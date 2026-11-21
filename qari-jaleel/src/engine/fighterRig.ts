@@ -611,7 +611,7 @@ function createKurtaFlapGeometry(
     // Slight natural cylindrical wrap around front/back torso without outward skirt flare
     const zCurve = (1 - t * t) * arcRadius * (1 - v * 0.12);
     // Very subtle vertical linen drape fold
-    const fold = Math.sin(t * Math.PI * 3) * 0.005 * v;
+    const fold = Math.sin(t * Math.PI * 4) * 0.009 * Math.min(1, v * 1.6);
     const pz = isFront ? zCurve + fold : -zCurve - fold;
     pos.setXYZ(i, x, py, pz);
   }
@@ -1506,40 +1506,6 @@ export function createFighterRig(
     waistCord.scale.set(1.06, 0.84 + Math.max(0, bodySpec.bellyBulge) * 0.42, 1);
     waistCord.position.y = 0.105;
     hips.add(waistCord);
-
-    const flapWidth = 0.34 * waistExpand;
-    const flapLength = 0.43;
-    const frontZ = 0.188 + bellyFrontPad * 0.78;
-    const backZ = -0.182;
-
-    const frontFlapGroup = new THREE.Group();
-    frontFlapGroup.position.set(0, 0.09, frontZ);
-    const frontFlapMesh = new THREE.Mesh(
-      trackGeo(createKurtaFlapGeometry(flapWidth, flapLength, 0.042, true)),
-      kurtaFlapMat
-    );
-    frontFlapMesh.castShadow = true;
-    frontFlapMesh.receiveShadow = true;
-    frontFlapGroup.add(frontFlapMesh);
-    hips.add(frontFlapGroup);
-
-    const backFlapGroup = new THREE.Group();
-    backFlapGroup.position.set(0, 0.09, backZ);
-    const backFlapMesh = new THREE.Mesh(
-      trackGeo(createKurtaFlapGeometry(flapWidth, flapLength, 0.036, false)),
-      kurtaFlapMat
-    );
-    backFlapMesh.castShadow = true;
-    backFlapMesh.receiveShadow = true;
-    backFlapGroup.add(backFlapMesh);
-    hips.add(backFlapGroup);
-
-    kurtaFlaps = {
-      frontFlap: frontFlapGroup,
-      backFlap: backFlapGroup,
-      frontRotX: 0,
-      backRotX: 0,
-    };
   } else {
     // Rolled-Cuff Village Trousers / Chinos: stitched leather belt + brass buckle + side belt loops
     const belt = new THREE.Mesh(
