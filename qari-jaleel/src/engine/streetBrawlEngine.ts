@@ -3604,18 +3604,18 @@ export class StreetBrawlEngine {
         }
       };
       // Flex show: poses, sparkles, cousin heckling, shirt rips off
-      once(1, 0.1, () => {
-        soundEngine.playCheerPop();
-        this.spawnComicPopup(hero.x, 2.15, hero.z, 'FLEX!', '#FDE047');
-        say(otherSide, 'Cousin', 'Bro why is he posing?', 1.5);
-      });
-      once(2, 0.2, () => {
+      once(2, 0.11, () => {
         soundEngine.playCheerPop();
         this.spawnParticles(hero.x, 1.2, hero.z, 22, 4);
         this.spawnComicPopup(hero.x, 2.15, hero.z, 'SHIRT: GONE!', '#F59E0B');
-        say(otherSide, 'Cousin', 'BHAI PUT YOUR SHIRT ON!!', 1.6);
+        say(otherSide, 'Cousin', 'BHAI PUT YOUR SHIRT ON!!', 1.5);
       });
-      once(4, 0.32, () => say(side, hero.profile.name, 'Come give me a hug bro.', 1.7));
+      once(1, 0.16, () => {
+        soundEngine.playCheerPop();
+        this.spawnComicPopup(hero.x, 2.15, hero.z, 'SIX PACK!', '#FDE047');
+      });
+      once(32, 0.25, () => say(otherSide, 'Cousin', 'Bro, where did the belly go?', 1.5));
+      once(4, 0.34, () => say(side, hero.profile.name, 'Come give me a hug bro.', 1.4));
       once(8, 0.42, () => this.spawnComicPopup(hero.x, 2.15, hero.z, 'HUG TIME!', '#F472B6'));
       once(512, 0.47, () => say(side, hero.profile.name, "WHERE'S CHETZY BABY?!", 1.7));
       // Charge in, closing the gap exactly by the time the hug starts
@@ -3647,7 +3647,7 @@ export class StreetBrawlEngine {
         soundEngine.playSqueak(1.0);
         this.dealPowerupAoeDamage(hero, tx, tz, 1.8, 10, false, 'SQUEAK!');
       });
-      once(32, 0.73, () => say(otherSide, 'Cousin', "Bhai he's not a toy!", 1.3));
+      once(1024, 0.73, () => say(otherSide, 'Cousin', "Bhai he's not a toy!", 1.3));
       once(64, 0.75, () => {
         soundEngine.playSqueak(1.25);
         this.dealPowerupAoeDamage(hero, tx, tz, 1.8, 10, false, 'SQUEAK!!');

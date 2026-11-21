@@ -379,7 +379,7 @@ export function buildStylizedHead(o: StylizedHeadOptions): THREE.Group {
     }
 
     if (hs === 'swept_silver') {
-      // Man bun: tied-up knot at the crown-back with a red hair tie
+      // Man bun: tied-up knot at the back of the head with a red hair tie
       const bunMat = trackMat(
         new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.8, metalness: 0.03, bumpMap: fibre, bumpScale: 1.5 }),
         true,
@@ -388,17 +388,16 @@ export function buildStylizedHead(o: StylizedHeadOptions): THREE.Group {
       bunMat.color.copy(hairCol).lerp(new THREE.Color('#8c8782'), 0.35);
       const bun = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.092, 22, 16)), bunMat);
       bun.scale.set(1, 0.9, 1);
-      bun.position.set(0, ry * 1.1, -rz * 0.42);
+      bun.position.set(0, ry * 0.5, -rz * 0.98 - 0.045);
       bun.castShadow = true;
       const base = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.06, 14, 10)), bunMat);
       base.scale.set(1.1, 0.8, 1);
-      base.position.set(0, ry * 0.9, -rz * 0.5);
+      base.position.set(0, ry * 0.52, -rz * 0.9);
       const tie = new THREE.Mesh(
         trackGeo(new THREE.TorusGeometry(0.06, 0.012, 8, 20)),
         trackMat(new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.6 }), false)
       );
-      tie.rotation.x = Math.PI / 2 - 0.2;
-      tie.position.set(0, ry * 0.96, -rz * 0.46);
+      tie.position.set(0, ry * 0.52, -rz * 0.94 - 0.005);
       group.add(bun, base, tie);
     }
 

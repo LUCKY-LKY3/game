@@ -237,16 +237,15 @@ export function CombatHud({
             hud.speechBubble.side === 1 ? 'justify-start sm:pl-16' : 'justify-end sm:pr-16'
           }`}
         >
-          <div className="relative max-w-[min(88vw,26rem)] rounded-2xl border-4 border-[#141210] bg-[#FFFDF8] px-6 py-4 text-[#141210] shadow-[6px_6px_0px_#141210]">
-            <div className="text-sm font-black tracking-wider text-[#B45309] uppercase">
+          <div className="relative max-w-[17rem] rounded-xl bg-[#FFFDF8]/95 px-3.5 py-2 text-[#141210] shadow-[0_6px_18px_rgba(0,0,0,0.45)] ring-1 ring-black/10 sm:max-w-xs">
+            <div className="text-[10px] font-bold tracking-[0.14em] text-[#B45309] uppercase">
               {hud.speechBubble.speaker}
             </div>
-            <div className="mt-1 text-2xl font-black leading-tight text-[#141210] sm:text-3xl">
-              &ldquo;{hud.speechBubble.text}&rdquo;
+            <div className="mt-0.5 text-sm font-semibold leading-snug text-[#141210] sm:text-base">
+              {hud.speechBubble.text}
             </div>
-            {/* Comic speech pointer tail */}
             <div
-              className={`absolute -bottom-3 h-5 w-5 rotate-45 border-r-[3px] border-b-[3px] border-[#141210] bg-[#FFFDF8] ${
+              className={`absolute -bottom-1.5 h-3 w-3 rotate-45 bg-[#FFFDF8]/95 ring-1 ring-black/10 ${
                 hud.speechBubble.side === 1 ? 'left-8' : 'right-8'
               }`}
             />

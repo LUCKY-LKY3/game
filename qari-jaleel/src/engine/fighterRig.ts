@@ -1553,12 +1553,59 @@ export function createFighterRig(
   const sparkles: THREE.Mesh[] = [];
   {
     // Bare torso (skin) revealed when the shirt comes off (Saf's flex)
-    const bareChest = new THREE.Mesh(chestMesh.geometry, limbSkinMat);
-    bareChest.scale.set(0.985, 1, 0.985);
+    // Slim, ripped torso (no belly): the shirt hid a lot
+    const bareGeo = trackGeo(createSculptedTorsoGeometry(0, bodySpec.shoulderMass, bodySpec.vTaper));
+    const bareChest = new THREE.Mesh(bareGeo, limbSkinMat);
     bareChest.castShadow = true;
     bareChest.visible = false;
     torso.add(bareChest);
     bareParts.push(bareChest);
+    // front surface depth at (x, y) read from the bare torso mesh
+    const bp = bareGeo.attributes.position as THREE.BufferAttribute;
+    const frontZ = (x: number, y: number) => {
+      let best = 0.15;
+      for (let i = 0; i < bp.count; i++) {
+        if (Math.abs(bp.getY(i) - y) < 0.025 && Math.abs(bp.getX(i) - x) < 0.025 && bp.getZ(i) > best) best = bp.getZ(i);
+      }
+      return best;
+    };
+    const absMat = trackMat(new THREE.MeshStandardMaterial({ color: '#E3AD82', roughness: 0.7 }), false);
+    const absGeo = trackGeo(new THREE.SphereGeometry(0.05, 12, 10));
+    for (let r = 0; r < 3; r++) {
+      for (const sx of [-1, 1]) {
+        const y = 0.1 + r * 0.095;
+        const x = sx * 0.052;
+        const ab = new THREE.Mesh(absGeo, absMat);
+        ab.scale.set(1.0, 0.82, 0.5);
+        ab.position.set(x, y, frontZ(x, y) - 0.004);
+        ab.visible = false;
+        torso.add(ab);
+        bareParts.push(ab);
+      }
+    }
+    for (const sx of [-1, 1]) {
+      const pec = new THREE.Mesh(absGeo, absMat);
+      pec.scale.set(1.9, 1.15, 0.6);
+      pec.position.set(sx * 0.115, 0.4, frontZ(sx * 0.115, 0.4) - 0.006);
+      pec.visible = false;
+      torso.add(pec);
+      bareParts.push(pec);
+    }
+    // chest + belly-trail hair: many tiny dark tufts
+    const hairMatB = trackMat(new THREE.MeshStandardMaterial({ color: '#2B1C12', roughness: 0.95 }), false);
+    const tuftGeo = trackGeo(new THREE.SphereGeometry(0.014, 6, 5));
+    const tufts: [number, number][] = [];
+    for (let i = 0; i < 46; i++) tufts.push([(((i * 37) % 21) - 10) * 0.014, 0.33 + (((i * 53) % 17) / 17) * 0.17]);
+    for (let i = 0; i < 12; i++) tufts.push([(((i * 7) % 5) - 2) * 0.008, 0.06 + i * 0.022]);
+    for (const [hx, hy] of tufts) {
+      const t = new THREE.Mesh(tuftGeo, hairMatB);
+      t.scale.set(1.4, 0.7, 1);
+      t.position.set(hx, hy, frontZ(hx, hy) + 0.004);
+      t.rotation.z = hx * 6;
+      t.visible = false;
+      torso.add(t);
+      bareParts.push(t);
+    }
     const sparkMat = trackMat(new THREE.MeshBasicMaterial({ color: '#FDE047', transparent: true, opacity: 0.95, depthWrite: false }), false);
     const sparkGeo = trackGeo(new THREE.OctahedronGeometry(0.06, 0));
     const sparkSpots: [number, number, number][] = [
@@ -2449,6 +2496,11 @@ export function applyFighterPose(
   // Smooth damped turning toward movement direction (falls back to 3/4 Tekken turn)
   const baseYaw = facing === 1 ? Math.PI * 0.4 : -Math.PI * 0.4;
   rig.root.rotation.y = visualYaw !== undefined ? visualYaw : baseYaw;
+  if (action === 'powerup_saf') {
+    // Saf turns to face the screen while he strips and flexes, then turns back for the charge
+    const turn = Math.min(1, phase / 0.05, Math.max(0, (0.4 - phase) / 0.06));
+    rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, 0, Math.max(0, turn));
+  }
 
   // Keep shadow & floor ring grounded even during jumps (clear depth perception while airborne!)
   rig.shadowDisc.position.y = 0.024 - yHeight;
@@ -2546,12 +2598,12 @@ export function applyFighterPose(
 
   // Saf's flex: shirt rips off at phase 0.2 of his power move, sparkles pop during the poses
   if (rig.shirtParts.length > 0) {
-    const shirtOff = action === 'powerup_saf' && phase >= 0.2;
+    const shirtOff = action === 'powerup_saf' && phase >= 0.12;
     if (rig.shirtParts[0].visible === shirtOff) {
       for (let i = 0; i < rig.shirtParts.length; i++) rig.shirtParts[i].visible = !shirtOff;
       for (let i = 0; i < rig.bareParts.length; i++) rig.bareParts[i].visible = shirtOff;
     }
-    const sparkOn = action === 'powerup_saf' && phase > 0.06 && phase < 0.34;
+    const sparkOn = action === 'powerup_saf' && phase > 0.14 && phase < 0.36;
     for (let i = 0; i < rig.sparkles.length; i++) {
       const s = rig.sparkles[i];
       if (s.visible !== sparkOn) s.visible = sparkOn;
@@ -3572,9 +3624,24 @@ export function applyFighterPose(
     }
 
     case 'powerup_saf': {
-      // 0-.06 ready, .06-.30 flex poses (shirt rips off at .20), .30-.46 "come give me a hug bro" open arms,
+      // 0-.04 ready, .04-.14 strips shirt (off at .12) facing the screen, .14-.34 flex poses, .34-.46 "come give me a hug bro" open arms,
       // .46-.60 lunge, .60-.90 real wrap-around bear hug with squeaky-toy squeezes, .90-1 shrug "sorry bro"
-      if (phase < 0.06) {
+      if (phase < 0.14) {
+        // strip: hands grab the hem, haul the top up and over the head, then fling it
+        const k = Math.min(1, Math.max(0, (phase - 0.04) / 0.08));
+        const up = Math.sin(k * Math.PI * 0.5);
+        hipsY = 0.9;
+        torsoRotX = -0.12 * up;
+        headRotX = -0.1;
+        headRotY = 0;
+        torsoRotY = 0;
+        lShX = THREE.MathUtils.lerp(-0.5, -2.9, up);
+        lShZ = THREE.MathUtils.lerp(-0.5, -0.45, up);
+        lElX = THREE.MathUtils.lerp(-1.6, -0.5, up);
+        rShX = THREE.MathUtils.lerp(-0.5, -2.9, up);
+        rShZ = THREE.MathUtils.lerp(0.5, 0.45, up);
+        rElX = THREE.MathUtils.lerp(-1.6, -0.5, up);
+      } else if (phase < 0.0) {
         hipsY = 0.86;
         torsoRotX = 0.12;
         lShX = -0.5;
@@ -3583,9 +3650,9 @@ export function applyFighterPose(
         rShX = -0.5;
         rShZ = 0.5;
         rElX = -1.6;
-      } else if (phase < 0.3) {
-        const u = (phase - 0.06) / 0.24;
-        const pop = Math.abs(Math.sin(u * Math.PI * 6));
+      } else if (phase < 0.34) {
+        const u = (phase - 0.14) / 0.2;
+        const pop = Math.abs(Math.sin(u * Math.PI * 5));
         hipsY = 0.86 + pop * 0.03;
         headRotX = -0.1;
         lHipX = -0.3;
@@ -3628,7 +3695,7 @@ export function applyFighterPose(
         }
       } else if (phase < 0.46) {
         // "Come give me a hug bro": arms wide open and beckoning
-        const k = Math.min(1, (phase - 0.3) / 0.05);
+        const k = Math.min(1, (phase - 0.34) / 0.05);
         const beckon = Math.abs(Math.sin(time * 11));
         hipsY = 0.9;
         torsoRotX = -0.1;
