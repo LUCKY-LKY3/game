@@ -267,7 +267,8 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
     const container = mountRef.current;
     if (!container) return;
 
-    const isSoftwareGl = detectSoftwareWebGL();
+    const forceHq = new URLSearchParams(window.location.search).has('hq'); // debug: ?hq forces full quality
+    const isSoftwareGl = forceHq ? false : detectSoftwareWebGL();
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
 

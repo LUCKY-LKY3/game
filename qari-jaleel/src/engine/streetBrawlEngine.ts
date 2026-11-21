@@ -5054,6 +5054,12 @@ export class StreetBrawlEngine {
     let camY = 6.1;
     let camZ = 10.4;
     let lookY = 0.95;
+    // Debug: ?closeup puts the camera right beside the hero so characters can be inspected.
+    if (typeof window !== 'undefined' && window.location.search.includes('closeup')) {
+      camY = 2.1;
+      camZ = 4.6;
+      lookY = 1.35;
+    }
 
     // Dramatic zoom-ins for Boss Intro, Signature FINISH!, and Final Zone KO Slow-Mo!
     if (this.bossIntroTimer > 0 && this.bossIntroTargetUid !== null) {
@@ -5142,7 +5148,7 @@ export class StreetBrawlEngine {
     for (let i = 0; i < 2; i++) {
       const h = this.heroes[i];
       const isActive = i === this.activeHeroIndex;
-      const targetYaw = h.facing === 1 ? Math.PI * 0.4 : -Math.PI * 0.4;
+      const targetYaw = h.facing === 1 ? Math.PI * 0.3 : -Math.PI * 0.3; // more toward camera so faces read
       h.visualYaw = THREE.MathUtils.damp(h.visualYaw, targetYaw, 14, _dt);
       if (h.landingSquashTimer > 0) {
         h.landingSquashTimer = Math.max(0, h.landingSquashTimer - _dt);
@@ -5248,7 +5254,7 @@ export class StreetBrawlEngine {
     for (let i = 0; i < this.enemies.length; i++) {
       const e = this.enemies[i];
       if (e.removed) continue;
-      const targetYaw = e.facing === 1 ? Math.PI * 0.42 : -Math.PI * 0.42;
+      const targetYaw = e.facing === 1 ? Math.PI * 0.32 : -Math.PI * 0.32;
       e.visualYaw = THREE.MathUtils.damp(e.visualYaw, targetYaw, 12, _dt);
       e.rig.root.position.set(e.x, e.y, e.z);
       const phase = e.actionDuration > 0 ? Math.min(1, e.actionTime / e.actionDuration) : 0;
