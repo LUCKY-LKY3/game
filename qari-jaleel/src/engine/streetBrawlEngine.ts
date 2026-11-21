@@ -753,6 +753,7 @@ export class StreetBrawlEngine {
   private rageFlashTimer = 0;
   private speechBubble: SpeechBubbleState | null = null;
   private speechTimer = 0;
+  private comedyTimer: string | null = null;
 
   private stats: MatchStats = {
     p1MaxCombo: 0,
@@ -1168,6 +1169,7 @@ export class StreetBrawlEngine {
     this.switchBanner = '';
     this.pickupToast = '';
     this.speechBubble = null;
+    this.comedyTimer = null;
     this.speechTimer = 0;
     this.rageFlashSide = null;
     this.rageFlashTimer = 0;
@@ -3461,8 +3463,16 @@ export class StreetBrawlEngine {
     switch (hero.powerupKind) {
       case 'fady_smoke':
         hero.action = 'powerup_fady';
-        hero.actionDuration = 2.9;
-        hero.callout = 'CHILL & SMOKE CLOUD!';
+        hero.actionDuration = 6.2;
+        hero.invulnTimer = 6.4;
+        hero.callout = "I'LL BE 2 MINS BRO!";
+        this.speechBubble = {
+          side: hero.index === 0 ? 1 : 2,
+          speaker: hero.profile.name,
+          text: 'Two mins bro.',
+        };
+        this.speechTimer = 1.5;
+        this.comedyTimer = null;
         break;
       case 'saf_hug':
         hero.action = 'powerup_saf';
@@ -3525,15 +3535,47 @@ export class StreetBrawlEngine {
         hero.facing,
         hero.powerupOriginX,
         hero.powerupOriginZ,
-        this.elapsed
+        this.elapsed,
+        tx,
+        tz
       );
-      if (phase > 0.25 && (hero.powerupHitsMask & 1) === 0) {
+      const side = hero.index === 0 ? 1 : 2;
+      const otherSide = side === 1 ? 2 : 1;
+      // Comic countdown: races down from 2:00, stalls on 0:01, then he adds ten more minutes
+      if (phase >= 0.1 && phase < 0.8) {
+        const t = Math.min(1, (phase - 0.1) / 0.56);
+        const fmt = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+        if (t < 0.5) this.comedyTimer = fmt(Math.max(3, Math.round(120 - 117 * (t / 0.5))));
+        else if (t < 0.62) this.comedyTimer = '0:03';
+        else if (t < 0.72) this.comedyTimer = '0:02';
+        else if (t < 0.88) this.comedyTimer = '0:01';
+        else this.comedyTimer = '+10:00';
+      } else {
+        this.comedyTimer = null;
+      }
+      if (phase > 0.12 && (hero.powerupHitsMask & 1) === 0) {
         hero.powerupHitsMask |= 1;
         soundEngine.playSmokePuff();
       }
-      if (phase > 0.68 && (hero.powerupHitsMask & 2) === 0) {
+      if (phase > 0.3 && (hero.powerupHitsMask & 4) === 0) {
+        hero.powerupHitsMask |= 4;
+        this.speechBubble = { side: otherSide, speaker: 'Cousin', text: "Bhai it's been 20 minutes!" };
+        this.speechTimer = 1.6;
+      }
+      if (phase > 0.5 && (hero.powerupHitsMask & 8) === 0) {
+        hero.powerupHitsMask |= 8;
+        this.speechBubble = { side, speaker: hero.profile.name, text: 'Nearly there bro. Two more mins.' };
+        this.speechTimer = 1.6;
+      }
+      if (phase > 0.7 && (hero.powerupHitsMask & 16) === 0) {
+        hero.powerupHitsMask |= 16;
+        this.speechBubble = { side, speaker: hero.profile.name, text: 'Right. Where were we?' };
+        this.speechTimer = 1.1;
+      }
+      if (phase > 0.86 && (hero.powerupHitsMask & 2) === 0) {
         hero.powerupHitsMask |= 2;
-        this.dealPowerupAoeDamage(hero, hero.x + hero.facing * 1.6, hero.z, 5.2, 60, true, 'KHALLAS!');
+        this.spawnParticles(tx, 0.8, tz, 26, 5);
+        this.dealPowerupAoeDamage(hero, tx, tz, 4.4, 60, true, 'KHALLAS!');
       }
     } else if (hero.powerupKind === 'saf_hug') {
       if (target && phase < 0.72) {
@@ -5358,6 +5400,7 @@ export class StreetBrawlEngine {
       stats: { ...this.stats },
       rageFlashSide: this.rageFlashSide,
       speechBubble: this.speechBubble ? { ...this.speechBubble } : null,
+      comedyTimer: this.comedyTimer,
       brawl: {
         activeHeroIndex: this.activeHeroIndex,
         hero1Weapon: this.heroes[0].heldWeapon ? { ...this.heroes[0].heldWeapon } : null,

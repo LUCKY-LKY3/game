@@ -3442,8 +3442,19 @@ export function applyFighterPose(
     }
 
     case 'powerup_fady': {
-      if (phase < 0.62) {
-        const puff = Math.sin(phase * Math.PI * 8);
+      // 0-.10 "two mins bro" hand raised, .10-.66 sitting & smoking, .66-.74 stands, .74-.80 hoists the chair, .80-1 slams it
+      if (phase < 0.1) {
+        const k = phase / 0.1;
+        hipsY = 0.94 - k * 0.04;
+        torsoRotX = 0.05;
+        headRotX = -0.06;
+        rShX = -1.45;
+        rShZ = 0.35;
+        rElX = -0.5 + Math.sin(k * Math.PI * 3) * 0.25; // wagging "wait a sec" hand
+        lShX = -0.4;
+        lElX = -1.1;
+      } else if (phase < 0.66) {
+        const puff = Math.sin((phase - 0.1) * Math.PI * 14);
         const takeDrag = Math.max(0, puff);
         hipsY = 0.6;
         torsoRotX = -0.14 - takeDrag * 0.08;
@@ -3459,28 +3470,39 @@ export function applyFighterPose(
         rShX = -0.95 - takeDrag * 0.55;
         rShZ = 0.18;
         rElX = -1.35 - takeDrag * 0.55;
-      } else if (phase < 0.78) {
-        const rise = (phase - 0.62) / 0.16;
+      } else if (phase < 0.74) {
+        const rise = (phase - 0.66) / 0.08;
         hipsY = THREE.MathUtils.lerp(0.6, 0.94, rise);
-        torsoRotX = 0.28;
-        lHipX = THREE.MathUtils.lerp(-1.2, -0.35, rise);
-        lKneeX = THREE.MathUtils.lerp(1.2, 0.55, rise);
-        rHipX = THREE.MathUtils.lerp(-1.2, 0.35, rise);
-        rKneeX = THREE.MathUtils.lerp(1.2, 0.45, rise);
-        rShX = -0.5;
-        rShZ = 0.65;
-        rElX = -1.2;
+        torsoRotX = 0.1;
+        lHipX = THREE.MathUtils.lerp(-1.2, -0.2, rise);
+        lKneeX = THREE.MathUtils.lerp(1.2, 0.35, rise);
+        rHipX = THREE.MathUtils.lerp(-1.2, 0.25, rise);
+        rKneeX = THREE.MathUtils.lerp(1.2, 0.3, rise);
+        lShX = THREE.MathUtils.lerp(-0.7, -1.2, rise);
+        rShX = THREE.MathUtils.lerp(-1.2, -1.2, rise);
+        lElX = -0.6;
+        rElX = -0.6;
+      } else if (phase < 0.8) {
+        const k = snap((phase - 0.74) / 0.06);
+        hipsY = 0.94;
+        torsoRotX = -0.18 * k;
+        lShX = THREE.MathUtils.lerp(-1.2, -2.7, k);
+        rShX = THREE.MathUtils.lerp(-1.2, -2.7, k);
+        lShZ = -0.12;
+        rShZ = 0.12;
+        lElX = -0.35;
+        rElX = -0.35;
       } else {
-        const hitT = snap((phase - 0.78) / 0.22);
-        hipsY = 0.92 + hitT * 0.08;
-        hipsRotY = 0.35 - hitT * 0.75;
-        torsoRotY = 0.4 - hitT * 0.95;
-        torsoRotX = 0.22;
-        rShX = -0.8 - hitT * 1.15;
-        rShZ = 0.55 - hitT * 0.45;
-        rElX = -0.9 + hitT * 0.78;
-        lShX = -0.85;
-        lElX = -1.4;
+        const hitT = snap((phase - 0.8) / 0.08);
+        const recover = snap((phase - 0.9) / 0.1);
+        hipsY = 0.94 - hitT * 0.1 + recover * 0.1;
+        hipsRotY = hitT * -0.2;
+        torsoRotX = -0.18 + hitT * 0.6 - recover * 0.4;
+        torsoRotY = -hitT * 0.3 * (1 - recover);
+        lShX = -2.7 + hitT * 1.7 + recover * 0.8;
+        rShX = -2.7 + hitT * 1.7 + recover * 0.8;
+        lElX = -0.35 - hitT * 0.4;
+        rElX = -0.35 - hitT * 0.4;
       }
       break;
     }

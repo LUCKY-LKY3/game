@@ -254,6 +254,25 @@ export function CombatHud({
         </div>
       )}
 
+      {/* Qari's "two mins bro" countdown clock: races down, stalls on 0:01, then adds ten minutes */}
+      {hud.comedyTimer && (
+        <div className="pointer-events-none fixed top-[46%] left-1/2 z-30 -translate-x-1/2">
+          <div
+            className={`flex items-center gap-2 border-[3px] border-[#141210] bg-[#0B0B0B] px-4 py-1.5 shadow-[4px_4px_0px_#141210] ${
+              hud.comedyTimer === '0:01' || hud.comedyTimer === '+10:00' ? 'animate-pulse' : ''
+            }`}
+          >
+            <span className="text-[10px] font-black tracking-wider text-[#F59E0B] uppercase">Two mins</span>
+            <span
+              className="font-mono-num text-2xl font-black text-[#FF4D3D] tabular-nums"
+              style={{ textShadow: '0 0 10px rgba(255,77,61,0.7)' }}
+            >
+              {hud.comedyTimer}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Bollywood Comic Impact Popups (capped & smoothly fading within 0.55s) */}
       {brawl && brawl.comicPopups.length > 0 && (
         <div className="pointer-events-none fixed inset-0 z-25 overflow-hidden">

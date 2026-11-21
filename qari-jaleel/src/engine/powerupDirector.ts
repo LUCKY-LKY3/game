@@ -68,6 +68,11 @@ export class PowerupDirector {
   private cigaretteEmberMat: THREE.MeshBasicMaterial;
   private smokeGroup: THREE.Group;
   private smokePuffs: SmokePuff[] = [];
+  private chaiGroup: THREE.Group;
+  private wispGroup: THREE.Group;
+  private wisps: { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; seed: number }[] = [];
+  private debrisGroup: THREE.Group;
+  private debris: { mesh: THREE.Mesh; v: THREE.Vector3; spin: THREE.Vector3 }[] = [];
 
   // Jam: Polished 3D Snooker Cue
   private snookerCueGroup: THREE.Group;
@@ -106,6 +111,39 @@ export class PowerupDirector {
     this.cigaretteEmberMat = cig.emberMat;
     this.cigaretteGroup.visible = false;
     this.scene.add(this.cigaretteGroup);
+
+    this.chaiGroup = this.buildChaiGlass(trackGeo, trackMat);
+    this.chaiGroup.visible = false;
+    this.scene.add(this.chaiGroup);
+
+    // Thin cigarette smoke wisps that curl up from his hand (so the move reads without hiding the screen)
+    this.wispGroup = new THREE.Group();
+    this.wispGroup.visible = false;
+    const wispGeo = trackGeo(new THREE.SphereGeometry(0.1, 8, 6));
+    for (let i = 0; i < 18; i++) {
+      const mat = trackMat(new THREE.MeshBasicMaterial({ color: '#ECE8E0', transparent: true, opacity: 0, depthWrite: false }));
+      const mesh = new THREE.Mesh(wispGeo, mat);
+      this.wisps.push({ mesh, mat, seed: i / 18 });
+      this.wispGroup.add(mesh);
+    }
+    this.scene.add(this.wispGroup);
+
+    // Chair splinters that fly when it gets smashed
+    this.debrisGroup = new THREE.Group();
+    this.debrisGroup.visible = false;
+    const debrisGeo = trackGeo(new THREE.BoxGeometry(0.14, 0.05, 0.22));
+    const debrisMat = trackMat(new THREE.MeshStandardMaterial({ color: '#D7263D', roughness: 0.35 }));
+    for (let i = 0; i < 10; i++) {
+      const mesh = new THREE.Mesh(debrisGeo, debrisMat);
+      const a = (i / 10) * Math.PI * 2;
+      this.debris.push({
+        mesh,
+        v: new THREE.Vector3(Math.cos(a) * (1.4 + (i % 3) * 0.5), 2.2 + (i % 4) * 0.5, Math.sin(a) * (0.9 + (i % 2) * 0.5)),
+        spin: new THREE.Vector3(4 + i, 5 - i * 0.4, 3 + (i % 3)),
+      });
+      this.debrisGroup.add(mesh);
+    }
+    this.scene.add(this.debrisGroup);
 
     this.smokeGroup = new THREE.Group();
     this.smokeGroup.visible = false;
@@ -195,13 +233,20 @@ export class PowerupDirector {
     this.chairGroup.visible = false;
     this.cigaretteGroup.visible = false;
     this.smokeGroup.visible = false;
+    this.chaiGroup.visible = false;
+    this.wispGroup.visible = false;
+    this.debrisGroup.visible = false;
     this.snookerCueGroup.visible = false;
     this.fordCarGroup.visible = false;
     this.girlsGroup.visible = false;
     this.heartsGroup.visible = false;
   }
 
-  /** Fady: Sits down on wooden chair, smokes heavily filling arena with smoke, then stands and strikes */
+  /**
+   * Fady's "two mins bro" move: a red plastic chair drops in, he sits with a chai and a smoke for ages,
+   * then hoists the chair overhead and smashes it over the nearest cousin.
+   * Phases: 0-.10 chair drops, .10-.66 sitting, .66-.74 stands, .74-.80 hoists, .80-.86 swings, .86+ smash.
+   */
   public updateFadySmoke(
     phase: number,
     attackerX: number,
@@ -209,50 +254,122 @@ export class PowerupDirector {
     facing: 1 | -1,
     chairX: number,
     chairZ: number,
-    elapsed: number
+    elapsed: number,
+    targetX = attackerX + facing * 1.6,
+    targetZ = attackerZ
   ) {
-    this.chairGroup.visible = phase < 0.88;
-    this.chairGroup.position.set(chairX - facing * 0.08, 0, chairZ);
-    this.chairGroup.rotation.y = facing === 1 ? Math.PI * 0.4 : -Math.PI * 0.4;
+    const SIT0 = 0.1, SIT1 = 0.66, LIFT = 0.74, SWING = 0.8, SMASH = 0.86;
+    const lerp = THREE.MathUtils.lerp;
+    const clamp01 = (v: number) => THREE.MathUtils.clamp(v, 0, 1);
+    const sitting = phase >= SIT0 && phase < SIT1;
 
-    // Cigarette held near mouth/right hand during sitting & smoking phase
-    const isSmoking = phase < 0.62;
-    this.cigaretteGroup.visible = isSmoking;
-    if (isSmoking) {
-      const puffCycle = Math.sin(phase * Math.PI * 8);
-      const lift = puffCycle > 0.2 ? 0.06 : 0;
-      this.cigaretteGroup.position.set(
-        attackerX + facing * (0.24 + lift * 0.3),
-        1.14 + lift,
-        attackerZ + 0.14
+    // ── chair ──
+    const ch = this.chairGroup;
+    const seatX = chairX - facing * 0.08;
+    ch.visible = phase < SMASH;
+    ch.rotation.set(0, facing === 1 ? Math.PI * 0.4 : -Math.PI * 0.4, 0);
+    if (phase < SIT0) {
+      const k = phase / SIT0;
+      const bounce = k > 0.85 ? Math.sin(((k - 0.85) / 0.15) * Math.PI) * 0.12 : 0;
+      ch.position.set(seatX, Math.max(0, 3.2 * (1 - k * k)) + bounce, chairZ);
+      ch.rotation.z = (1 - k) * 0.5;
+    } else if (phase < LIFT) {
+      ch.position.set(seatX, 0, chairZ);
+    } else if (phase < SWING) {
+      const k = clamp01((phase - LIFT) / (SWING - LIFT));
+      const e = k * k * (3 - 2 * k);
+      ch.position.set(lerp(seatX, attackerX + facing * 0.3, e), lerp(0, 2.05, e), lerp(chairZ, attackerZ, e));
+      ch.rotation.z = -facing * e * 0.2;
+    } else {
+      const k = clamp01((phase - SWING) / (SMASH - SWING));
+      const e = k * k;
+      ch.position.set(
+        lerp(attackerX + facing * 0.3, targetX - facing * 0.35, e),
+        lerp(2.05, 0.55, e),
+        lerp(attackerZ, targetZ, e)
       );
+      ch.rotation.z = -facing * (0.2 + e * 1.6);
+    }
+
+    // ── chai glass on the ground next to the chair ──
+    this.chaiGroup.visible = phase >= SIT0 && phase < SMASH;
+    this.chaiGroup.position.set(chairX + facing * 0.62, 0, chairZ + 0.46);
+
+    // ── smashed-chair splinters ──
+    this.debrisGroup.visible = phase >= SMASH && phase < 0.98;
+    if (this.debrisGroup.visible) {
+      const tau = clamp01((phase - SMASH) / 0.12) * 0.9;
+      const ox = targetX - facing * 0.35, oz = targetZ;
+      for (const d of this.debris) {
+        d.mesh.position.set(ox + d.v.x * tau * facing, 0.55 + d.v.y * tau - 4.6 * tau * tau, oz + d.v.z * tau);
+        d.mesh.position.y = Math.max(0.03, d.mesh.position.y);
+        d.mesh.rotation.set(d.spin.x * tau, d.spin.y * tau, d.spin.z * tau);
+        d.mesh.scale.setScalar(phase > 0.94 ? Math.max(0.01, (0.98 - phase) / 0.04) : 1);
+      }
+    }
+
+    // ── cigarette ──
+    const lit = phase >= 0.06 && phase < SIT1 + 0.02;
+    this.cigaretteGroup.visible = lit;
+    let cigX = attackerX, cigY = 1.14, cigZ = attackerZ;
+    if (lit) {
+      const puffCycle = sitting ? Math.sin((phase - SIT0) * Math.PI * 14) : 0;
+      const lift = puffCycle > 0.2 ? 0.06 : 0;
+      cigX = attackerX + facing * (0.24 + lift * 0.3);
+      cigY = sitting ? 1.14 + lift : 1.42;
+      cigZ = attackerZ + 0.14;
+      this.cigaretteGroup.position.set(cigX, cigY, cigZ);
       this.cigaretteGroup.rotation.set(0, facing === 1 ? 0 : Math.PI, -0.15);
       const glow = 0.6 + Math.max(0, puffCycle) * 0.4;
       this.cigaretteEmberMat.color.setRGB(1.0, 0.32 * glow, 0.04);
     }
 
-    // Swirling volumetric smoke filling the arena
-    this.smokeGroup.visible = phase > 0.08;
-    const smokeIntensity =
-      phase < 0.25
-        ? THREE.MathUtils.clamp((phase - 0.08) / 0.17, 0, 1)
-        : phase < 0.84
-          ? 1.0
-          : THREE.MathUtils.clamp((1 - phase) / 0.16, 0, 1);
+    // ── thin smoke wisps from the cigarette ──
+    this.wispGroup.visible = lit;
+    if (lit) {
+      const fade = sitting ? 1 : 0.5;
+      for (let i = 0; i < this.wisps.length; i++) {
+        const w = this.wisps[i];
+        const cyc = (elapsed * 0.32 + w.seed) % 1;
+        w.mesh.position.set(
+          cigX + Math.sin(elapsed * 1.4 + i * 1.7) * 0.12 * cyc + facing * cyc * 0.25,
+          cigY + 0.04 + cyc * 1.5,
+          cigZ + Math.cos(elapsed * 1.1 + i) * 0.1 * cyc
+        );
+        w.mesh.scale.setScalar(0.35 + cyc * 1.1);
+        w.mat.opacity = Math.sin(cyc * Math.PI) * 0.34 * fade;
+      }
+    }
 
-    this.smokeGroup.position.set(chairX + facing * 1.15, 0, chairZ);
-    for (let i = 0; i < this.smokePuffs.length; i++) {
-      const p = this.smokePuffs[i];
-      const t = Math.min(1, Math.max(0, (phase - 0.06) * 1.35 + p.phaseOffset * 0.35));
-      const sway = Math.sin(elapsed * 2.1 + i) * 0.22;
-      p.mesh.position.set(
-        p.baseOffset.x * (0.25 + t * 0.95) * facing + sway,
-        p.baseOffset.y + t * p.drift.y,
-        p.baseOffset.z * (0.35 + t * 0.85) + Math.cos(elapsed * 1.6 + i) * 0.15
+    // ── gentle low smoke cloud while he waits, plus a short poof when the chair hits ──
+    const base =
+      phase < SIT0 ? 0
+      : phase < 0.35 ? clamp01((phase - SIT0) / 0.25) * 0.8
+      : phase < SIT1 ? 0.8
+      : phase < SWING ? 0.8 * clamp01((SWING - phase) / 0.14)
+      : 0;
+    const poof = phase >= SMASH ? clamp01(1 - (phase - SMASH) / 0.1) : 0;
+    const smokeIntensity = Math.max(base, poof);
+    this.smokeGroup.visible = smokeIntensity > 0.01;
+    if (this.smokeGroup.visible) {
+      const atTarget = phase >= SMASH;
+      this.smokeGroup.position.set(
+        atTarget ? targetX : chairX + facing * 0.9,
+        0,
+        atTarget ? targetZ : chairZ
       );
-      const sc = p.baseScale * (0.45 + t * 1.35);
-      p.mesh.scale.setScalar(sc);
-      p.mat.opacity = smokeIntensity * (i % 2 === 0 ? 0.44 : 0.32);
+      for (let i = 0; i < this.smokePuffs.length; i++) {
+        const p = this.smokePuffs[i];
+        const t = clamp01((phase - 0.06) * 1.35 + p.phaseOffset * 0.35);
+        const sway = Math.sin(elapsed * 2.1 + i) * 0.18;
+        p.mesh.position.set(
+          p.baseOffset.x * (0.2 + t * 0.6) * facing + sway,
+          p.baseOffset.y * 0.8 + t * p.drift.y * 0.6,
+          p.baseOffset.z * (0.3 + t * 0.6) + Math.cos(elapsed * 1.6 + i) * 0.12
+        );
+        p.mesh.scale.setScalar(p.baseScale * (0.35 + t * 0.9));
+        p.mat.opacity = smokeIntensity * (i % 2 === 0 ? 0.2 : 0.14);
+      }
     }
   }
 
@@ -444,52 +561,76 @@ export class PowerupDirector {
     trackGeo: <T extends THREE.BufferGeometry>(g: T) => T,
     trackMat: <T extends THREE.Material>(m: T) => T
   ): THREE.Group {
+    // The classic red plastic monobloc chair every chai stall has.
     const group = new THREE.Group();
-    const woodMat = trackMat(
-      new THREE.MeshStandardMaterial({ color: '#6E4223', roughness: 0.78, metalness: 0.06 })
-    );
-    const seatMat = trackMat(
-      new THREE.MeshStandardMaterial({ color: '#B4824E', roughness: 0.9, metalness: 0.02 })
-    );
+    const plastic = trackMat(new THREE.MeshStandardMaterial({ color: '#D7263D', roughness: 0.34, metalness: 0.04 }));
+    const shade = trackMat(new THREE.MeshStandardMaterial({ color: '#A91B2E', roughness: 0.4, metalness: 0.04 }));
 
-    // Seat frame
-    const seat = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.68, 0.07, 0.62)), seatMat);
+    // Dished seat with a rounded front lip
+    const seat = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.64, 0.07, 0.6)), plastic);
     seat.position.set(0, 0.54, 0);
     seat.castShadow = true;
     seat.receiveShadow = true;
-    group.add(seat);
+    const lip = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.045, 0.045, 0.64, 12)), plastic);
+    lip.rotation.z = Math.PI / 2;
+    lip.position.set(0, 0.54, 0.3);
+    const rear = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.6, 0.05, 0.1)), shade);
+    rear.position.set(0, 0.5, -0.27);
+    group.add(seat, lip, rear);
 
-    // 4 stout legs
-    const legGeo = trackGeo(new THREE.CylinderGeometry(0.032, 0.028, 0.54, 8));
-    const corners = [
-      [-0.28, -0.25],
-      [0.28, -0.25],
-      [-0.28, 0.25],
-      [0.28, 0.25],
-    ];
-    for (const [cx, cz] of corners) {
-      const leg = new THREE.Mesh(legGeo, woodMat);
+    // Four splayed tapered legs
+    const legGeo = trackGeo(new THREE.CylinderGeometry(0.034, 0.026, 0.54, 10));
+    for (const [cx, cz] of [[-0.27, -0.24], [0.27, -0.24], [-0.27, 0.24], [0.27, 0.24]]) {
+      const leg = new THREE.Mesh(legGeo, plastic);
       leg.position.set(cx, 0.27, cz);
+      leg.rotation.set(cz > 0 ? -0.09 : 0.09, 0, cx > 0 ? 0.08 : -0.08);
       leg.castShadow = true;
       group.add(leg);
     }
 
-    // Backrest posts & slats
-    const postGeo = trackGeo(new THREE.CylinderGeometry(0.03, 0.03, 0.68, 8));
-    const leftPost = new THREE.Mesh(postGeo, woodMat);
-    leftPost.position.set(-0.28, 0.88, -0.26);
-    const rightPost = new THREE.Mesh(postGeo, woodMat);
-    rightPost.position.set(0.28, 0.88, -0.26);
-    group.add(leftPost, rightPost);
-
-    const slatGeo = trackGeo(new THREE.BoxGeometry(0.56, 0.09, 0.035));
-    for (const sy of [0.76, 0.95, 1.14]) {
-      const slat = new THREE.Mesh(slatGeo, woodMat);
-      slat.position.set(0, sy, -0.26);
+    // Moulded backrest: curved panel with slots and side rails, leaning back
+    const back = new THREE.Group();
+    back.position.set(0, 0.62, -0.27);
+    back.rotation.x = -0.16;
+    const railGeo = trackGeo(new THREE.BoxGeometry(0.06, 0.62, 0.05));
+    const railL = new THREE.Mesh(railGeo, plastic);
+    railL.position.set(-0.28, 0.31, 0);
+    const railR = new THREE.Mesh(railGeo, plastic);
+    railR.position.set(0.28, 0.31, 0);
+    back.add(railL, railR);
+    const slatGeo = trackGeo(new THREE.BoxGeometry(0.5, 0.1, 0.045));
+    for (const sy of [0.12, 0.28, 0.44, 0.58]) {
+      const slat = new THREE.Mesh(slatGeo, plastic);
+      slat.position.set(0, sy, 0);
       slat.castShadow = true;
-      group.add(slat);
+      back.add(slat);
     }
+    group.add(back);
+    return group;
+  }
 
+  private buildChaiGlass(
+    trackGeo: <T extends THREE.BufferGeometry>(g: T) => T,
+    trackMat: <T extends THREE.Material>(m: T) => T
+  ): THREE.Group {
+    const group = new THREE.Group();
+    const saucer = new THREE.Mesh(
+      trackGeo(new THREE.CylinderGeometry(0.1, 0.085, 0.014, 18)),
+      trackMat(new THREE.MeshStandardMaterial({ color: '#F4EFE6', roughness: 0.5 }))
+    );
+    saucer.position.y = 0.007;
+    const chai = new THREE.Mesh(
+      trackGeo(new THREE.CylinderGeometry(0.048, 0.04, 0.09, 14)),
+      trackMat(new THREE.MeshStandardMaterial({ color: '#B5651D', roughness: 0.3 }))
+    );
+    chai.position.y = 0.065;
+    const glass = new THREE.Mesh(
+      trackGeo(new THREE.CylinderGeometry(0.052, 0.044, 0.12, 14, 1, true)),
+      trackMat(new THREE.MeshStandardMaterial({ color: '#DDF1FA', roughness: 0.1, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false }))
+    );
+    glass.position.y = 0.075;
+    group.add(saucer, chai, glass);
+    group.scale.setScalar(1.7);
     return group;
   }
 

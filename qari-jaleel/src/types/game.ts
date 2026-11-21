@@ -303,6 +303,7 @@ export interface HudSnapshot {
   stats: MatchStats;
   rageFlashSide: 1 | 2 | null;
   speechBubble: SpeechBubbleState | null;
+  comedyTimer?: string | null; // comic countdown clock shown during Qari's "two mins bro" move
   brawl?: StreetBrawlHudState;
 }
 
