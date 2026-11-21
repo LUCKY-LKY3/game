@@ -3615,8 +3615,9 @@ export class StreetBrawlEngine {
         this.spawnComicPopup(hero.x, 2.15, hero.z, 'SHIRT: GONE!', '#F59E0B');
         say(otherSide, 'Cousin', 'BHAI PUT YOUR SHIRT ON!!', 1.6);
       });
-      once(4, 0.32, () => say(side, hero.profile.name, 'Come give me a hug bro.', 1.5));
+      once(4, 0.32, () => say(side, hero.profile.name, 'Come give me a hug bro.', 1.7));
       once(8, 0.42, () => this.spawnComicPopup(hero.x, 2.15, hero.z, 'HUG TIME!', '#F472B6'));
+      once(512, 0.47, () => say(side, hero.profile.name, "WHERE'S CHETZY BABY?!", 1.7));
       // Charge in, closing the gap exactly by the time the hug starts
       if (target && phase >= 0.46 && phase < 0.6) {
         const k = Math.min(1, dt / Math.max(0.05, (0.6 - phase) * hero.actionDuration));
