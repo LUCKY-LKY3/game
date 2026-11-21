@@ -1200,7 +1200,7 @@ export class StreetBrawlEngine {
       h.hp = h.maxHp;
       h.trailHp = h.maxHp;
       h.recoverableHp = 0;
-      h.rage = 45;
+      h.rage = typeof window !== 'undefined' && window.location.search.includes('fullrage') ? 100 : 45; // ?fullrage: debug
       h.comboCount = 0;
       h.comboTimer = 0;
       h.action = 'idle';
