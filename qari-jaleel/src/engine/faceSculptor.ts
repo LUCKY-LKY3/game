@@ -884,6 +884,8 @@ export function attachSculptedFaceFeatures3D(
     lowerLid.rotation.x = -0.18 - spec.eyeSquint * 0.14;
     eyeSocket.add(lowerLid);
 
+    eyeSocket.userData.faceFeature = true;
+
     headGroup.add(eyeSocket);
   }
 
@@ -902,6 +904,7 @@ export function attachSculptedFaceFeatures3D(
     const browMesh = new THREE.Mesh(browGeo, browMat);
     browMesh.scale.set(1, 0.72, 0.85);
     browMesh.castShadow = true;
+    browMesh.userData.faceFeature = true;
     headGroup.add(browMesh);
   }
 
@@ -916,6 +919,7 @@ export function attachSculptedFaceFeatures3D(
     const nostril = new THREE.Mesh(nostrilGeo, nostrilMat);
     nostril.scale.set(1.15 * spec.noseWidth, 0.45, 0.85);
     nostril.position.set(side * 0.014 * spec.noseWidth, noseTipY - 0.005, noseTipZ - 0.006);
+    nostril.userData.faceFeature = true;
     headGroup.add(nostril);
   }
 
@@ -1058,6 +1062,7 @@ export function attachSculptedFaceFeatures3D(
     const stacheGeo = trackGeo(new THREE.TubeGeometry(curve, 20, radius, 8, false));
     const stache = new THREE.Mesh(stacheGeo, beardMat);
     stache.castShadow = true;
+    stache.userData.faceFeature = true;
     headGroup.add(stache);
   }
 
@@ -1086,6 +1091,7 @@ export function attachSculptedFaceFeatures3D(
     chinBeard.scale.set(spec.headWidth * chinScaleX, chinScaleY, chinScaleZ);
     chinBeard.position.set(0, chinY, chinZ);
     chinBeard.castShadow = true;
+    chinBeard.userData.faceFeature = true;
     headGroup.add(chinBeard);
 
     // Sculpted side-jaw beard strips connecting chin smoothly up toward sideburns/ears
@@ -1101,6 +1107,7 @@ export function attachSculptedFaceFeatures3D(
       );
       sideBeard.rotation.set(0.36, side * 0.28, side * 0.34);
       sideBeard.castShadow = true;
+      sideBeard.userData.faceFeature = true;
       headGroup.add(sideBeard);
     }
 
@@ -1111,6 +1118,7 @@ export function attachSculptedFaceFeatures3D(
     );
     soulPatch.scale.set(1.15, 0.95, 0.65);
     soulPatch.position.set(0, -0.105, 0.175 * spec.headDepth);
+    soulPatch.userData.faceFeature = true;
     headGroup.add(soulPatch);
   }
 }

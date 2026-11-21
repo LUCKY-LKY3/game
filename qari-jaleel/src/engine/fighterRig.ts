@@ -1004,8 +1004,8 @@ export function applyWarmRimHighlight(material: THREE.MeshStandardMaterial, stre
 function createCurvedFrontFaceGeometry(rx: number, ry: number, rz: number): THREE.BufferGeometry {
   const segU = 18;
   const segV = 18;
-  const yawMax = 0.68; // ~39° left/right wrap cleanly around front face
-  const pitchMax = 0.58; // ~33° forehead-to-chin wrap
+  const yawMax = 0.9; // ~52° left/right
+  const pitchMax = 0.72; // ~41° forehead-to-chin
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
@@ -1804,9 +1804,9 @@ export function createFighterRig(
   const curvedPhotoMesh = new THREE.Mesh(
     trackGeo(
       createCurvedFrontFaceGeometry(
-        0.166 * faceSpec.headWidth,
-        0.205 * faceSpec.headHeight,
-        0.214 * faceSpec.headDepth
+        0.2 * faceSpec.headWidth,
+        0.24 * faceSpec.headHeight,
+        0.228 * faceSpec.headDepth
       )
     ),
     curvedPhotoMat
@@ -2035,7 +2035,7 @@ export function createFighterRig(
   // Real-time 2D-to-3D MediaPipe FaceLandmarker head replacement attached directly to headGroup pivot
   let rigDisposed = false;
   let mediaPipeHead: THREE.Group | null = null;
-  const photoSource = profile.rawPhotoUrl || profile.portraitUrl || profile.faceTextureUrl;
+  const photoSource = profile.faceCropUrl || profile.rawPhotoUrl || profile.portraitUrl || profile.faceTextureUrl;
 
   if (photoSource) {
     const headConfig = resolveFighter3DConfig(profile);
@@ -2053,7 +2053,7 @@ export function createFighterRig(
             // Center-crop square/portrait face region cleanly onto front of head
             const iw = img.naturalWidth || img.width;
             const ih = img.naturalHeight || img.height;
-            const cropSize = Math.min(iw, ih) * 0.86;
+            const cropSize = Math.min(iw, ih) * (profile.faceCropUrl ? 0.98 : 0.86);
             const sx = (iw - cropSize) * 0.5;
             const sy = Math.max(0, (ih - cropSize) * 0.28);
             ctx.save();
@@ -2061,8 +2061,8 @@ export function createFighterRig(
             ctx.ellipse(
               texSize * 0.5,
               texSize * 0.5,
-              texSize * 0.44,
-              texSize * 0.48,
+              texSize * 0.5,
+              texSize * 0.5,
               0,
               0,
               Math.PI * 2
@@ -2093,6 +2093,10 @@ export function createFighterRig(
             textures.push(photoTex);
             curvedPhotoMat.map = photoTex;
             curvedPhotoMat.opacity = 1;
+            // The photo already shows eyes, brows and facial hair: hide the built-in ones drawn on top of it.
+            fallbackHeadGroup.traverse((o) => {
+              if (o.userData.faceFeature) o.visible = false;
+            });
             curvedPhotoMat.needsUpdate = true;
           }
         }

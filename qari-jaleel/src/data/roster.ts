@@ -175,6 +175,7 @@ export function createStarterRoster(): FighterProfile[] {
       isCustom: false,
       archetype: 'pehelwan',
       portraitUrl: '/src/assets/images/qari_jaleel_hero_1795104584255.jpg',
+      faceCropUrl: '/src/assets/faces/qari_jaleel.jpg',
       portraitFaceRect: { cx: 0.505, cy: 0.315, size: 0.3 },
       appearance: {
         skinTone: '#BE7D4E',
@@ -201,6 +202,7 @@ export function createStarterRoster(): FighterProfile[] {
       isCustom: false,
       archetype: 'boxer',
       portraitUrl: '/src/assets/images/rebel_aviator_boss_1795104578513.jpg',
+      faceCropUrl: '/src/assets/faces/rebel_aviator.jpg',
       portraitFaceRect: { cx: 0.5, cy: 0.355, size: 0.42 },
       appearance: {
         skinTone: '#C8895C',
@@ -226,6 +228,7 @@ export function createStarterRoster(): FighterProfile[] {
       isCustom: false,
       archetype: 'boxer',
       portraitUrl: '/src/assets/images/rebel_glasses_tactician_1795104809936.jpg',
+      faceCropUrl: '/src/assets/faces/rebel_tactician.jpg',
       portraitFaceRect: { cx: 0.502, cy: 0.222, size: 0.22 },
       appearance: {
         skinTone: '#C58657',
@@ -251,6 +254,7 @@ export function createStarterRoster(): FighterProfile[] {
       isCustom: false,
       archetype: 'striker',
       portraitUrl: '/src/assets/images/rebel_left_bald_1795104569340.jpg',
+      faceCropUrl: '/src/assets/faces/rebel_enforcer.jpg',
       portraitFaceRect: { cx: 0.502, cy: 0.205, size: 0.23 },
       appearance: {
         skinTone: '#C48456',
@@ -276,6 +280,7 @@ export function createStarterRoster(): FighterProfile[] {
       isCustom: false,
       archetype: 'kicker',
       portraitUrl: '/src/assets/images/rebel_center_bald_1795104619931.jpg',
+      faceCropUrl: '/src/assets/faces/rebel_striker.jpg',
       portraitFaceRect: { cx: 0.505, cy: 0.215, size: 0.23 },
       appearance: {
         skinTone: '#BD7E50',
@@ -301,6 +306,7 @@ export function createStarterRoster(): FighterProfile[] {
       isCustom: false,
       archetype: 'pehelwan',
       portraitUrl: '/src/assets/images/rebel_right_bald_1795104552522.jpg',
+      faceCropUrl: '/src/assets/faces/rebel_shadow.jpg',
       portraitFaceRect: { cx: 0.595, cy: 0.375, size: 0.43 },
       appearance: {
         skinTone: '#AE6F43',
