@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Big Shoulders Display", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-obsidian: #141210;
+  --color-sandstone: #221E1A;
+  --color-marigold: #F59E0B;
+  --color-sindoor: #DC2626;
+  --color-peacock: #0D9488;
+  --color-chalk: #F8F4EC;
+  --color-ash: #B6AA9A;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #141210;
+    color: #F8F4EC;
+    font-family: var(--font-sans);
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.touch-control {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.akhara-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.akhara-scroll::-webkit-scrollbar-track {
+  background: rgba(20, 18, 16, 0.6);
+}
+
+.akhara-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.35);
+  border-radius: 3px;
+}
+
+.akhara-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.6);
+}

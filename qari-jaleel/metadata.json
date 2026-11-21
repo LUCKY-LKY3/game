@@ -1,0 +1,6 @@
+{
+  "name": "Akhara Clash",
+  "description": "A 2.5D Tekken-style martial arts fighting game set in an Indian village where you import yourself and friends from photos as playable face-mapped fighters.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
