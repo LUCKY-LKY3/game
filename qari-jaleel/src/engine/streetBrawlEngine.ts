@@ -754,6 +754,10 @@ export class StreetBrawlEngine {
   private speechBubble: SpeechBubbleState | null = null;
   private speechTimer = 0;
   private comedyTimer: string | null = null;
+  // Saf's bear hug: the victim is carried in his arms and squeezed like a squeaky toy
+  private hugVictimUid: number | null = null;
+  private hugSquash = 0;
+  private hugPos = { x: 0, y: 0, z: 0 };
 
   private stats: MatchStats = {
     p1MaxCombo: 0,
@@ -3476,8 +3480,17 @@ export class StreetBrawlEngine {
         break;
       case 'saf_hug':
         hero.action = 'powerup_saf';
-        hero.actionDuration = 2.45;
-        hero.callout = 'SUPER BEAR HUG!';
+        hero.actionDuration = 6.4;
+        hero.invulnTimer = 6.6;
+        hero.callout = 'GYM BRO HUG!';
+        this.hugVictimUid = null;
+        this.hugSquash = 0;
+        this.speechBubble = {
+          side: hero.index === 0 ? 1 : 2,
+          speaker: hero.profile.name,
+          text: 'Bro. Watch this.',
+        };
+        this.speechTimer = 1.0;
         break;
       case 'jav_story':
         hero.action = 'powerup_jav';
@@ -3578,20 +3591,75 @@ export class StreetBrawlEngine {
         this.dealPowerupAoeDamage(hero, tx, tz, 4.4, 60, true, 'KHALLAS!');
       }
     } else if (hero.powerupKind === 'saf_hug') {
-      if (target && phase < 0.72) {
-        hero.x = THREE.MathUtils.lerp(hero.x, target.x - hero.facing * 0.72, dt * 8);
-        hero.z = THREE.MathUtils.lerp(hero.z, target.z, dt * 8);
+      const side = hero.index === 0 ? 1 : 2;
+      const otherSide = side === 1 ? 2 : 1;
+      const say = (s: 1 | 2, speaker: string, text: string, secs: number) => {
+        this.speechBubble = { side: s, speaker, text };
+        this.speechTimer = secs;
+      };
+      const once = (bit: number, at: number, fn: () => void) => {
+        if (phase > at && (hero.powerupHitsMask & bit) === 0) {
+          hero.powerupHitsMask |= bit;
+          fn();
+        }
+      };
+      // Flex show: poses, sparkles, cousin heckling, shirt rips off
+      once(1, 0.1, () => {
+        soundEngine.playCheerPop();
+        this.spawnComicPopup(hero.x, 2.15, hero.z, 'FLEX!', '#FDE047');
+        say(otherSide, 'Cousin', 'Bro why is he posing?', 1.5);
+      });
+      once(2, 0.2, () => {
+        soundEngine.playCheerPop();
+        this.spawnParticles(hero.x, 1.2, hero.z, 22, 4);
+        this.spawnComicPopup(hero.x, 2.15, hero.z, 'SHIRT: GONE!', '#F59E0B');
+        say(otherSide, 'Cousin', 'BHAI PUT YOUR SHIRT ON!!', 1.6);
+      });
+      once(4, 0.32, () => say(side, hero.profile.name, 'Come give me a hug bro.', 1.5));
+      once(8, 0.42, () => this.spawnComicPopup(hero.x, 2.15, hero.z, 'HUG TIME!', '#F472B6'));
+      // Charge in, closing the gap exactly by the time the hug starts
+      if (target && phase >= 0.46 && phase < 0.6) {
+        const k = Math.min(1, dt / Math.max(0.05, (0.6 - phase) * hero.actionDuration));
+        hero.x += (target.x - hero.facing * 0.62 - hero.x) * k;
+        hero.z += (target.z - hero.z) * k;
       }
-      if (phase > 0.3 && (hero.powerupHitsMask & 1) === 0) {
-        hero.powerupHitsMask |= 1;
+      // The grab: victim is lifted into Saf's arms and squeezed like a squeaky toy
+      if (target && phase >= 0.6 && phase < 0.9) {
+        this.hugVictimUid = target.uid;
+        const u = (phase - 0.6) / 0.3;
+        this.hugSquash = Math.abs(Math.sin(u * Math.PI * 3));
+        this.hugPos.x = hero.x + hero.facing * 0.6;
+        this.hugPos.z = hero.z;
+        this.hugPos.y = 0.3 + this.hugSquash * 0.08;
+        target.x = this.hugPos.x;
+        target.z = this.hugPos.z;
+        target.y = this.hugPos.y;
+        target.vx = 0;
+        target.vz = 0;
+        target.vy = 0;
+        target.facing = (-hero.facing) as 1 | -1;
+      } else {
+        this.hugVictimUid = null;
+        this.hugSquash = 0;
+      }
+      once(16, 0.65, () => {
+        soundEngine.playSqueak(1.0);
+        this.dealPowerupAoeDamage(hero, tx, tz, 1.8, 10, false, 'SQUEAK!');
+      });
+      once(32, 0.73, () => say(otherSide, 'Cousin', "Bhai he's not a toy!", 1.3));
+      once(64, 0.75, () => {
+        soundEngine.playSqueak(1.25);
+        this.dealPowerupAoeDamage(hero, tx, tz, 1.8, 10, false, 'SQUEAK!!');
+      });
+      once(128, 0.85, () => {
+        soundEngine.playSqueak(1.55);
+        this.dealPowerupAoeDamage(hero, tx, tz, 1.8, 14, false, 'SQUEEEAK!!!');
+      });
+      once(256, 0.9, () => {
         soundEngine.playSqueeze();
-        this.dealPowerupAoeDamage(hero, tx, tz, 3.6, 26, false, 'CRUNCH!');
-      }
-      if (phase > 0.62 && (hero.powerupHitsMask & 2) === 0) {
-        hero.powerupHitsMask |= 2;
-        soundEngine.playSqueeze();
-        this.dealPowerupAoeDamage(hero, tx, tz, 4.0, 40, true, 'DHISHUM!');
-      }
+        this.dealPowerupAoeDamage(hero, tx, tz, 3.6, 34, true, 'DHISHUM!');
+        say(side, hero.profile.name, '...sorry bro. Love you though.', 1.6);
+      });
     } else if (hero.powerupKind === 'jav_story') {
       if (phase > 0.72 && (hero.powerupHitsMask & 1) === 0) {
         hero.powerupHitsMask |= 1;
@@ -3657,6 +3725,8 @@ export class StreetBrawlEngine {
       hero.actionTime = 0;
       hero.actionDuration = 0;
       this.powerupDirector.hideAll();
+      this.hugVictimUid = null;
+      this.hugSquash = 0;
     }
   }
 
@@ -5298,7 +5368,9 @@ export class StreetBrawlEngine {
       if (e.removed) continue;
       const targetYaw = e.facing === 1 ? Math.PI * 0.32 : -Math.PI * 0.32;
       e.visualYaw = THREE.MathUtils.damp(e.visualYaw, targetYaw, 12, _dt);
-      e.rig.root.position.set(e.x, e.y, e.z);
+      const hugged = this.hugVictimUid === e.uid;
+      if (hugged) e.rig.root.position.set(this.hugPos.x, this.hugPos.y, this.hugPos.z);
+      else e.rig.root.position.set(e.x, e.y, e.z);
       const phase = e.actionDuration > 0 ? Math.min(1, e.actionTime / e.actionDuration) : 0;
       applyThugPose(
         e.rig,
@@ -5312,6 +5384,23 @@ export class StreetBrawlEngine {
         e.phase2Rage,
         e.visualYaw
       );
+      if (hugged) {
+        // Squeaky-toy victim: squashed by each squeeze, legs dangling, arms flailing
+        const sq = this.hugSquash;
+        e.rig.hips.scale.set(1 + sq * 0.32, 1 - sq * 0.3, 1 + sq * 0.32);
+        const wob = Math.sin(this.elapsed * 22);
+        e.rig.leftHip.rotation.x = -0.15 + wob * 0.25;
+        e.rig.rightHip.rotation.x = -0.15 - wob * 0.25;
+        e.rig.leftKnee.rotation.x = 0.4;
+        e.rig.rightKnee.rotation.x = 0.4;
+        e.rig.leftShoulder.rotation.x = -0.6 + wob * 0.3;
+        e.rig.rightShoulder.rotation.x = -0.6 - wob * 0.3;
+        e.rig.leftShoulder.rotation.z = -0.9;
+        e.rig.rightShoulder.rotation.z = 0.9;
+        e.rig.headGroup.scale.set(1 + sq * 0.2, 1 + sq * 0.28, 1 + sq * 0.2);
+      } else if (e.rig.hips.scale.y !== 1) {
+        e.rig.hips.scale.set(1, 1, 1);
+      }
       if (e.onBike) {
         // Seated biker posture on top of the 3D Splendor bike!
         e.rig.hips.position.y = 1.02;

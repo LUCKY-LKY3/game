@@ -369,6 +369,30 @@ class AkharaSoundEngine {
     osc.stop(now + 0.25);
   }
 
+  /** High rubber squeaky-toy squeak (Saf's hug) */
+  public playSqueak(pitch = 1) {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(900 * pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(1900 * pitch, now + 0.07);
+    osc.frequency.exponentialRampToValueAtTime(1300 * pitch, now + 0.16);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 3200;
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.16, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+    osc.connect(lp);
+    lp.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+
   /** Soft smoky puff exhale (Fady) */
   public playSmokePuff() {
     const ctx = this.ensureContext();

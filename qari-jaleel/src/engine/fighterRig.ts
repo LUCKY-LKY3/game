@@ -158,6 +158,10 @@ export interface ArticulatedFighterRig {
   strikeTrailMat: THREE.MeshBasicMaterial;
   faceMaterial: THREE.MeshPhysicalMaterial;
   faceTexture: THREE.Texture | null;
+  /** Shirt meshes (hidden for Saf's shirt-off flex) and the bare-skin meshes that replace them */
+  shirtParts: THREE.Object3D[];
+  bareParts: THREE.Object3D[];
+  sparkles: THREE.Mesh[];
   dispose: () => void;
 }
 
@@ -1544,6 +1548,32 @@ export function createFighterRig(
   chestMesh.receiveShadow = true;
   torso.add(chestMesh);
 
+  const shirtParts: THREE.Object3D[] = [chestMesh];
+  const bareParts: THREE.Object3D[] = [];
+  const sparkles: THREE.Mesh[] = [];
+  {
+    // Bare torso (skin) revealed when the shirt comes off (Saf's flex)
+    const bareChest = new THREE.Mesh(chestMesh.geometry, limbSkinMat);
+    bareChest.scale.set(0.985, 1, 0.985);
+    bareChest.castShadow = true;
+    bareChest.visible = false;
+    torso.add(bareChest);
+    bareParts.push(bareChest);
+    const sparkMat = trackMat(new THREE.MeshBasicMaterial({ color: '#FDE047', transparent: true, opacity: 0.95, depthWrite: false }), false);
+    const sparkGeo = trackGeo(new THREE.OctahedronGeometry(0.06, 0));
+    const sparkSpots: [number, number, number][] = [
+      [-0.46, 0.62, 0.3], [0.46, 0.66, 0.3], [-0.34, 0.12, 0.38], [0.36, 0.16, 0.38], [0, 0.82, 0.22], [-0.52, 0.38, 0.1], [0.52, 0.4, 0.1],
+    ];
+    for (const [sx, sy, sz] of sparkSpots) {
+      const s = new THREE.Mesh(sparkGeo, sparkMat);
+      s.position.set(sx, sy, sz);
+      s.scale.set(0.6, 1.5, 0.6);
+      s.visible = false;
+      torso.add(s);
+      sparkles.push(s);
+    }
+  }
+
   // Tucked waist fabric seam ring where the kurta tucks cleanly into the lungi/belt
   const waistTuckRing = new THREE.Mesh(
     trackGeo(new THREE.TorusGeometry(0.238 / Math.max(0.85, bodySpec.vTaper), 0.022, 8, 28)),
@@ -1553,6 +1583,7 @@ export function createFighterRig(
   waistTuckRing.scale.set(1.06 + Math.max(0, bodySpec.bellyBulge) * 1.4, 0.82 + Math.max(0, bodySpec.bellyBulge) * 1.8, 1);
   waistTuckRing.position.y = 0.02;
   torso.add(waistTuckRing);
+  shirtParts.push(waistTuckRing);
 
   // Open V-neck collar cavity showing sculpted collarbone / clavicle ridges & sternum skin
   const chestSkinV = new THREE.Mesh(
@@ -1582,6 +1613,7 @@ export function createFighterRig(
   collarBackRim.rotation.set(Math.PI / 2 + 0.12, 0, Math.PI * 0.82);
   collarBackRim.position.set(0, 0.575, -0.01);
   torso.add(collarBackRim);
+  shirtParts.push(collarBackRim);
 
   const collarGeo = trackGeo(new THREE.BoxGeometry(0.118, 0.072, 0.026));
   const leftCollar = new THREE.Mesh(collarGeo, vestMat);
@@ -1591,6 +1623,7 @@ export function createFighterRig(
   rightCollar.position.set(0.092, 0.542, 0.15 + bellyFrontPad * 0.12);
   rightCollar.rotation.set(0.32, 0.48, 0.38);
   torso.add(leftCollar, rightCollar);
+  shirtParts.push(leftCollar, rightCollar);
 
   // Vertical kurta button placket & stitched horn buttons
   const placket = new THREE.Mesh(
@@ -1599,6 +1632,7 @@ export function createFighterRig(
   );
   placket.position.set(0, 0.215, 0.218 + bellyFrontPad * 0.95);
   torso.add(placket);
+  shirtParts.push(placket);
 
   const buttonGeo = trackGeo(new THREE.CylinderGeometry(0.009, 0.009, 0.009, 10));
   const buttonMat = trackMat(
@@ -1609,6 +1643,7 @@ export function createFighterRig(
     btn.rotation.x = Math.PI / 2;
     btn.position.set(0, 0.34 - b * 0.09, 0.228 + bellyFrontPad * (0.55 + b * 0.28));
     torso.add(btn);
+    shirtParts.push(btn);
   }
 
   // Stitched breast pocket on left chest
@@ -1619,6 +1654,7 @@ export function createFighterRig(
   pocket.position.set(0.132 * bodySpec.shoulderMass, 0.358, 0.222 + bellyFrontPad * 0.32);
   pocket.rotation.y = 0.22;
   torso.add(pocket);
+  shirtParts.push(pocket);
 
   // Qari Jaleel's signature forged double-bladed battle axe strapped across his back!
   if (appearance.hasAxe) {
@@ -2003,6 +2039,12 @@ export function createFighterRig(
     cuffLower.position.y = -0.162;
     cuffLower.castShadow = true;
     shoulder.add(cuffUpper, cuffLower);
+    shirtParts.push(deltoidSocket, sleeve, cuffUpper, cuffLower);
+    const bareDelt = new THREE.Mesh(deltoidSocketGeo, limbSkinMat);
+    bareDelt.scale.set(0.99, 1.05, 0.99);
+    bareDelt.visible = false;
+    shoulder.add(bareDelt);
+    bareParts.push(bareDelt);
 
     // Sculpted muscular upper arm emerging below rolled cloth cuff
     const upperArm = new THREE.Mesh(upperArmGeo, limbSkinMat);
@@ -2335,6 +2377,9 @@ export function createFighterRig(
     strikeTrailMat,
     faceMaterial,
     faceTexture,
+    shirtParts,
+    bareParts,
+    sparkles,
     dispose,
   };
 }
@@ -2498,6 +2543,25 @@ export function applyFighterPose(
     rig.bodyBaseScale.y * bodyScaleY,
     rig.bodyBaseScale.z * bodyScaleZ
   );
+
+  // Saf's flex: shirt rips off at phase 0.2 of his power move, sparkles pop during the poses
+  if (rig.shirtParts.length > 0) {
+    const shirtOff = action === 'powerup_saf' && phase >= 0.2;
+    if (rig.shirtParts[0].visible === shirtOff) {
+      for (let i = 0; i < rig.shirtParts.length; i++) rig.shirtParts[i].visible = !shirtOff;
+      for (let i = 0; i < rig.bareParts.length; i++) rig.bareParts[i].visible = shirtOff;
+    }
+    const sparkOn = action === 'powerup_saf' && phase > 0.06 && phase < 0.34;
+    for (let i = 0; i < rig.sparkles.length; i++) {
+      const s = rig.sparkles[i];
+      if (s.visible !== sparkOn) s.visible = sparkOn;
+      if (sparkOn) {
+        s.rotation.z = time * 5 + i;
+        const tw = 0.5 + 0.9 * Math.abs(Math.sin(time * 9 + i * 1.7));
+        s.scale.set(0.5 * tw, 1.6 * tw, 0.5 * tw);
+      }
+    }
+  }
 
   // Neutral fighting guard defaults (slightly angled head toward viewer/opponent)
   let hipsX = 0;
@@ -3508,35 +3572,126 @@ export function applyFighterPose(
     }
 
     case 'powerup_saf': {
-      if (phase < 0.2) {
-        hipsY = 0.92;
-        torsoRotX = 0.22;
-        lShX = -1.35;
-        lShZ = -0.75;
-        lElX = -0.3;
-        rShX = -1.35;
-        rShZ = 0.75;
-        rElX = -0.3;
-      } else if (phase < 0.82) {
-        const squeezePulse = Math.abs(Math.sin(((phase - 0.2) / 0.62) * Math.PI * 3));
-        hipsY = 0.9 + squeezePulse * 0.06;
-        torsoRotX = -0.14 - squeezePulse * 0.18;
-        torsoRotY = Math.sin(time * 28) * 0.09;
-        headRotX = -0.18;
-        lShX = -1.42;
-        lShZ = 0.18 + squeezePulse * 0.06;
-        lElX = -1.25 - squeezePulse * 0.35;
-        rShX = -1.42;
-        rShZ = -0.18 - squeezePulse * 0.06;
-        rElX = -1.25 - squeezePulse * 0.35;
-      } else {
-        const rel = (phase - 0.82) / 0.18;
-        hipsY = 0.96;
+      // 0-.06 ready, .06-.30 flex poses (shirt rips off at .20), .30-.46 "come give me a hug bro" open arms,
+      // .46-.60 lunge, .60-.90 real wrap-around bear hug with squeaky-toy squeezes, .90-1 shrug "sorry bro"
+      if (phase < 0.06) {
+        hipsY = 0.86;
+        torsoRotX = 0.12;
+        lShX = -0.5;
+        lShZ = -0.5;
+        lElX = -1.6;
+        rShX = -0.5;
+        rShZ = 0.5;
+        rElX = -1.6;
+      } else if (phase < 0.3) {
+        const u = (phase - 0.06) / 0.24;
+        const pop = Math.abs(Math.sin(u * Math.PI * 6));
+        hipsY = 0.86 + pop * 0.03;
+        headRotX = -0.1;
+        lHipX = -0.3;
+        rHipX = -0.3;
+        lKneeX = 0.5;
+        rKneeX = 0.5;
+        if (u < 0.4) {
+          // front double biceps
+          torsoRotY = 0;
+          headRotY = 0;
+          torsoRotX = 0.05 + pop * 0.04;
+          lShX = -0.2;
+          lShZ = -1.45;
+          lElX = -2.1 - pop * 0.15;
+          rShX = -0.2;
+          rShZ = 1.45;
+          rElX = -2.1 - pop * 0.15;
+        } else if (u < 0.7) {
+          // side chest pose, proud head tilt
+          torsoRotY = 0.55;
+          headRotY = -0.1;
+          headRotZ = 0.14;
+          torsoRotX = 0.08;
+          lShX = -1.0;
+          lShZ = -0.2 + pop * 0.08;
+          lElX = -1.8;
+          rShX = -1.0;
+          rShZ = 0.2 - pop * 0.08;
+          rElX = -1.8;
+        } else {
+          // back to double biceps, kiss-the-muscle wobble
+          torsoRotY = Math.sin(u * 40) * 0.12;
+          headRotZ = Math.sin(u * 20) * 0.14;
+          lShX = -0.1;
+          lShZ = -1.55;
+          lElX = -2.2 - pop * 0.12;
+          rShX = -0.1;
+          rShZ = 1.55;
+          rElX = -2.2 - pop * 0.12;
+        }
+      } else if (phase < 0.46) {
+        // "Come give me a hug bro": arms wide open and beckoning
+        const k = Math.min(1, (phase - 0.3) / 0.05);
+        const beckon = Math.abs(Math.sin(time * 11));
+        hipsY = 0.9;
         torsoRotX = -0.1;
-        lShX = -1.2;
-        lShZ = -0.8 * rel;
-        rShX = -1.2;
-        rShZ = 0.8 * rel;
+        torsoRotY = 0;
+        headRotY = 0;
+        headRotZ = 0.12;
+        lShX = THREE.MathUtils.lerp(-0.2, -1.1, k);
+        lShZ = THREE.MathUtils.lerp(-1.45, -1.0, k);
+        lElX = -0.15 - beckon * 0.55;
+        rShX = THREE.MathUtils.lerp(-0.2, -1.1, k);
+        rShZ = THREE.MathUtils.lerp(1.45, 1.0, k);
+        rElX = -0.15 - beckon * 0.55;
+      } else if (phase < 0.6) {
+        // bear-charge: lean in, arms still wide, legs pumping
+        const run = Math.sin(time * 20);
+        hipsY = 0.84 + Math.abs(run) * 0.04;
+        torsoRotX = 0.4;
+        torsoRotY = 0;
+        headRotX = -0.3;
+        lShX = -1.1;
+        lShZ = -0.9;
+        lElX = -0.2;
+        rShX = -1.1;
+        rShZ = 0.9;
+        rElX = -0.2;
+        lHipX = -0.7 * run;
+        rHipX = 0.7 * run;
+        lKneeX = 0.5 + Math.max(0, run) * 0.7;
+        rKneeX = 0.5 + Math.max(0, -run) * 0.7;
+      } else if (phase < 0.9) {
+        // wrap-around hug: upper arms reach out and around, forearms fold in behind the victim
+        const u = (phase - 0.6) / 0.3;
+        const squeeze = Math.abs(Math.sin(u * Math.PI * 3));
+        hipsY = 0.84 - squeeze * 0.04;
+        lHipX = -0.34;
+        rHipX = -0.34;
+        lKneeX = 0.6;
+        rKneeX = 0.6;
+        torsoRotX = 0.18 + squeeze * 0.12;
+        torsoRotY = 0;
+        headRotX = -0.25;
+        headRotY = 0;
+        headRotZ = Math.sin(time * 14) * 0.08;
+        lShX = -1.35;
+        lShZ = -0.38 + squeeze * 0.26;
+        lElX = -1.3 - squeeze * 0.5;
+        rShX = -1.35;
+        rShZ = 0.38 - squeeze * 0.26;
+        rElX = -1.3 - squeeze * 0.5;
+      } else {
+        // sheepish shrug: "...sorry bro"
+        const u = (phase - 0.9) / 0.1;
+        hipsY = 0.92;
+        torsoRotX = -0.02;
+        torsoRotY = 0;
+        headRotZ = 0.2;
+        headRotY = 0.1;
+        lShX = THREE.MathUtils.lerp(-1.2, -0.3, u);
+        lShZ = THREE.MathUtils.lerp(-0.4, -0.7, u);
+        lElX = -1.3;
+        rShX = THREE.MathUtils.lerp(-1.2, -0.3, u);
+        rShZ = THREE.MathUtils.lerp(0.4, 0.7, u);
+        rElX = -1.3;
       }
       break;
     }
