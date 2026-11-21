@@ -13,7 +13,6 @@ import {
   loadCustomFighters,
   saveCustomFighter,
 } from './utils/storage';
-import { PosterFaceMapping } from './utils/portraitStylizer';
 import { soundEngine } from './engine/sound';
 import { ArenaCanvas, ArenaCanvasHandle } from './components/ArenaCanvas';
 import { CombatHud } from './components/CombatHud';

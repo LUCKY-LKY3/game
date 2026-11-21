@@ -23,9 +23,6 @@ import {
   STAGE_CONFIGS,
 } from '../data/roster';
 import { parseImportedFighterJson } from '../utils/storage';
-import { extractPosterSquadFaces, PosterFaceMapping } from '../utils/portraitStylizer';
-import { preloadFighter3DHead } from '../utils/FaceTo3DHead';
-import { resolveFighter3DConfig } from '../utils/fighterHeads';
 
 interface RosterSelectProps {
   mode: GameMode;

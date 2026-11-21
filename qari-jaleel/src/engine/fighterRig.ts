@@ -8,14 +8,7 @@ import {
   createSculptedHeadSkinPbrMaps,
   getCharacterFaceSculptSpec,
 } from './faceSculptor';
-import {
-  build3DFighterHead,
-  disposeHeadGroup,
-  loadImageElement,
-} from '../utils/FaceTo3DHead';
-import { resolveFighter3DConfig } from '../utils/fighterHeads';
-import faceLandmarkTable from '../data/faceLandmarks.json';
-import { buildFaceMask3D } from '../utils/faceMask3D';
+import { buildStylizedHead } from './stylizedHead';
 
 export interface CharacterBodySpec {
   heightScale: number;
@@ -1741,80 +1734,21 @@ export function createFighterRig(
   const fallbackHeadGroup = new THREE.Group();
   headGroup.add(fallbackHeadGroup);
 
-  const headMesh = new THREE.Mesh(trackGeo(createAnatomicalHeadGeometry(faceSpec)), faceMaterial);
-  headMesh.rotation.y = -Math.PI / 2;
-  headMesh.castShadow = true;
-  fallbackHeadGroup.add(headMesh);
-
-  // Sculpted 3D anatomical ears (outer helix rim, concha shell, lobe)
+  // Sculpted stylised 3D head: shaped skull/nose/brow/lips/jaw, open eyes, brows, moustache, beard and hair
+  fallbackHeadGroup.add(
+    buildStylizedHead({
+      spec: faceSpec,
+      skinHex: appearance.skinTone,
+      hairHex: appearance.hairColor || '#1C1612',
+      headgear: appearance.headgear,
+      isMobile,
+      trackGeo,
+      trackMat,
+      trackTex,
+    })
+  );
   fallbackHeadGroup.add(buildSculptedEar(-1, skinMat, trackGeo));
   fallbackHeadGroup.add(buildSculptedEar(1, skinMat, trackGeo));
-
-  // Real 3D glossy eyeballs, eyelids, curved eyebrows, nostrils, hair, mustache & beard
-  attachSculptedFaceFeatures3D(
-    fallbackHeadGroup,
-    profile,
-    faceSpec,
-    skinMat,
-    trackGeo,
-    trackMat,
-    trackTex
-  );
-
-  // Complete back & crown hair cap behind and above the face so head shape is full from all angles
-  if (appearance.hairStyle !== 'bald' && appearance.headgear !== 'turban') {
-    const capHairMat = trackMat(
-      new THREE.MeshStandardMaterial({
-        color: appearance.hairColor || '#1C1612',
-        roughness: 0.86,
-        metalness: 0.04,
-      }),
-      true,
-      0.16
-    );
-    const crownCap = new THREE.Mesh(
-      trackGeo(new THREE.SphereGeometry(0.194, 18, 14, 0, Math.PI * 2, 0, Math.PI * 0.56)),
-      capHairMat
-    );
-    crownCap.scale.set(faceSpec.headWidth * 1.03, faceSpec.headHeight * 1.04, faceSpec.headDepth * 1.04);
-    crownCap.position.set(0, 0.035, -0.022);
-    const backCap = new THREE.Mesh(
-      trackGeo(new THREE.SphereGeometry(0.188, 16, 12, Math.PI * 0.52, Math.PI * 0.96, 0.14, Math.PI * 0.72)),
-      capHairMat
-    );
-    backCap.scale.set(faceSpec.headWidth * 1.01, faceSpec.headHeight * 0.96, faceSpec.headDepth * 1.03);
-    backCap.position.set(0, 0.008, -0.028);
-    fallbackHeadGroup.add(crownCap, backCap);
-  }
-
-  // Curved front-mounted face photo shell strictly on +Z so photo faces forward immediately
-  const curvedPhotoMat = trackMat(
-    new THREE.MeshStandardMaterial({
-      color: '#FFFFFF',
-      roughness: 0.64,
-      metalness: 0.02,
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -1,
-    }),
-    false,
-    0.18
-  );
-  facePhotoMaterials.push(curvedPhotoMat);
-  const curvedPhotoMesh = new THREE.Mesh(
-    trackGeo(
-      createCurvedFrontFaceGeometry(
-        0.2 * faceSpec.headWidth,
-        0.24 * faceSpec.headHeight,
-        0.228 * faceSpec.headDepth
-      )
-    ),
-    curvedPhotoMat
-  );
-  curvedPhotoMesh.position.set(0, 0.008, 0.008);
-  fallbackHeadGroup.add(curvedPhotoMesh);
 
   // Dizzy face overlay (spinning X-eyes flush at front +Z eye level + orbiting golden stars above crown)
   const dizzyFaceGroup = new THREE.Group();
@@ -2034,151 +1968,6 @@ export function createFighterRig(
     headgearGroup.add(tilak);
   }
 
-  // Real-time 2D-to-3D MediaPipe FaceLandmarker head replacement attached directly to headGroup pivot
-  let rigDisposed = false;
-  let mediaPipeHead: THREE.Group | null = null;
-  const photoSource = profile.faceCropUrl || profile.rawPhotoUrl || profile.portraitUrl || profile.faceTextureUrl;
-
-  if (photoSource) {
-    const headConfig = resolveFighter3DConfig(profile);
-    void loadImageElement(photoSource)
-      .then((img) => {
-        // Immediately paint feathered oval portrait onto the front-mounted curved face shell
-        if (!rigDisposed) {
-          const texSize = isMobile ? 256 : 512;
-          const c = document.createElement('canvas');
-          c.width = texSize;
-          c.height = texSize;
-          const ctx = c.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, texSize, texSize);
-            // Center-crop square/portrait face region cleanly onto front of head
-            const iw = img.naturalWidth || img.width;
-            const ih = img.naturalHeight || img.height;
-            const cropSize = Math.min(iw, ih) * (profile.faceCropUrl ? 0.98 : 0.86);
-            const sx = (iw - cropSize) * 0.5;
-            const sy = Math.max(0, (ih - cropSize) * 0.28);
-            ctx.save();
-            ctx.beginPath();
-            ctx.ellipse(
-              texSize * 0.5,
-              texSize * 0.5,
-              texSize * 0.5,
-              texSize * 0.5,
-              0,
-              0,
-              Math.PI * 2
-            );
-            ctx.clip();
-            ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, texSize, texSize);
-            ctx.restore();
-
-            // Soft feathered oval alpha edge so photo blends organically into sculpted head skin
-            ctx.globalCompositeOperation = 'destination-in';
-            const feather = ctx.createRadialGradient(
-              texSize * 0.5,
-              texSize * 0.5,
-              texSize * 0.28,
-              texSize * 0.5,
-              texSize * 0.5,
-              texSize * 0.47
-            );
-            feather.addColorStop(0, 'rgba(255,255,255,1)');
-            feather.addColorStop(0.74, 'rgba(255,255,255,0.96)');
-            feather.addColorStop(1, 'rgba(255,255,255,0)');
-            ctx.fillStyle = feather;
-            ctx.fillRect(0, 0, texSize, texSize);
-
-            const photoTex = new THREE.CanvasTexture(c);
-            photoTex.colorSpace = THREE.SRGBColorSpace;
-            photoTex.anisotropy = effAniso;
-            textures.push(photoTex);
-            curvedPhotoMat.map = photoTex;
-            curvedPhotoMat.opacity = 1;
-            // The photo already shows eyes, brows and facial hair: hide the built-in ones drawn on top of it.
-            fallbackHeadGroup.traverse((o) => {
-              if (o.userData.faceFeature) o.visible = false;
-            });
-            curvedPhotoMat.needsUpdate = true;
-          }
-        }
-        // Lay a real 3D relief face (built from saved landmarks, no network or model needed) over the front of the head.
-        const lmTable = faceLandmarkTable as unknown as Record<string, number[][]>;
-        const lm = lmTable[profile.id];
-        if (!profile.face3DUrl || !lm) return null as THREE.Group | null;
-        return loadImageElement(profile.face3DUrl).then((img3d) => {
-          if (rigDisposed) return null as THREE.Group | null;
-          const fm = buildFaceMask3D(
-            img3d,
-            lm,
-            0.2 * faceSpec.headWidth,
-            0.24 * faceSpec.headHeight,
-            0.228 * faceSpec.headDepth,
-            isMobile ? 384 : 512
-          );
-          textures.push(fm.texture);
-          fm.texture.anisotropy = effAniso;
-          const faceMat = trackMat(
-            new THREE.MeshStandardMaterial({
-              map: fm.texture,
-              color: '#D9D2CA',
-              roughness: 0.92,
-              metalness: 0,
-              transparent: true,
-              side: THREE.FrontSide,
-              depthWrite: true,
-              polygonOffset: true,
-              polygonOffsetFactor: -2,
-            }),
-            false,
-            0.18
-          );
-          facePhotoMaterials.push(faceMat);
-          const faceMesh = new THREE.Mesh(trackGeo(fm.geometry), faceMat);
-          faceMesh.position.set(0, 0.008, 0.008);
-          faceMesh.castShadow = false;
-          fallbackHeadGroup.add(faceMesh);
-          curvedPhotoMat.opacity = 0; // the relief face replaces the flat photo shell
-          return null as THREE.Group | null;
-        });
-      })
-      .then((mpHead) => {
-        if (!mpHead) return;
-        if (rigDisposed) {
-          disposeHeadGroup(mpHead);
-          return;
-        }
-        if (!mpHead.userData.hasDetectedFace) {
-          disposeHeadGroup(mpHead);
-          return;
-        }
-        // Align flush MediaPipe 3D head cleanly over the sculpted neck pivot (+Z, rotation.y = 0)
-        mpHead.rotation.set(0, 0, 0);
-        mpHead.scale.setScalar(0.242);
-        mpHead.position.set(0, 0.03, 0.01);
-        mpHead.traverse((obj) => {
-          if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
-            if (obj.material.map) {
-              obj.material.map.anisotropy = Math.min(isMobile ? 2 : 8, effAniso);
-            }
-            applyWarmRimHighlight(obj.material, 0.2);
-            obj.material.needsUpdate = true;
-            if (obj.userData.isFacePhotoMesh) {
-              facePhotoMaterials.push(obj.material);
-            } else {
-              hitFlashMaterials.push(obj.material);
-            }
-          }
-        });
-        mediaPipeHead = mpHead;
-        fallbackHeadGroup.visible = false;
-        headGroup.remove(fallbackHeadGroup);
-        headGroup.add(mpHead);
-      })
-      .catch(() => {
-        // Keep curved front-mounted photo fallback head seamlessly if offline or MediaPipe unavailable
-      });
-  }
 
   // ── SCULPTED MUSCULAR ARMS, ROLLED FABRIC CUFFS & ARTICULATED HANDS ───────
   const upperArmGeo = trackGeo(createUpperArmGeometry(bodySpec.shoulderMass));
@@ -2527,11 +2316,6 @@ export function createFighterRig(
   const rightLeg = buildLeg(1);
 
   const dispose = () => {
-    rigDisposed = true;
-    if (mediaPipeHead) {
-      disposeHeadGroup(mediaPipeHead);
-      mediaPipeHead = null;
-    }
     geometries.forEach((g) => g.dispose());
     materials.forEach((m) => m.dispose());
     textures.forEach((t) => t.dispose());
