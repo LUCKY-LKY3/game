@@ -43,27 +43,27 @@ export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec
     case 'rebel_tactician':
       // Jav: larger Pehelwan-broad frame (taller & broader deltoids)
       return {
-        heightScale: 1.12,
-        widthScale: 1.15,
-        depthScale: 1.12,
-        bellyBulge: 0.04,
-        limbScale: 1.14,
-        headScale: 1.04,
-        shoulderMass: 1.22,
-        vTaper: 1.08,
+        heightScale: 1.1,
+        widthScale: 1.0,
+        depthScale: 1.0,
+        bellyBulge: 0.03,
+        limbScale: 1.08,
+        headScale: 1.08,
+        shoulderMass: 1.06,
+        vTaper: 1.06,
       };
 
     case 'rebel_aviator':
       // Saf: shorter, heavy Pehelwan build with wide shoulders & rounded belly
       return {
-        heightScale: 0.89,
-        widthScale: 1.24,
-        depthScale: 1.26,
-        bellyBulge: 0.14,
-        limbScale: 1.16,
-        headScale: 1.01,
-        shoulderMass: 1.2,
-        vTaper: 0.88,
+        heightScale: 0.93,
+        widthScale: 1.1,
+        depthScale: 1.12,
+        bellyBulge: 0.1,
+        limbScale: 1.12,
+        headScale: 1.14,
+        shoulderMass: 1.04,
+        vTaper: 0.94,
       };
 
     case 'rebel_enforcer':
@@ -73,8 +73,8 @@ export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec
         widthScale: 0.82,
         depthScale: 0.84,
         bellyBulge: -0.02,
-        limbScale: 0.82,
-        headScale: 0.96,
+        limbScale: 0.88,
+        headScale: 1.04,
         shoulderMass: 0.98,
         vTaper: 1.15,
       };
@@ -86,8 +86,8 @@ export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec
         widthScale: 0.82,
         depthScale: 0.84,
         bellyBulge: -0.02,
-        limbScale: 0.82,
-        headScale: 0.96,
+        limbScale: 0.88,
+        headScale: 1.04,
         shoulderMass: 1.0,
         vTaper: 1.15,
       };
@@ -99,8 +99,8 @@ export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec
         widthScale: 0.82,
         depthScale: 0.84,
         bellyBulge: -0.02,
-        limbScale: 0.82,
-        headScale: 0.92,
+        limbScale: 0.88,
+        headScale: 1.04,
         shoulderMass: 0.96,
         vTaper: 1.14,
       };

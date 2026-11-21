@@ -29,7 +29,10 @@ export function HeadLab() {
     const fill = new THREE.DirectionalLight(0xfff4e6, 0.7); fill.position.set(-0.6, 2.0, 4.5); scene.add(fill);
     const rim = new THREE.DirectionalLight(0xffbe76, 1.4); rim.position.set(-2.4, 2.7, -3.1); scene.add(rim);
 
-    const roster = createStarterRoster().slice(0, 6);
+    const bodyView = new URLSearchParams(window.location.search).has('body');
+    const onlyRaw = new URLSearchParams(window.location.search).get('only');
+    const all = createStarterRoster().slice(0, 6);
+    const roster = onlyRaw ? onlyRaw.split(',').map((i) => all[+i]) : all;
     const rigs = roster.map((p) => {
       const rig = createFighterRig(p, '#F59E0B', 8);
       scene.add(rig.root);
@@ -48,8 +51,14 @@ export function HeadLab() {
         rigs.forEach(({ rig: o }) => (o.root.visible = o === rig));
         for (let r = 0; r < rows; r++) {
           rig.root.rotation.y = yaws[r];
-          camera.position.set(0, headY - 0.01, 1.35);
-          camera.lookAt(0, headY - 0.01, 0);
+          if (bodyView) {
+            const hs = getCharacterBodySpec(p).heightScale;
+            camera.position.set(0, 1.05 * hs, 4.4 * hs);
+            camera.lookAt(0, 0.98 * hs, 0);
+          } else {
+            camera.position.set(0, headY - 0.01, 1.35);
+            camera.lookAt(0, headY - 0.01, 0);
+          }
           const x = c * cw, y = H - (r + 1) * ch;
           renderer.setViewport(x, y, cw, ch);
           renderer.setScissor(x, y, cw, ch);
