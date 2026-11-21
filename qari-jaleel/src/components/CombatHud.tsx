@@ -505,7 +505,7 @@ export function CombatHud({
       {/* TOP COMBAT HUD (Compact, zero-pill, high contrast, no backdrop-filter) */}
       <div className="mx-auto w-full max-w-6xl">
         {brawl ? (
-          <div className="grid grid-cols-[1.15fr_auto_1fr] items-start gap-2 sm:gap-4">
+          <div className="hud-top grid grid-cols-[1.15fr_auto_1fr] items-start gap-2 sm:gap-4">
             {/* LEFT: TAG-TEAM HERO 1 & HERO 2 SQUAD BARS */}
             <div className="flex flex-col gap-1.5">
               {([0, 1] as const).map((idx) => {
@@ -1056,7 +1056,7 @@ export function CombatHud({
 
             {/* RIGHT THUMB ZONE: Ergonomic Thumb-Arc Combat Cluster */}
             <div
-              className="relative h-[222px] w-[244px] shrink-0 sm:h-[232px] sm:w-[254px]"
+              className="touch-cluster relative h-[222px] w-[244px] shrink-0 sm:h-[232px] sm:w-[254px]"
               aria-label="Ergonomic thumb-arc combat buttons"
             >
               {/* UPPER-LEFT OF ARC (Street Brawl only): 52px SWAP / HOLD ASSIST button */}

@@ -5050,9 +5050,10 @@ export class StreetBrawlEngine {
     let desiredZLead = THREE.MathUtils.clamp(active.z * 0.22 - 0.4, -1.1, 0.35);
 
     // Classic ~30-degree elevated Double Dragon arcade angle!
-    let camY = 8.85;
-    let camZ = 15.1;
-    let lookY = 0.62;
+    // Closer, lower camera so fighters read clearly on phone screens.
+    let camY = 6.1;
+    let camZ = 10.4;
+    let lookY = 0.95;
 
     // Dramatic zoom-ins for Boss Intro, Signature FINISH!, and Final Zone KO Slow-Mo!
     if (this.bossIntroTimer > 0 && this.bossIntroTargetUid !== null) {
@@ -5079,8 +5080,8 @@ export class StreetBrawlEngine {
     }
 
     // Smooth critically-damped spring follow
-    const stiffness = 28;
-    const damping = 10.6;
+    const stiffness = 40;
+    const damping = 12.6;
     const accel = (desiredCamX - this.cameraX) * stiffness - this.cameraVelX * damping;
     this.cameraVelX += accel * dt;
     this.cameraX += this.cameraVelX * dt;
@@ -5101,7 +5102,7 @@ export class StreetBrawlEngine {
     const targetCamPosY = camY + sy;
     const targetCamPosZ = camZ + portraitBoost;
 
-    this.camera.position.x = THREE.MathUtils.damp(this.camera.position.x, targetCamPosX, 9.5, dt);
+    this.camera.position.x = THREE.MathUtils.damp(this.camera.position.x, targetCamPosX, 16, dt);
     this.camera.position.y = THREE.MathUtils.damp(this.camera.position.y, targetCamPosY, 7.5, dt);
     this.camera.position.z = THREE.MathUtils.damp(this.camera.position.z, targetCamPosZ, 7.5, dt);
 

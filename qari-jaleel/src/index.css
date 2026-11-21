@@ -67,3 +67,9 @@
 .akhara-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 158, 11, 0.6);
 }
+
+/* Short landscape phones: shrink the HUD and touch pad so fighters stay visible and nothing is cut off */
+@media (max-height: 520px) {
+  .hud-top { zoom: 0.72; }
+  .touch-cluster { zoom: 0.84; margin-bottom: max(4px, env(safe-area-inset-bottom)); }
+}
