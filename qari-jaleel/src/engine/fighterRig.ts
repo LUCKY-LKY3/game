@@ -14,6 +14,8 @@ import {
   loadImageElement,
 } from '../utils/FaceTo3DHead';
 import { resolveFighter3DConfig } from '../utils/fighterHeads';
+import faceLandmarkTable from '../data/faceLandmarks.json';
+import { buildFaceMask3D } from '../utils/faceMask3D';
 
 export interface CharacterBodySpec {
   heightScale: number;
@@ -2100,8 +2102,45 @@ export function createFighterRig(
             curvedPhotoMat.needsUpdate = true;
           }
         }
-        // Face-detection head replacement removed: the photo shell above is the face.
-        return null as THREE.Group | null;
+        // Lay a real 3D relief face (built from saved landmarks, no network or model needed) over the front of the head.
+        const lmTable = faceLandmarkTable as unknown as Record<string, number[][]>;
+        const lm = lmTable[profile.id];
+        if (!profile.face3DUrl || !lm) return null as THREE.Group | null;
+        return loadImageElement(profile.face3DUrl).then((img3d) => {
+          if (rigDisposed) return null as THREE.Group | null;
+          const fm = buildFaceMask3D(
+            img3d,
+            lm,
+            0.2 * faceSpec.headWidth,
+            0.24 * faceSpec.headHeight,
+            0.228 * faceSpec.headDepth,
+            isMobile ? 384 : 512
+          );
+          textures.push(fm.texture);
+          fm.texture.anisotropy = effAniso;
+          const faceMat = trackMat(
+            new THREE.MeshStandardMaterial({
+              map: fm.texture,
+              color: '#D9D2CA',
+              roughness: 0.92,
+              metalness: 0,
+              transparent: true,
+              side: THREE.FrontSide,
+              depthWrite: true,
+              polygonOffset: true,
+              polygonOffsetFactor: -2,
+            }),
+            false,
+            0.18
+          );
+          facePhotoMaterials.push(faceMat);
+          const faceMesh = new THREE.Mesh(trackGeo(fm.geometry), faceMat);
+          faceMesh.position.set(0, 0.008, 0.008);
+          faceMesh.castShadow = false;
+          fallbackHeadGroup.add(faceMesh);
+          curvedPhotoMat.opacity = 0; // the relief face replaces the flat photo shell
+          return null as THREE.Group | null;
+        });
       })
       .then((mpHead) => {
         if (!mpHead) return;

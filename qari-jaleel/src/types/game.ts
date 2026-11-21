@@ -62,6 +62,7 @@ export interface FighterProfile {
   archetype: FighterArchetype;
   fightingStyle?: FightingStyle;
   portraitUrl: string;
+  face3DUrl?: string; // Wider face image whose saved landmarks build the 3D face mesh
   faceCropUrl?: string; // Tight square face crop painted onto the 3D head (preferred over rawPhotoUrl / portraitUrl)
   rawPhotoUrl?: string; // Clean uploaded photo used for real-time MediaPipe 2D-to-3D face mapping
   faceTextureUrl?: string; // Pre-baked 3D head texture (used for custom photo uploads / poster crops)

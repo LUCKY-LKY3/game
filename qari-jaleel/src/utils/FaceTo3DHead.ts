@@ -5,6 +5,7 @@ import {
   NormalizedLandmark,
 } from '@mediapipe/tasks-vision';
 import { Fighter3DConfig } from './fighterHeads';
+import precomputedLandmarks from '../data/faceLandmarks.json';
 
 /**
  * Full MediaPipe canonical 468-landmark face triangulation (852 solid triangles, 2,556 indices)
@@ -144,6 +145,12 @@ async function detectCachedLandmarks(
   imageElement: HTMLImageElement
 ): Promise<NormalizedLandmark[] | null> {
   const cacheKey = imageElement.currentSrc || imageElement.src;
+  // Landmarks for the built-in fighters were detected once at build time, so no model or network is needed.
+  const pre = /faces3d\/([a-z_]+)\.jpg/.exec(cacheKey || '');
+  const table = precomputedLandmarks as unknown as Record<string, number[][]>;
+  if (pre && table[pre[1]]) {
+    return table[pre[1]].map(([x, y, z]) => ({ x, y, z, visibility: 1 })) as NormalizedLandmark[];
+  }
   if (cacheKey && landmarkCache.has(cacheKey)) {
     return landmarkCache.get(cacheKey) ?? null;
   }
