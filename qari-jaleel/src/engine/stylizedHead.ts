@@ -171,6 +171,7 @@ export function buildStylizedHead(o: StylizedHeadOptions): THREE.Group {
   const skin = new THREE.Color(o.skinHex);
   const hairCol = new THREE.Color(hairHex);
   const beardCol = new THREE.Color(spec.beardColor);
+  const stubbleCol = skin.clone().lerp(new THREE.Color('#1c1815'), 0.82); // dark grey-brown shadow, not orange
   const lipCol = skin.clone().lerp(new THREE.Color('#9b4a3c'), 0.5);
   const warm = skin.clone().lerp(new THREE.Color('#b8553f'), 0.35);
   const shade = skin.clone().multiplyScalar(0.72);
@@ -209,7 +210,7 @@ export function buildStylizedHead(o: StylizedHeadOptions): THREE.Group {
     return m;
   };
   const stubbleAmt =
-    beardStyle === 'stubble' ? 0.5 : beardStyle === 'none' ? 0 : 0.35; // base layer under real beards
+    beardStyle === 'stubble' ? 0.88 : beardStyle === 'none' ? 0 : 0.35; // base layer under real beards
 
   // vertex colours: skin with lips, warmth, eye shadow, stubble and scalp tint
   const colors = new Float32Array(n * 3);
@@ -231,8 +232,9 @@ export function buildStylizedHead(o: StylizedHeadOptions): THREE.Group {
     c.lerp(shade, 0.5 * gauss(ax, dy, 0.058, -0.195, 0.03, 0.026) * front); // nostrils
     c.lerp(lipCol, 0.9 * (gauss(ax, dy, 0, -0.29, 0.14, 0.03) + gauss(ax, dy, 0, -0.38, 0.12, 0.035)) * front);
     c.lerp(shade, 0.7 * gauss(ax, dy, 0, -0.335, 0.15, 0.012) * front); // mouth line
-    const sm = stubbleMask(dx, dy, dz) * stubbleAmt * (0.55 + 0.45 * noise3(px * 140, py * 140, pz * 140));
-    c.lerp(beardCol, clamp(sm, 0, 0.75));
+    const grain = noise3(px * 70, py * 70, pz * 70);
+    const sm = stubbleMask(dx, dy, dz) * stubbleAmt * (0.78 + 0.34 * grain);
+    c.lerp(stubbleCol, clamp(sm, 0, 0.85));
     const hm = hairMask(dx, dy, dz);
     hairM[i] = hm;
     if (hm > 0.01) c.lerp(hairCol, hm);
