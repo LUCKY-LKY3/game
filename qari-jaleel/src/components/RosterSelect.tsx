@@ -39,10 +39,7 @@ interface RosterSelectProps {
   onSwapSides: () => void;
   onSelectStage: (stage: StageId) => void;
   onSelectDifficulty: (diff: Difficulty) => void;
-  onOpenStudio: (fighterToEdit?: FighterProfile) => void;
   onDeleteCustom: (id: string) => void;
-  onImportJsonFighter: (fighter: FighterProfile) => Promise<void>;
-  onApplyPosterFaces: (mappings: PosterFaceMapping[]) => Promise<void>;
   onStartMatch: () => void;
   onBackToTitle: () => void;
 }
@@ -71,18 +68,11 @@ export function RosterSelect({
   onSwapSides,
   onSelectStage,
   onSelectDifficulty,
-  onOpenStudio,
   onDeleteCustom,
-  onImportJsonFighter,
-  onApplyPosterFaces,
   onStartMatch,
   onBackToTitle,
 }: RosterSelectProps) {
   const [activeSlot, setActiveSlot] = useState<1 | 2>(1);
-  const [importFeedback, setImportFeedback] = useState('');
-  const [mapping3DFaces, setMapping3DFaces] = useState(false);
-  const jsonInputRef = useRef<HTMLInputElement | null>(null);
-  const posterInputRef = useRef<HTMLInputElement | null>(null);
 
   const p1 = fighters.find((f) => f.id === p1Id) ?? fighters[0];
   const p2 = fighters.find((f) => f.id === p2Id) ?? fighters[1] ?? fighters[0];
@@ -101,104 +91,7 @@ export function RosterSelect({
     }
   };
 
-  const handleJsonUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const parsed = parseImportedFighterJson(text);
-      if (!parsed) {
-        setImportFeedback('Invalid fighter card JSON file.');
-        return;
-      }
-      await onImportJsonFighter(parsed);
-      setImportFeedback(`Imported ${parsed.name} into your roster.`);
-    } catch {
-      setImportFeedback('Could not import fighter card.');
-    } finally {
-      e.target.value = '';
-    }
-  };
-
-  const handleMapSquad3DFaces = async () => {
-    if (mapping3DFaces) return;
-    setMapping3DFaces(true);
-    setImportFeedback('Building real 3D face meshes for all 6 squad fighters...');
-    try {
-      const squadIds = new Set([
-        'qari_jaleel',
-        'rebel_aviator',
-        'rebel_tactician',
-        'rebel_enforcer',
-        'rebel_striker',
-        'rebel_shadow',
-      ]);
-      const targets = fighters.filter((f) => squadIds.has(f.id) || f.isCustom);
-      let mappedCount = 0;
-      for (const fighter of targets) {
-        const src = fighter.rawPhotoUrl || fighter.portraitUrl || fighter.faceTextureUrl;
-        if (!src) continue;
-        const ok = await preloadFighter3DHead(src, resolveFighter3DConfig(fighter));
-        if (ok) mappedCount++;
-      }
-      setImportFeedback(
-        mappedCount > 0
-          ? `Mapped ${mappedCount}/${targets.length} real 3D fighter heads — ready for the Indian Village Arena!`
-          : '3D face meshes ready with sculpted fallback heads.'
-      );
-    } catch {
-      setImportFeedback('Could not initialize 3D face mapper — using sculpted 3D heads.');
-    } finally {
-      setMapping3DFaces(false);
-    }
-  };
-
-  const handlePosterUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = async () => {
-        setMapping3DFaces(true);
-        setImportFeedback('Slicing poster and mapping 6 real 3D faces...');
-        try {
-          const skinMap: Record<string, string> = {};
-          fighters.forEach((f) => {
-            skinMap[f.id] = f.appearance.skinTone;
-          });
-          const mappings = extractPosterSquadFaces(img, skinMap);
-          await onApplyPosterFaces(mappings);
-          let mappedCount = 0;
-          for (const m of mappings) {
-            const target = fighters.find((f) => f.id === m.fighterId);
-            if (!target) continue;
-            const ok = await preloadFighter3DHead(
-              m.portraitUrl,
-              resolveFighter3DConfig({ ...target, portraitUrl: m.portraitUrl })
-            );
-            if (ok) mappedCount++;
-          }
-          setImportFeedback(
-            `Mapped ${mappedCount}/6 real 3D faces from your poster onto the squad!`
-          );
-        } finally {
-          setMapping3DFaces(false);
-        }
-      };
-      img.onerror = () => setImportFeedback('Could not read poster image.');
-      img.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
-
   const handleStartMatchClick = () => {
-    // Pre-warm MediaPipe 3D heads for active combatants in parallel as the arena mounts
-    const p1Src = p1.rawPhotoUrl || p1.portraitUrl || p1.faceTextureUrl;
-    const p2Src = p2.rawPhotoUrl || p2.portraitUrl || p2.faceTextureUrl;
-    if (p1Src) void preloadFighter3DHead(p1Src, resolveFighter3DConfig(p1));
-    if (p2Src && p2Src !== p1Src) void preloadFighter3DHead(p2Src, resolveFighter3DConfig(p2));
     onStartMatch();
   };
 
@@ -411,61 +304,8 @@ export function RosterSelect({
                       : `Click a card to assign Player ${activeSlot}.`}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  ref={posterInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePosterUpload}
-                  className="hidden"
-                />
-                <input
-                  ref={jsonInputRef}
-                  type="file"
-                  accept="application/json"
-                  onChange={handleJsonUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  disabled={mapping3DFaces}
-                  onClick={handleMapSquad3DFaces}
-                  className="flex items-center gap-1.5 border border-[#F59E0B]/60 bg-[#2A2016] px-3 py-2 text-xs font-semibold text-[#F59E0B] hover:bg-[#F59E0B] hover:text-[#141210] disabled:opacity-60 transition-colors whitespace-nowrap"
-                >
-                  <ImagePlus className="h-3.5 w-3.5" />
-                  {mapping3DFaces ? 'Mapping 3D Faces...' : 'Map Real Faces from Poster'}
-                </button>
-                <button
-                  type="button"
-                  disabled={mapping3DFaces}
-                  onClick={() => posterInputRef.current?.click()}
-                  className="flex items-center gap-1.5 border border-[#F8F4EC]/15 bg-[#1D1916] px-3 py-2 text-xs font-semibold text-[#F8F4EC] hover:border-[#F59E0B] disabled:opacity-60 transition-colors whitespace-nowrap"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  Upload Poster
-                </button>
-                <button
-                  type="button"
-                  onClick={() => jsonInputRef.current?.click()}
-                  className="flex items-center gap-1.5 border border-[#F8F4EC]/15 bg-[#1D1916] px-3 py-2 text-xs font-semibold text-[#F8F4EC] hover:border-[#F59E0B] transition-colors whitespace-nowrap"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  Load Card (.json)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOpenStudio()}
-                  className="flex items-center gap-1.5 bg-[#F59E0B] px-3.5 py-2 text-xs font-bold text-[#141210] hover:bg-[#D97706] transition-colors whitespace-nowrap"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Friend Photo
-                </button>
-              </div>
             </div>
 
-            {importFeedback && (
-              <div className="mt-2 text-xs font-medium text-[#F59E0B]">{importFeedback}</div>
-            )}
 
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {fighters.map((f) => {
@@ -535,14 +375,6 @@ export function RosterSelect({
                     </button>
 
                     <div className="flex items-center justify-between gap-1 border-t border-[#F8F4EC]/10 bg-[#181512] px-2.5 py-1.5">
-                      <button
-                        type="button"
-                        onClick={() => onOpenStudio(f)}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[#B6AA9A] hover:text-[#F59E0B] whitespace-nowrap"
-                      >
-                        <Pencil className="h-3 w-3" />
-                        Rename / Photo
-                      </button>
                       {f.isCustom && !f.id.startsWith('qari_') && !f.id.startsWith('rebel_') && (
                         <button
                           type="button"

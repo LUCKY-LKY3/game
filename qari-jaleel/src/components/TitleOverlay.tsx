@@ -1,18 +1,16 @@
 import { useMemo } from 'react';
-import { Flame, Swords, Trophy, UserPlus, Users } from 'lucide-react';
+import { Flame, Swords, Trophy, Users } from 'lucide-react';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
 
 interface TitleOverlayProps {
   customCount: number;
   onSelectMode: (mode: GameMode) => void;
-  onOpenStudio: () => void;
 }
 
 export function TitleOverlay({
   customCount,
   onSelectMode,
-  onOpenStudio,
 }: TitleOverlayProps) {
   const records = useMemo(() => loadArcadeRecords(), []);
 
@@ -87,8 +85,8 @@ export function TitleOverlay({
             </button>
           </div>
 
-          {/* Secondary Modes + Photo Studio */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {/* Secondary Modes */}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => onSelectMode('arcade')}
@@ -107,14 +105,6 @@ export function TitleOverlay({
               Local 2P
             </button>
 
-            <button
-              type="button"
-              onClick={onOpenStudio}
-              className="flex items-center justify-center gap-2 border border-[#F59E0B]/60 bg-[#2A2016]/95 px-3 py-2.5 text-xs font-bold text-[#F59E0B] hover:bg-[#F59E0B] hover:text-[#141210] transition-colors whitespace-nowrap"
-            >
-              <UserPlus className="h-3.5 w-3.5 shrink-0" />
-              Friend Photo
-            </button>
           </div>
         </div>
       </div>

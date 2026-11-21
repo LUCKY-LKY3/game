@@ -2100,9 +2100,11 @@ export function createFighterRig(
             curvedPhotoMat.needsUpdate = true;
           }
         }
-        return build3DFighterHead(img, headConfig);
+        // Face-detection head replacement removed: the photo shell above is the face.
+        return null as THREE.Group | null;
       })
       .then((mpHead) => {
+        if (!mpHead) return;
         if (rigDisposed) {
           disposeHeadGroup(mpHead);
           return;

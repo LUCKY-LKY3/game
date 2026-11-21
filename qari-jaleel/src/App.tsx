@@ -19,7 +19,6 @@ import { ArenaCanvas, ArenaCanvasHandle } from './components/ArenaCanvas';
 import { CombatHud } from './components/CombatHud';
 import { TitleOverlay } from './components/TitleOverlay';
 import { RosterSelect } from './components/RosterSelect';
-import { FighterStudio } from './components/FighterStudio';
 import { MatchOverModal, PauseModal } from './components/MatchOverlays';
 
 export default function App() {
@@ -147,21 +146,7 @@ export default function App() {
     setScreen('ROSTER');
   };
 
-  const handleOpenStudio = (fromScreen: GameScreen, fighterToEdit?: FighterProfile) => {
-    soundEngine.playUiSelect();
-    setEditingFighter(fighterToEdit ?? null);
-    setStudioReturnScreen(fromScreen);
-    setScreen('STUDIO');
-  };
 
-  const handleSaveFighter = async (fighter: FighterProfile) => {
-    await saveCustomFighter(fighter);
-    const refreshed = await loadCustomFighters();
-    setCustomFighters(refreshed);
-    setP1Id(fighter.id);
-    soundEngine.playUiSelect();
-    setScreen(studioReturnScreen === 'TITLE' ? 'ROSTER' : studioReturnScreen);
-  };
 
   const handleDeleteCustomFighter = async (id: string) => {
     await deleteCustomFighter(id);
@@ -171,30 +156,7 @@ export default function App() {
     if (p2Id === id) setP2Id(starterRoster[1].id);
   };
 
-  const handleImportJsonFighter = async (fighter: FighterProfile) => {
-    await saveCustomFighter(fighter);
-    const refreshed = await loadCustomFighters();
-    setCustomFighters(refreshed);
-    setP2Id(fighter.id);
-    soundEngine.playUiSelect();
-  };
 
-  const handleApplyPosterFaces = async (mappings: PosterFaceMapping[]) => {
-    for (const m of mappings) {
-      const target = allFighters.find((f) => f.id === m.fighterId);
-      if (target) {
-        await saveCustomFighter({
-          ...target,
-          portraitUrl: m.portraitUrl,
-          rawPhotoUrl: m.portraitUrl,
-          faceTextureUrl: m.faceTextureUrl,
-        });
-      }
-    }
-    const refreshed = await loadCustomFighters();
-    setCustomFighters(refreshed);
-    soundEngine.playUiSelect();
-  };
 
   const handleStartMatch = () => {
     soundEngine.playUiSelect();
@@ -264,7 +226,6 @@ export default function App() {
         <TitleOverlay
           customCount={customFighters.length}
           onSelectMode={handleSelectMode}
-          onOpenStudio={() => handleOpenStudio('TITLE')}
         />
       )}
 
@@ -285,21 +246,9 @@ export default function App() {
           }}
           onSelectStage={setStageId}
           onSelectDifficulty={setDifficulty}
-          onOpenStudio={(fighter) => handleOpenStudio('ROSTER', fighter)}
           onDeleteCustom={handleDeleteCustomFighter}
-          onImportJsonFighter={handleImportJsonFighter}
-          onApplyPosterFaces={handleApplyPosterFaces}
           onStartMatch={handleStartMatch}
           onBackToTitle={() => setScreen('TITLE')}
-        />
-      )}
-
-      {/* Import Yourself & Friends Studio */}
-      {screen === 'STUDIO' && (
-        <FighterStudio
-          editingFighter={editingFighter}
-          onSave={handleSaveFighter}
-          onCancel={() => setScreen(studioReturnScreen)}
         />
       )}
 
