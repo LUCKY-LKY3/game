@@ -303,12 +303,12 @@ function createWovenKurtaTextures(
   // Hand-loomed linen slub warp & weft threads
   for (let y = 0; y < size; y += 3) {
     const alt = y % 6 === 0;
-    ctx.fillStyle = alt ? 'rgba(255, 246, 232, 0.065)' : 'rgba(18, 12, 8, 0.055)';
+    ctx.fillStyle = alt ? 'rgba(255, 246, 232, 0.03)' : 'rgba(18, 12, 8, 0.028)';
     ctx.fillRect(0, y, size, 1.5);
   }
   for (let x = 0; x < size; x += 3) {
     const alt = x % 6 === 0;
-    ctx.fillStyle = alt ? 'rgba(255, 244, 226, 0.048)' : 'rgba(22, 14, 10, 0.05)';
+    ctx.fillStyle = alt ? 'rgba(255, 244, 226, 0.022)' : 'rgba(22, 14, 10, 0.024)';
     ctx.fillRect(x, 0, 1.5, size);
   }
 
@@ -440,14 +440,14 @@ function createPlaidLungiTextures(
     ctx.fillRect(0, i + 18, size, 18);
 
     // Crisp cream cotton warp & weft double threads
-    ctx.fillStyle = 'rgba(248, 238, 220, 0.48)';
+    ctx.fillStyle = 'rgba(248, 238, 220, 0.3)';
     ctx.fillRect(i + 2, 0, 4, size);
     ctx.fillRect(0, i + 2, size, 4);
     ctx.fillRect(i + 10, 0, 2, size);
     ctx.fillRect(0, i + 10, size, 2);
 
     // Harmonized warm ochre/gold accent cross-stripe
-    ctx.fillStyle = `rgba(${Math.round(brightAccent.r * 255)}, ${Math.round(brightAccent.g * 255)}, ${Math.round(brightAccent.b * 255)}, 0.34)`;
+    ctx.fillStyle = `rgba(${Math.round(brightAccent.r * 255)}, ${Math.round(brightAccent.g * 255)}, ${Math.round(brightAccent.b * 255)}, 0.22)`;
     ctx.fillRect(i + 44, 0, 4, size);
     ctx.fillRect(0, i + 44, size, 4);
 
@@ -645,7 +645,8 @@ function createSculptedTorsoGeometry(
     new THREE.Vector2((0.292 + bPos * 0.08) * shoulderMass, 0.545),             // shoulder slope
     new THREE.Vector2(0.142, 0.585),                                             // collar rim
   ];
-  const geo = new THREE.LatheGeometry(pts, 32);
+  const smoothPts = new THREE.SplineCurve(pts).getPoints(34);
+  const geo = new THREE.LatheGeometry(smoothPts, 72);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     let x = pos.getX(i);
@@ -693,6 +694,23 @@ function createSculptedTorsoGeometry(
     if (z < -0.04 && y > 0.26 && y < 0.53) {
       const back = Math.sin(((y - 0.26) / 0.27) * Math.PI);
       z -= 0.022 * shoulderMass * back;
+    }
+
+    // Cloth folds: bunching above the belt, creases pulled from the armpits and across the chest
+    {
+      const r = Math.hypot(x, z) || 1;
+      const th = Math.atan2(x, z);
+      const sm = (a: number, b: number, v: number) => {
+        const t = THREE.MathUtils.clamp((v - a) / (b - a), 0, 1);
+        return t * t * (3 - 2 * t);
+      };
+      let f = 0;
+      f += 0.0075 * Math.sin(y * 42 + th * 3) * sm(0.22, 0.09, y) * sm(-0.04, 0.04, y);
+      f += 0.0055 * Math.sin(th * 7 + y * 20) * sm(0.24, 0.38, y) * (1 - sm(0.46, 0.53, y));
+      f += 0.0035 * Math.sin(th * 12 - y * 14) * sm(0.28, 0.48, y) * (z > 0 ? 1 : 0.35);
+      f += 0.003 * Math.sin(th * 16) * sm(0.15, 0.0, y); // vertical drape near the hem
+      x += (x / r) * f;
+      z += (z / r) * f;
     }
 
     pos.setXYZ(i, x, y, z);

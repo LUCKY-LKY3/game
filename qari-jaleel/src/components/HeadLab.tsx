@@ -53,8 +53,13 @@ export function HeadLab() {
           rig.root.rotation.y = yaws[r];
           if (bodyView) {
             const hs = getCharacterBodySpec(p).heightScale;
-            camera.position.set(0, 1.05 * hs, 4.4 * hs);
-            camera.lookAt(0, 0.98 * hs, 0);
+            if (new URLSearchParams(window.location.search).has('mid')) {
+              camera.position.set(0, 1.3 * hs, 2.7 * hs);
+              camera.lookAt(0, 1.12 * hs, 0);
+            } else {
+              camera.position.set(0, 1.05 * hs, 4.4 * hs);
+              camera.lookAt(0, 0.98 * hs, 0);
+            }
           } else {
             camera.position.set(0, headY - 0.01, 1.35);
             camera.lookAt(0, headY - 0.01, 0);
