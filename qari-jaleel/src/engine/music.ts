@@ -15,14 +15,12 @@ export type MusicMode = 'normal' | 'hype' | 'boss';
  * The user's own recorded groove (src/assets/audio/groove.mp3) is the rhythmic backbone.
  * It was trimmed to exactly 96 beats (24 bars) on its beat grid, so it loops seamlessly.
  * Measured from the recording: 132.99 BPM (beat = 0.45113 s), centred on A (Phrygian-ish).
- * Everything synthesised here is locked to that grid.
+ * The synth layers (bass, sitar, shehnai, drone) are only a fallback if the recording fails to load.
  */
 const BEAT = 0.45113;
 const GROOVE_SECONDS = 96 * BEAT;
-/** If the groove feels a beat early or late against the bass/sitar, nudge this (in beats, can be 1, 2 or 3). */
-const GROOVE_BAR_OFFSET_STEPS = 0;
 /** How loud the recording sits per mode */
-const GROOVE_LEVEL: Record<MusicMode, number> = { normal: 1.5, hype: 1.75, boss: 2.0 };
+const GROOVE_LEVEL: Record<MusicMode, number> = { normal: 3.4, hype: 3.7, boss: 4.0 };
 
 const ROOT_HZ = 220; // A3
 const SCALE = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19]; // A Phrygian, two octaves
@@ -124,7 +122,9 @@ class MusicEngine {
         this.grooveBuf = buf;
       })
       .catch(() => {
+        // Recording unavailable: fall back to the synthesised score
         this.useGroove = false;
+        if (this.timer !== null && !this.droneNodes) this.startDrone();
       })
       .finally(() => {
         this.grooveLoading = false;
@@ -182,7 +182,7 @@ class MusicEngine {
     if (this.timer !== null || typeof window === 'undefined') return;
     this.step = 0;
     this.nextTime = ctx.currentTime + 0.12;
-    this.startDrone();
+    if (!this.useGroove) this.startDrone();
     this.timer = window.setInterval(() => this.tick(), 25);
   }
 
@@ -232,11 +232,14 @@ class MusicEngine {
     const boss = mode === 'boss';
     const hype = mode === 'hype' || boss;
     const fillBar = barInLoop === 3;
-    // Start the recorded groove on a 4-bar boundary once it has decoded (keeps it phase-locked to the synth bars)
-    if (this.useGroove && !this.grooveSrc && this.grooveBuf && s === 0 && barInLoop === 0) {
-      this.startGroove(t + GROOVE_BAR_OFFSET_STEPS * (BEAT / 4));
+    // The recorded groove IS the music: it plays unchanged (only its level follows the mode).
+    // None of the synthesised layers are added on top, so the original beat style is kept as-is.
+    // The synth score below only plays if the recording could not be loaded.
+    if (this.useGroove) {
+      if (!this.grooveSrc && this.grooveBuf) this.startGroove(t);
+      return;
     }
-    const hasGroove = this.grooveSrc !== null;
+    const hasGroove = false;
 
     // ── Dhol dagga (bass head)
     const dagga = boss ? [0, 3, 6, 8, 10, 12, 14] : hype ? [0, 6, 8, 10, 12] : [0, 6, 10];
