@@ -45,6 +45,25 @@ interface TrackState {
   gain: GainNode | null;
 }
 
+/**
+ * Turn an inlined `data:` URI into bytes without fetch(): sandboxed pages (like the phone Artifact)
+ * block fetch() of data URLs, which used to leave the game silent.
+ */
+function dataUriToArrayBuffer(uri: string): ArrayBuffer {
+  const bin = atob(uri.slice(uri.indexOf(',') + 1));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+/** decodeAudioData in both promise and callback styles (older Safari only has callbacks) */
+function decode(ctx: AudioContext, ab: ArrayBuffer): Promise<AudioBuffer> {
+  return new Promise((resolve, reject) => {
+    const p = ctx.decodeAudioData(ab, resolve, reject);
+    if (p && typeof p.then === 'function') p.then(resolve, reject);
+  });
+}
+
 const newTrack = (): TrackState => ({ buf: null, loading: false, failed: false, delay: 0, src: null, gain: null });
 
 class MusicEngine {
@@ -82,15 +101,15 @@ class MusicEngine {
     const tr = this.tracks[id];
     if (!ctx || tr.buf || tr.loading || tr.failed) return;
     tr.loading = true;
-    fetch(id === 'groove' ? grooveUrl : songUrl)
-      .then((r) => r.arrayBuffer())
-      .then((ab) => ctx.decodeAudioData(ab))
+    Promise.resolve()
+      .then(() => decode(ctx, dataUriToArrayBuffer(id === 'groove' ? grooveUrl : songUrl)))
       .then((buf) => {
         // MP3 decoders can leave encoder delay at the head; skip any excess so the loop stays on its grid
         if (id === 'groove') tr.delay = Math.min(0.06, Math.max(0, buf.duration - GROOVE_SECONDS));
         tr.buf = buf;
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('music: could not load', id, err);
         tr.failed = true;
       })
       .finally(() => {
@@ -166,7 +185,11 @@ class MusicEngine {
   /** Make the right track play at the right tempo/level; crossfade away from the other one */
   private sync() {
     const ctx = this.ctx;
-    if (!ctx || !this.master || ctx.state !== 'running') return;
+    if (!ctx || !this.master) return;
+    if (ctx.state !== 'running') {
+      ctx.resume().catch(() => {});
+      return;
+    }
     const plan = PLANS[this.mode];
     // If the wanted track hasn't decoded yet, keep (or start) the other one meanwhile
     let active: TrackId = plan.track;
