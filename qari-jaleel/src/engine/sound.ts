@@ -3,12 +3,12 @@
  * Synthesizes Indian village dhol drums, combat impacts, blocks, sidesteps,
  * Rage Art drops, and brass temple gongs with zero external audio dependencies.
  */
+import { musicEngine } from './music';
+
 class AkharaSoundEngine {
   private ctx: AudioContext | null = null;
   private muted = false;
-  private dholTimer: number | null = null;
-  private dholStep = 0;
-  private dholIntensity: 'normal' | 'hype' | 'boss' = 'normal';
+  private musicWanted = false;
 
   private ensureContext(): AudioContext | null {
     if (this.muted) return null;
@@ -28,6 +28,8 @@ class AkharaSoundEngine {
 
   public setMuted(m: boolean) {
     this.muted = m;
+    musicEngine.setMuted(m);
+    if (!m && this.musicWanted) this.startDholLoop();
   }
 
   public isMuted(): boolean {
@@ -577,73 +579,29 @@ class AkharaSoundEngine {
     });
   }
 
-  /** Live procedural Indian Village Dhol rhythm (speeds up during big combos & Boss Bade Tau!) */
+  /** Starts the procedural street-brawl score (see music.ts). Name kept for existing call sites. */
   public startDholLoop() {
     if (typeof window === 'undefined') return;
-    if (this.dholTimer !== null) return;
-    this.dholStep = 0;
-
-    const scheduleNext = () => {
-      if (this.dholTimer === null) return;
-      this.playDholStep(this.dholStep);
-      this.dholStep = (this.dholStep + 1) % 8;
-      const intervalMs =
-        this.dholIntensity === 'boss' ? 148 : this.dholIntensity === 'hype' ? 162 : 190;
-      this.dholTimer = window.setTimeout(scheduleNext, intervalMs);
-    };
-
-    this.dholTimer = window.setTimeout(scheduleNext, 220);
+    this.musicWanted = true;
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    musicEngine.start(ctx);
+    if (ctx.state === 'suspended') {
+      window.addEventListener('pointerdown', () => ctx.resume().catch(() => {}), { once: true });
+    }
   }
 
   public setDholIntensity(mode: 'normal' | 'hype' | 'boss') {
-    this.dholIntensity = mode;
+    musicEngine.setMode(mode);
   }
 
   public stopDholLoop() {
-    if (this.dholTimer !== null) {
-      clearTimeout(this.dholTimer);
-      this.dholTimer = null;
-    }
+    this.musicWanted = false;
+    musicEngine.stop();
   }
 
-  private playDholStep(step: number) {
-    if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
-    const ctx = this.ctx;
-    const now = ctx.currentTime;
-    // Authentic Punjabi bhangra / akhara 8-step chaal: DUM - ta - DUM DUM - ta - DUM ta
-    const isBass = step === 0 || step === 3 || step === 4 || (this.dholIntensity !== 'normal' && step === 6);
-    const isSlap = step === 2 || step === 5 || step === 7 || (this.dholIntensity === 'boss' && step === 1);
-
-    if (isBass) {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = 'triangle';
-      const pitch = step === 0 ? 96 : 84;
-      osc.frequency.setValueAtTime(pitch * 1.35, now);
-      osc.frequency.exponentialRampToValueAtTime(pitch * 0.56, now + 0.12);
-      g.gain.setValueAtTime(this.dholIntensity === 'boss' ? 0.12 : 0.085, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-      osc.connect(g);
-      g.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.15);
-    }
-
-    if (isSlap) {
-      const noise = ctx.createBufferSource();
-      noise.buffer = this.noiseBuffer(ctx, 0.045);
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = step === 7 ? 1650 : 1220;
-      bp.Q.value = 1.8;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(this.dholIntensity === 'normal' ? 0.045 : 0.068, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
-      noise.connect(bp);
-      bp.connect(g);
-      g.connect(ctx.destination);
-      noise.start(now);
-    }
+  public setMusicVolume(v: number) {
+    musicEngine.setVolume(v);
   }
 
   /** Crisp golden metallic ring when timing a perfect Guard Parry! */
