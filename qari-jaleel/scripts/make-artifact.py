@@ -27,7 +27,7 @@ code = open(js).read()
 code = re.sub(r"([\"'`])/src/assets/", r"\1src/assets/", code)
 open(js, "w").write(code)
 
-html = f"""<title>Qari Jaleel Fighter</title>
+html = f"""<title>Mafia Bhayas</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
 <style>html,body{{margin:0;height:100%;background:#141210;color:#F8F4EC;overscroll-behavior:none}}
 {open(css).read()}</style>

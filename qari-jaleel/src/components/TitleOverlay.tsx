@@ -28,7 +28,7 @@ export function TitleOverlay({
       {/* Top quiet header */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <div className="font-display text-2xl font-black tracking-wider text-[#F8F4EC] whitespace-nowrap">
-          QARI JALEEL
+          MAFIA BHAYAS
         </div>
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F59E0B]/90">
           {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
@@ -42,7 +42,7 @@ export function TitleOverlay({
             className="font-display text-6xl font-black leading-[0.88] tracking-tight text-[#F8F4EC] drop-shadow-[0_6px_24px_rgba(0,0,0,0.85)] sm:text-8xl"
             style={{ textWrap: 'balance' }}
           >
-            QARI JALEEL
+            MAFIA BHAYAS
           </h1>
           <div className="mt-1.5 font-display text-2xl font-extrabold uppercase tracking-[0.22em] text-[#DC2626] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] sm:text-4xl">
             Blood and Honour

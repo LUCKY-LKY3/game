@@ -2,7 +2,7 @@
 
 Two games live in this repo:
 - `index.html` (repo root): small 2D "Street Dragons" brawler prototype. Not the focus now.
-- `qari-jaleel/`: the main game. 2.5D village street brawler. React 19 + three.js + Vite 8 + Tailwind 4. Touch-first, played on a phone.
+- `qari-jaleel/`: the main game, titled "Mafia Bhayas". 2.5D village street brawler. React 19 + three.js + Vite 8 + Tailwind 4. Touch-first, played on a phone.
 
 ## User preferences
 - Keep replies short. Be efficient with tokens: no screenshots or previews unless truly needed, batch several changes per build, republish the phone link once per batch.

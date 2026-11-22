@@ -740,6 +740,107 @@ export function buildStreetStage(
   }
   group.add(fgParallaxGroup);
 
+  // ── AMBIENT VILLAGE LIFE: drifting clouds, pigeon flocks, strolling villagers, dusk fireflies ──
+  const cloudGroup = new THREE.Group();
+  const cloudMat = trackMat(
+    new THREE.MeshBasicMaterial({ color: '#FFF1D6', transparent: true, opacity: 0.42, depthWrite: false, fog: false })
+  );
+  const cloudPuffGeo = trackGeo(new THREE.CircleGeometry(1, 18));
+  const clouds: { g: THREE.Group; x: number; y: number; speed: number }[] = [];
+  for (let c = 0; c < 8; c++) {
+    const cg = new THREE.Group();
+    for (let k = 0; k < 4; k++) {
+      const puff = new THREE.Mesh(cloudPuffGeo, cloudMat);
+      puff.scale.set(1.5 + (k % 2) * 0.7, 0.55 + (k % 3) * 0.18, 1);
+      puff.position.set((k - 1.5) * 1.5, (k % 2) * 0.22, 0);
+      cg.add(puff);
+    }
+    const cy = 10.2 + (c % 3) * 1.5;
+    cg.position.set(0, cy, -14.6);
+    cloudGroup.add(cg);
+    clouds.push({ g: cg, x: c * 9.5, y: cy, speed: 0.18 + (c % 4) * 0.07 });
+  }
+  group.add(cloudGroup);
+
+  // Pigeon flocks crossing the sky
+  const birdMat = trackMat(new THREE.MeshBasicMaterial({ color: '#3A2B25', side: THREE.DoubleSide, fog: false }));
+  const wingGeo = trackGeo(new THREE.PlaneGeometry(0.34, 0.12));
+  const birds: { g: THREE.Group; wl: THREE.Mesh; wr: THREE.Mesh; off: number; y: number; speed: number; ph: number }[] = [];
+  for (let f = 0; f < 2; f++) {
+    for (let b = 0; b < 6; b++) {
+      const bg = new THREE.Group();
+      const wl = new THREE.Mesh(wingGeo, birdMat);
+      const wr = new THREE.Mesh(wingGeo, birdMat);
+      wl.position.x = -0.17;
+      wr.position.x = 0.17;
+      bg.add(wl, wr);
+      bg.position.z = -12.2;
+      group.add(bg);
+      birds.push({
+        g: bg,
+        wl,
+        wr,
+        off: f * 34 + b * 0.9 + (b % 2) * 0.4,
+        y: 9.2 + f * 1.3 + (b % 3) * 0.35 - Math.abs(b - 2.5) * 0.2,
+        speed: 2.1 + f * 0.5,
+        ph: b * 0.7,
+      });
+    }
+  }
+
+  // Villagers strolling along the far sidewalk behind the fight
+  const walkerColors = ['#B45309', '#1D4ED8', '#BE185D', '#15803D', '#7C3AED', '#0F766E', '#C2410C'];
+  const walkers: { g: THREE.Group; ll: THREE.Mesh; rl: THREE.Mesh; off: number; dir: 1 | -1; speed: number; z: number }[] = [];
+  const wBodyGeo = trackGeo(new THREE.CapsuleGeometry(0.17, 0.5, 4, 8));
+  const wHeadGeo = trackGeo(new THREE.SphereGeometry(0.14, 10, 8));
+  const wLegGeo = trackGeo(new THREE.CapsuleGeometry(0.075, 0.5, 3, 6));
+  const wSkinMat = trackMat(new THREE.MeshStandardMaterial({ color: '#A8693D', roughness: 0.85 }));
+  const wPantsMat = trackMat(new THREE.MeshStandardMaterial({ color: '#E8DFC8', roughness: 0.9 }));
+  for (let w = 0; w < 7; w++) {
+    const wg = new THREE.Group();
+    const shirt = trackMat(new THREE.MeshStandardMaterial({ color: walkerColors[w % walkerColors.length], roughness: 0.85 }));
+    const body = new THREE.Mesh(wBodyGeo, shirt);
+    body.position.y = 1.05;
+    const head = new THREE.Mesh(wHeadGeo, wSkinMat);
+    head.position.y = 1.62;
+    const ll = new THREE.Mesh(wLegGeo, wPantsMat);
+    ll.position.set(-0.09, 0.48, 0);
+    const rl = new THREE.Mesh(wLegGeo, wPantsMat);
+    rl.position.set(0.09, 0.48, 0);
+    // pivot legs at the hip
+    ll.geometry.translate(0, 0, 0);
+    wg.add(body, head, ll, rl);
+    wg.scale.setScalar(0.9 + (w % 3) * 0.06);
+    group.add(wg);
+    walkers.push({ g: wg, ll, rl, off: w * 6.7, dir: w % 2 === 0 ? 1 : -1, speed: 0.55 + (w % 3) * 0.2, z: -4.95 - (w % 2) * 0.4 });
+  }
+
+  // Dusk fireflies (fade in toward the Mela zone)
+  const fireflyCount = 34;
+  const fireflyPos = new Float32Array(fireflyCount * 3);
+  const fireflySeeds: { x: number; y: number; z: number; ph: number }[] = [];
+  for (let f = 0; f < fireflyCount; f++) {
+    fireflySeeds.push({
+      x: (f / fireflyCount - 0.5) * 26,
+      y: 0.7 + ((f * 29) % 24) * 0.11,
+      z: f % 2 === 0 ? -5.6 + ((f * 7) % 10) * 0.12 : 3.4 + ((f * 11) % 10) * 0.1,
+      ph: f * 1.17,
+    });
+  }
+  const fireflyGeo = trackGeo(new THREE.BufferGeometry());
+  fireflyGeo.setAttribute('position', new THREE.BufferAttribute(fireflyPos, 3));
+  const fireflyMat = trackMat(
+    new THREE.PointsMaterial({
+      color: '#D9F99D',
+      size: 0.12,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  group.add(new THREE.Points(fireflyGeo, fireflyMat));
+
   // ── SMASHABLE TERRACOTTA CLAY POTS + GLOWING PICKUP DROPS ───────────────────
   const potMat = trackMat(
     new THREE.MeshStandardMaterial({ color: '#B4532A', roughness: 0.78, metalness: 0.04 })
@@ -1923,6 +2024,54 @@ export function buildStreetStage(
       g.group.rotation.x = Math.sin(time * 2.1 + g.phase) * 0.08;
       g.group.rotation.z = Math.cos(time * 1.6 + g.phase) * 0.03;
     }
+
+    // Drifting clouds, pigeon flocks, strolling villagers, dusk fireflies
+    cloudGroup.position.x = cameraX * 0.7;
+    cloudMat.color.setRGB(
+      THREE.MathUtils.lerp(1.0, 1.0, 0),
+      THREE.MathUtils.lerp(0.95, 0.62, Math.min(1, zoneProgress / 2)),
+      THREE.MathUtils.lerp(0.84, 0.5, Math.min(1, zoneProgress / 2))
+    );
+    for (let i = 0; i < clouds.length; i++) {
+      const c = clouds[i];
+      c.g.position.x = ((c.x + time * c.speed + 40) % 80) - 40;
+    }
+    for (let i = 0; i < birds.length; i++) {
+      const b = birds[i];
+      const bx = cameraX + ((b.off + time * b.speed) % 68) - 34;
+      b.g.position.set(bx, b.y + Math.sin(time * 1.6 + b.ph) * 0.18, -12.2);
+      const flap = Math.sin(time * 11 + b.ph) * 0.7;
+      b.wl.rotation.z = flap;
+      b.wr.rotation.z = -flap;
+    }
+    for (let i = 0; i < walkers.length; i++) {
+      const w = walkers[i];
+      const span = 46;
+      const raw = ((w.off + time * w.speed) % span) - span / 2;
+      const wx = cameraX + raw * w.dir;
+      const step = Math.sin(time * 5.2 * (w.speed + 0.4) + w.off);
+      w.g.position.set(wx, Math.abs(step) * 0.03, w.z);
+      w.g.rotation.y = w.dir === 1 ? Math.PI / 2 : -Math.PI / 2;
+      w.ll.rotation.x = step * 0.5;
+      w.rl.rotation.x = -step * 0.5;
+    }
+    const ffAlpha = Math.max(0, Math.min(1, (zoneProgress - 0.7) / 0.9));
+    fireflyMat.opacity = ffAlpha * 0.9;
+    if (ffAlpha > 0.01) {
+      const ffAttr = fireflyGeo.getAttribute('position') as THREE.BufferAttribute;
+      for (let i = 0; i < fireflySeeds.length; i++) {
+        const f = fireflySeeds[i];
+        ffAttr.setXYZ(
+          i,
+          cameraX + f.x + Math.sin(time * 0.5 + f.ph) * 0.8,
+          f.y + Math.sin(time * 0.9 + f.ph * 1.3) * 0.4,
+          f.z + Math.cos(time * 0.6 + f.ph) * 0.3
+        );
+      }
+      ffAttr.needsUpdate = true;
+    }
+    // Lantern flicker
+    lanternGlowMat.emissiveIntensity = 1.4 + Math.sin(time * 9.3) * 0.12 + Math.sin(time * 5.1) * 0.1;
 
     // Fluttering paper kites drifting gently across sky
     for (let i = 0; i < kites.length; i++) {
