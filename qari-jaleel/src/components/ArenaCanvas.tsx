@@ -97,7 +97,7 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
     const engine = engineRef.current;
     if (engine) {
       engine.paused = paused;
-      if (engine instanceof StreetBrawlEngine) {
+      if (engine instanceof StreetBrawlEngine || !attractMode) {
         if (paused) {
           soundEngine.stopDholLoop();
         } else if (engine.getHudSnapshot().phase !== 'MATCH_OVER') {
@@ -353,6 +353,11 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
         difficulty,
         attractMode
       );
+      // Arcade 1v1 / local 2P play the full track (not on the title-screen attract demo)
+      if (!attractMode) {
+        soundEngine.setDholIntensity('duel');
+        soundEngine.startDholLoop();
+      }
     }
 
     engine.paused = pausedRef.current;
@@ -446,6 +451,7 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
+      if (!(engine instanceof StreetBrawlEngine)) soundEngine.stopDholLoop();
       engine.dispose();
       p1Rig.dispose();
       p2Rig.dispose();

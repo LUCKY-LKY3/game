@@ -3,7 +3,7 @@
  * Synthesizes Indian village dhol drums, combat impacts, blocks, sidesteps,
  * Rage Art drops, and brass temple gongs with zero external audio dependencies.
  */
-import { musicEngine } from './music';
+import { musicEngine, type MusicMode } from './music';
 
 class AkharaSoundEngine {
   private ctx: AudioContext | null = null;
@@ -591,7 +591,7 @@ class AkharaSoundEngine {
     }
   }
 
-  public setDholIntensity(mode: 'normal' | 'hype' | 'boss') {
+  public setDholIntensity(mode: MusicMode) {
     musicEngine.setMode(mode);
   }
 

@@ -854,8 +854,9 @@ export class StreetBrawlEngine {
     }
 
     // Update dynamic Dhol tempo intensity based on Boss Bade Tau, Crowd Hype, or 5+ hit combo
-    const bossAlive = this.enemies.some((e) => e.alive && e.spec.archetype === 'boss');
-    if (bossAlive) soundEngine.setDholIntensity('boss');
+    const bossFoe = this.enemies.find((e) => e.alive && e.spec.archetype === 'boss');
+    if (bossFoe) soundEngine.setDholIntensity(bossFoe.phase2Rage ? 'rage' : 'boss');
+    else if (active.hp > 0 && active.hp <= active.maxHp * 0.25) soundEngine.setDholIntensity('danger');
     else if (active.comboCount >= 5 || this.crowdHypeTier >= 10) soundEngine.setDholIntensity('hype');
     else soundEngine.setDholIntensity('normal');
 
