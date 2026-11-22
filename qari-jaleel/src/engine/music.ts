@@ -1,16 +1,31 @@
 /**
  * Procedural street-brawl score for Mafia Bhayas (zero audio files).
  *
- * Desi-fusion groove in D Phrygian dominant: tanpura drone, dhol (dagga + tilli), ghungroo shaker,
+ * Desi-fusion groove in A Phrygian, built around a recorded drum/percussion loop: tanpura drone, dhol (dagga + tilli), ghungroo shaker,
  * plucked bass, a sitar riff, and a shehnai lead that joins as the fight heats up.
  * Modes: 'normal' (street fight), 'hype' (big combos / crowd hype), 'boss' (Bade Tau).
  * A lookahead scheduler keeps timing tight even when the game loop stutters.
  */
 
+import grooveUrl from '../assets/audio/groove.mp3?inline';
+
 export type MusicMode = 'normal' | 'hype' | 'boss';
 
-const ROOT_HZ = 293.66; // D4
-const SCALE = [0, 1, 4, 5, 7, 8, 10, 12, 13, 16, 17, 19]; // D Phrygian dominant, two octaves
+/**
+ * The user's own recorded groove (src/assets/audio/groove.mp3) is the rhythmic backbone.
+ * It was trimmed to exactly 96 beats (24 bars) on its beat grid, so it loops seamlessly.
+ * Measured from the recording: 132.99 BPM (beat = 0.45113 s), centred on A (Phrygian-ish).
+ * Everything synthesised here is locked to that grid.
+ */
+const BEAT = 0.45113;
+const GROOVE_SECONDS = 96 * BEAT;
+/** If the groove feels a beat early or late against the bass/sitar, nudge this (in beats, can be 1, 2 or 3). */
+const GROOVE_BAR_OFFSET_STEPS = 0;
+/** How loud the recording sits per mode */
+const GROOVE_LEVEL: Record<MusicMode, number> = { normal: 1.5, hype: 1.75, boss: 2.0 };
+
+const ROOT_HZ = 220; // A3
+const SCALE = [0, 1, 3, 5, 7, 8, 10, 12, 13, 15, 17, 19]; // A Phrygian, two octaves
 const semi = (n: number, oct = 0) => ROOT_HZ * Math.pow(2, (n + oct * 12) / 12);
 
 /** Sitar riff, one bar each: [step 0-15, scale degree index, length in steps]. */
@@ -50,6 +65,12 @@ class MusicEngine {
   private volume = 0.55;
   private droneNodes: { stop: () => void } | null = null;
   private duckUntil = 0;
+  private grooveBuf: AudioBuffer | null = null;
+  private grooveDelay = 0;
+  private grooveLoading = false;
+  private grooveSrc: AudioBufferSourceNode | null = null;
+  private grooveGain: GainNode | null = null;
+  private useGroove = typeof window === 'undefined' || !window.location.search.includes('nosample');
 
   /** Called by the sound engine with its AudioContext */
   public attach(ctx: AudioContext) {
@@ -85,9 +106,47 @@ class MusicEngine {
     }
     this.dry = dry;
     this.reverbSend = send;
+    this.loadGroove(ctx);
     this.noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.25), ctx.sampleRate);
     const nd = this.noise.getChannelData(0);
     for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  }
+
+  private loadGroove(ctx: AudioContext) {
+    if (!this.useGroove || this.grooveBuf || this.grooveLoading) return;
+    this.grooveLoading = true;
+    fetch(grooveUrl)
+      .then((r) => r.arrayBuffer())
+      .then((ab) => ctx.decodeAudioData(ab))
+      .then((buf) => {
+        // MP3 decoders may leave encoder delay at the head; skip any excess so beat 0 stays on the grid
+        this.grooveDelay = Math.min(0.06, Math.max(0, buf.duration - GROOVE_SECONDS));
+        this.grooveBuf = buf;
+      })
+      .catch(() => {
+        this.useGroove = false;
+      })
+      .finally(() => {
+        this.grooveLoading = false;
+      });
+  }
+
+  private startGroove(t: number) {
+    const ctx = this.ctx as AudioContext;
+    if (!this.grooveBuf || this.grooveSrc) return;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(GROOVE_LEVEL[this.mode], t + 0.6);
+    const src = ctx.createBufferSource();
+    src.buffer = this.grooveBuf;
+    src.loop = true;
+    src.loopStart = this.grooveDelay;
+    src.loopEnd = this.grooveDelay + GROOVE_SECONDS;
+    src.connect(g);
+    g.connect(this.dry as GainNode);
+    src.start(t, this.grooveDelay);
+    this.grooveSrc = src;
+    this.grooveGain = g;
   }
 
   public setMuted(m: boolean) {
@@ -102,6 +161,7 @@ class MusicEngine {
 
   public setMode(mode: MusicMode) {
     this.mode = mode;
+    if (this.grooveGain && this.ctx) this.grooveGain.gain.setTargetAtTime(GROOVE_LEVEL[mode], this.ctx.currentTime, 0.4);
   }
 
   /** Briefly lower the music so a big power-move sound effect cuts through */
@@ -135,11 +195,20 @@ class MusicEngine {
       this.droneNodes.stop();
       this.droneNodes = null;
     }
+    if (this.grooveSrc) {
+      try {
+        this.grooveSrc.stop();
+      } catch {
+        // already stopped
+      }
+      this.grooveSrc = null;
+      this.grooveGain = null;
+    }
   }
 
   // ───────────────────────── scheduler ─────────────────────────
   private bpm() {
-    return this.mode === 'boss' ? 132 : this.mode === 'hype' ? 118 : 106;
+    return 60 / BEAT;
   }
 
   private tick() {
@@ -163,17 +232,24 @@ class MusicEngine {
     const boss = mode === 'boss';
     const hype = mode === 'hype' || boss;
     const fillBar = barInLoop === 3;
+    // Start the recorded groove on a 4-bar boundary once it has decoded (keeps it phase-locked to the synth bars)
+    if (this.useGroove && !this.grooveSrc && this.grooveBuf && s === 0 && barInLoop === 0) {
+      this.startGroove(t + GROOVE_BAR_OFFSET_STEPS * (BEAT / 4));
+    }
+    const hasGroove = this.grooveSrc !== null;
 
     // ── Dhol dagga (bass head)
     const dagga = boss ? [0, 3, 6, 8, 10, 12, 14] : hype ? [0, 6, 8, 10, 12] : [0, 6, 10];
-    if (dagga.includes(s)) this.dagga(t, s === 0 ? 1 : 0.75);
+    if (dagga.includes(s) && (!hasGroove || hype)) this.dagga(t, (s === 0 ? 1 : 0.75) * (hasGroove ? 0.45 : 1));
     // ── Tilli (stick/treble head) backbeat + fills
     const tilli = [4, 12];
-    if (tilli.includes(s)) this.tilli(t, 1);
-    if (hype && (s === 7 || s === 15)) this.tilli(t, 0.55);
-    if (fillBar && s >= 12) this.tilli(t, 0.7 + (s - 12) * 0.1);
+    if (!hasGroove) {
+      if (tilli.includes(s)) this.tilli(t, 1);
+      if (hype && (s === 7 || s === 15)) this.tilli(t, 0.55);
+      if (fillBar && s >= 12) this.tilli(t, 0.7 + (s - 12) * 0.1);
+    }
     // ── Ghungroo shaker 16ths
-    if (s % 2 === 1 || hype) this.shaker(t, s % 4 === 2 ? 1 : 0.55, hype ? 1.25 : 1);
+    if (!hasGroove && (s % 2 === 1 || hype)) this.shaker(t, s % 4 === 2 ? 1 : 0.55, hype ? 1.25 : 1);
 
     // ── Bass
     const root = BASS_ROOTS[barInLoop];
@@ -398,7 +474,7 @@ class MusicEngine {
     g.gain.setValueAtTime(0.0001, ctx.currentTime);
     g.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 1.5);
     const oscs: OscillatorNode[] = [];
-    for (const [mult, det] of [[0.25, -5], [0.25, 6], [0.375, 0]] as const) {
+    for (const [mult, det] of [[0.5, -5], [0.5, 6], [0.75, 0]] as const) {
       const o = ctx.createOscillator();
       o.type = 'sawtooth';
       o.frequency.value = ROOT_HZ * mult;
