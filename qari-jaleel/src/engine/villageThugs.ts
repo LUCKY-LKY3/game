@@ -41,6 +41,8 @@ export interface VillageThugSpec {
   goofyEyes: boolean;
   buckTeeth: boolean;
   battleCry: string;
+  /** shield: blocks light frontal hits. rusher: dashes in fast. */
+  trait?: 'shield' | 'rusher';
 }
 
 export interface VillageThugRig {
@@ -134,6 +136,52 @@ export const VILLAGE_COUSIN_ROSTER: Record<string, Omit<VillageThugSpec, 'id'>> 
     goofyEyes: true,
     buckTeeth: true,
     battleCry: 'Wait till Chacha hears about this!',
+  },
+  chintu: {
+    name: 'Cousin Chintu',
+    subtitle: 'Scooter Sprinter',
+    archetype: 'idiot',
+    maxHp: 50,
+    damage: 9,
+    speed: 4.1,
+    scoreValue: 260,
+    skinTone: '#C99262',
+    shirtColor: '#2563EB',
+    pantsColor: '#1E293B',
+    gamchaColor: '#F97316',
+    hairColor: '#111827',
+    heightScale: 0.92,
+    widthScale: 0.8,
+    bellyBulge: 0,
+    hasClub: false,
+    headAccessory: 'bandana',
+    goofyEyes: true,
+    buckTeeth: true,
+    battleCry: 'Zoom zoom, cousin!',
+    trait: 'rusher',
+  },
+  thali_tiwari: {
+    name: 'Thali Tiwari',
+    subtitle: 'Steel Plate Shield-Bearer',
+    archetype: 'thug',
+    maxHp: 112,
+    damage: 12,
+    speed: 1.7,
+    scoreValue: 380,
+    skinTone: '#B5764A',
+    shirtColor: '#FACC15',
+    pantsColor: '#14532D',
+    gamchaColor: '#DC2626',
+    hairColor: '#292524',
+    heightScale: 1.02,
+    widthScale: 1.1,
+    bellyBulge: 0.14,
+    hasClub: false,
+    headAccessory: 'gamcha_knot',
+    goofyEyes: false,
+    buckTeeth: false,
+    battleCry: 'Try hitting a thali, na!',
+    trait: 'shield',
   },
   pappu: {
     name: 'Chacha Pappu',
@@ -684,6 +732,23 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
       clubGroup.add(bulb);
     }
     rightArm.elbow.add(clubGroup);
+  }
+
+  // Steel thali shield on the left forearm
+  if (spec.trait === 'shield') {
+    const steel = trackMat(new THREE.MeshStandardMaterial({ color: '#D1D5DB', roughness: 0.28, metalness: 0.85 }));
+    const shield = new THREE.Group();
+    shield.position.set(0, -0.2, 0.12);
+    shield.rotation.x = Math.PI / 2;
+    const plate = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.34, 0.34, 0.03, 28)), steel);
+    plate.castShadow = true;
+    const rim = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.34, 0.025, 8, 28)), steel);
+    rim.rotation.x = Math.PI / 2;
+    const boss = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.07, 12, 10)), goldMat);
+    boss.position.y = 0.03;
+    boss.scale.y = 0.6;
+    shield.add(plate, rim, boss);
+    leftArm.elbow.add(shield);
   }
 
   // ── ARTICULATED LEGS ────────────────────────────────────────────────────────

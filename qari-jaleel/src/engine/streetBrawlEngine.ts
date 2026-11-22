@@ -329,8 +329,8 @@ const STREET_ZONES: StreetZoneConfig[] = [
     lockMinX: -6.5,
     lockMaxX: 11.5,
     triggerX: -10,
-    wave1: ['bunty', 'golu'],
-    wave2: ['chappal_chacha', 'tinku', 'pappu'],
+    wave1: ['bunty', 'golu', 'chintu'],
+    wave2: ['chappal_chacha', 'thali_tiwari', 'pappu'],
   },
   {
     index: 2,
@@ -338,8 +338,8 @@ const STREET_ZONES: StreetZoneConfig[] = [
     lockMinX: 10.0,
     lockMaxX: 28.0,
     triggerX: 14.2,
-    wave1: ['lathi_lala', 'raju_bike', 'bunty'],
-    wave2: ['moti_pehelwan', 'chappal_chacha', 'pappu'],
+    wave1: ['lathi_lala', 'raju_bike', 'chintu', 'bunty'],
+    wave2: ['moti_pehelwan', 'thali_tiwari', 'chappal_chacha', 'pappu'],
   },
   {
     index: 3,
@@ -347,8 +347,8 @@ const STREET_ZONES: StreetZoneConfig[] = [
     lockMinX: 26.5,
     lockMaxX: 46.5,
     triggerX: 30.8,
-    wave1: ['raju_bike', 'lathi_lala', 'chappal_chacha'],
-    wave2: ['kalu_goon', 'bade_tau'],
+    wave1: ['raju_bike', 'thali_tiwari', 'chintu', 'chappal_chacha'],
+    wave2: ['kalu_goon', 'thali_tiwari', 'bade_tau'],
   },
 ];
 
@@ -418,6 +418,7 @@ interface HeroRuntime {
   weaponMeshes: HeroWeaponMeshes;
   activeRing: THREE.Mesh;
   activeRingMat: THREE.MeshBasicMaterial;
+  counterTimer: number;
   aiThinkTimer: number;
   powerupKind: PowerupKind;
   powerupOriginX: number;
@@ -444,6 +445,7 @@ interface EnemyRuntime {
   actionTime: number;
   actionDuration: number;
   hasHitThisSwing: boolean;
+  telegraphed: boolean;
   hitFlash: number;
   aiCooldown: number;
   aiState: 'circle' | 'approach' | 'telegraph_pause' | 'retreat';
@@ -1098,6 +1100,7 @@ export class StreetBrawlEngine {
       activeRing,
       activeRingMat: ringMat,
       aiThinkTimer: 0.25,
+      counterTimer: 0,
       powerupKind: getPowerupKindForFighter(profile.id),
       powerupOriginX: x,
       powerupOriginZ: z,
@@ -1247,7 +1250,10 @@ export class StreetBrawlEngine {
     } else {
       this.announcement = 'ZONE 1 · CHAI CHOWK';
       this.subAnnouncement = 'CLEAN OUT THE VILLAGE LANE';
-      this.spawnWave(STREET_ZONES[0].wave1, STREET_ZONES[0]);
+      // Debug: ?foes=thali_tiwari,chintu spawns those cousins in the first wave
+      const foesParam =
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('foes') : null;
+      this.spawnWave(foesParam ? foesParam.split(',') : STREET_ZONES[0].wave1, STREET_ZONES[0]);
     }
     soundEngine.playRoundStart();
     soundEngine.setDholIntensity('normal');
@@ -1264,7 +1270,7 @@ export class StreetBrawlEngine {
       wave1: [],
       wave2: [],
     };
-    const pool = ['bunty', 'golu', 'tinku', 'pappu', 'lathi_lala', 'kalu_goon', 'chappal_chacha'];
+    const pool = ['bunty', 'golu', 'tinku', 'pappu', 'lathi_lala', 'kalu_goon', 'chappal_chacha', 'chintu', 'thali_tiwari'];
     const count = Math.min(7, 2 + Math.floor(waveNum * 0.75));
     const keys: string[] = [];
     for (let i = 0; i < count; i++) {
@@ -1341,6 +1347,7 @@ export class StreetBrawlEngine {
         actionTime: 0,
         actionDuration: 0,
         hasHitThisSwing: false,
+        telegraphed: false,
         hitFlash: 0,
         aiCooldown: 0.45 + idx * 0.28,
         aiState: 'circle',
@@ -2353,6 +2360,7 @@ export class StreetBrawlEngine {
     hero.hitFlash = Math.max(0, hero.hitFlash - dt * 5);
     hero.invulnTimer = Math.max(0, hero.invulnTimer - dt);
     hero.superArmorTimer = Math.max(0, hero.superArmorTimer - dt);
+    hero.counterTimer = Math.max(0, hero.counterTimer - dt);
     if (hero.lpChainWindow > 0) {
       hero.lpChainWindow -= dt;
       if (hero.lpChainWindow <= 0) hero.lpChainStep = 0;
@@ -3794,7 +3802,8 @@ export class StreetBrawlEngine {
 
     const effectiveRangeX = spec.rangeX + bonusRange;
     const effectiveRangeZ = spec.rangeZ + (isBollywoodSlap || isKushtiShockwave ? 0.55 : 0);
-    const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03));
+    const counterMul = hero.counterTimer > 0 ? 1.5 : 1;
+    const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul);
 
     // 1. Smashable terracotta clay pots
     for (let i = 0; i < this.stage.pots.length; i++) {
@@ -3994,6 +4003,21 @@ export class StreetBrawlEngine {
     launchVy: number,
     popupText?: string
   ) {
+    // Thali Tiwari's steel plate soaks up light frontal hits; heavy hits, launchers or flanking break through
+    if (e.spec.trait === 'shield' && e.alive) {
+      const facingAttacker = attacker ? (attacker.x - e.x) * e.facing > 0 : false;
+      if (facingAttacker && !heavy && launchVy < 2.5) {
+        e.hp = Math.max(1, e.hp - Math.max(1, Math.round(damage * 0.15)));
+        e.hitFlash = 0.35;
+        e.vx = knockbackVx * 0.25;
+        soundEngine.playBlock();
+        this.spawnParticles(e.x + e.facing * 0.5, 1.3, e.z, 6, 2.4);
+        this.spawnComicPopup(e.x, 1.95, e.z, 'CLANG!', '#9CA3AF');
+        this.hitstopTimer = Math.max(this.hitstopTimer, 0.03);
+        return;
+      }
+      if (facingAttacker && !popupText) popupText = 'GUARD BREAK!';
+    }
     e.hp = Math.max(0, e.hp - damage);
     e.hitFlash = 1.0;
     this.lastHitEnemyUid = e.uid;
@@ -4020,6 +4044,11 @@ export class StreetBrawlEngine {
     this.spawnParticles(e.x, 1.15, e.z, heavy ? 14 : 7, heavy ? 4.2 : 2.6);
     if (attacker) {
       const isKnockdownHit = e.hp <= 0 || launchVy >= 3.2;
+      if (e.hp <= 0) this.hitstopTimer = Math.max(this.hitstopTimer, 0.11);
+      else if (isKnockdownHit) this.hitstopTimer = Math.max(this.hitstopTimer, 0.08);
+      if (attacker.comboCount > 0 && attacker.comboCount % 5 === 0) {
+        this.spawnComicPopup(attacker.x, 2.25, attacker.z, `${attacker.comboCount} HIT COMBO!`, '#FACC15');
+      }
       if (isKnockdownHit) {
         triggerHaptic([42, 24, 64]);
         this.shakeIntensity = Math.max(this.shakeIntensity, 0.36);
@@ -4431,6 +4460,16 @@ export class StreetBrawlEngine {
       if (e.removed) continue;
 
       e.hitFlash = Math.max(0, e.hitFlash - dt * 5);
+
+      // Attack warning: a red "!" pops over any enemy who starts winding up a strike
+      if (e.alive && e.action === 'windup') {
+        if (!e.telegraphed) {
+          e.telegraphed = true;
+          this.spawnComicPopup(e.x, 2.35, e.z, '!', '#EF4444');
+        }
+      } else {
+        e.telegraphed = false;
+      }
 
       if (e.y > 0 || e.vy !== 0) {
         e.y += e.vy * dt;
@@ -4893,7 +4932,7 @@ export class StreetBrawlEngine {
         const adz = flankZ - e.z;
         const aDist = Math.hypot(adx, adz);
         if (aDist > 0.34) {
-          const sp = e.spec.speed * (isFastEnemy ? 1.04 : 0.96);
+          const sp = e.spec.speed * (isFastEnemy ? 1.04 : 0.96) * (e.spec.trait === 'rusher' && aDist > 2.6 ? 1.7 : 1);
           e.x += (adx / aDist) * sp * dt;
           e.z += (adz / aDist) * (sp * 0.78) * dt;
           e.action = 'walk';
@@ -4942,7 +4981,23 @@ export class StreetBrawlEngine {
 
     for (let h = 0; h < 2; h++) {
       const hero = this.heroes[h];
-      if (hero.hp <= 0 || hero.invulnTimer > 0) continue;
+      if (hero.hp <= 0) continue;
+      // PERFECT DODGE: sidestepping out of a swing that would have landed -> slow-mo + counter boost
+      if (
+        (hero.action === 'sidestep_in' || hero.action === 'sidestep_out') &&
+        !e.hasHitThisSwing &&
+        Math.abs(hero.x - e.x) <= (e.spec.hasClub ? 2.4 : 1.9) &&
+        Math.abs(hero.z - e.z) <= 1.5
+      ) {
+        e.hasHitThisSwing = true;
+        hero.counterTimer = 1.6;
+        hero.rage = Math.min(100, hero.rage + 12);
+        this.slowMoTimer = Math.max(this.slowMoTimer, 0.45);
+        soundEngine.playParryClang();
+        this.spawnComicPopup(hero.x, 2.05, hero.z, 'PERFECT DODGE!', '#38BDF8');
+        break;
+      }
+      if (hero.invulnTimer > 0) continue;
       const dx = (hero.x - e.x) * e.facing;
       const dz = Math.abs(hero.z - e.z);
       if (dx >= -0.3 && dx <= reachX && dz <= reachZ) {
