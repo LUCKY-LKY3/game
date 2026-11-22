@@ -8,6 +8,7 @@
  */
 
 import grooveUrl from '../assets/audio/groove.mp3?inline';
+import songUrl from '../assets/audio/rain-slicked-escape.mp3?inline';
 
 export type MusicMode = 'normal' | 'hype' | 'boss';
 
@@ -19,6 +20,12 @@ export type MusicMode = 'normal' | 'hype' | 'boss';
  */
 const BEAT = 0.45113;
 const GROOVE_SECONDS = 96 * BEAT;
+/**
+ * Boss fights switch to the user's full track "Rain-Slicked Escape" (3:02, ~120 BPM, G# minor),
+ * crossfading from the groove and back again when the boss is down.
+ */
+const SONG_LEVEL = 0.9;
+const CROSSFADE = 0.5; // time constant (s)
 /** How loud the recording sits per mode */
 const GROOVE_LEVEL: Record<MusicMode, number> = { normal: 3.4, hype: 3.7, boss: 4.0 };
 
@@ -68,6 +75,11 @@ class MusicEngine {
   private grooveLoading = false;
   private grooveSrc: AudioBufferSourceNode | null = null;
   private grooveGain: GainNode | null = null;
+  private songBuf: AudioBuffer | null = null;
+  private songLoading = false;
+  private songSrc: AudioBufferSourceNode | null = null;
+  private songGain: GainNode | null = null;
+  private songPrefetch: number | null = null;
   private useGroove = typeof window === 'undefined' || !window.location.search.includes('nosample');
 
   /** Called by the sound engine with its AudioContext */
@@ -131,6 +143,58 @@ class MusicEngine {
       });
   }
 
+  private loadSong(ctx: AudioContext) {
+    if (!this.useGroove || this.songBuf || this.songLoading) return;
+    this.songLoading = true;
+    fetch(songUrl)
+      .then((r) => r.arrayBuffer())
+      .then((ab) => ctx.decodeAudioData(ab))
+      .then((buf) => {
+        this.songBuf = buf;
+      })
+      .catch(() => {
+        // stay on the groove if the track cannot be decoded
+      })
+      .finally(() => {
+        this.songLoading = false;
+      });
+  }
+
+  /** Crossfade between the groove loop and the boss track depending on the current mode */
+  private syncTracks() {
+    const ctx = this.ctx;
+    if (!ctx || !this.grooveGain) return;
+    const wantSong = this.mode === 'boss' && this.songBuf !== null;
+    if (wantSong && !this.songSrc) {
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      const src = ctx.createBufferSource();
+      src.buffer = this.songBuf;
+      src.loop = true;
+      src.connect(g);
+      g.connect(this.dry as GainNode);
+      src.start(ctx.currentTime + 0.02, 0);
+      this.songSrc = src;
+      this.songGain = g;
+    }
+    if (this.songGain && this.songSrc) {
+      this.songGain.gain.setTargetAtTime(wantSong ? SONG_LEVEL : 0.0001, ctx.currentTime, CROSSFADE);
+      if (!wantSong) {
+        const old = this.songSrc;
+        this.songSrc = null;
+        this.songGain = null;
+        window.setTimeout(() => {
+          try {
+            old.stop();
+          } catch {
+            // already stopped
+          }
+        }, 2500);
+      }
+    }
+    this.grooveGain.gain.setTargetAtTime(wantSong ? 0.0001 : GROOVE_LEVEL[this.mode], ctx.currentTime, CROSSFADE);
+  }
+
   private startGroove(t: number) {
     const ctx = this.ctx as AudioContext;
     if (!this.grooveBuf || this.grooveSrc) return;
@@ -147,6 +211,9 @@ class MusicEngine {
     src.start(t, this.grooveDelay);
     this.grooveSrc = src;
     this.grooveGain = g;
+    if (this.songPrefetch === null && typeof window !== 'undefined') {
+      this.songPrefetch = window.setTimeout(() => this.loadSong(ctx), 4000);
+    }
   }
 
   public setMuted(m: boolean) {
@@ -161,7 +228,7 @@ class MusicEngine {
 
   public setMode(mode: MusicMode) {
     this.mode = mode;
-    if (this.grooveGain && this.ctx) this.grooveGain.gain.setTargetAtTime(GROOVE_LEVEL[mode], this.ctx.currentTime, 0.4);
+    this.syncTracks();
   }
 
   /** Briefly lower the music so a big power-move sound effect cuts through */
@@ -195,6 +262,19 @@ class MusicEngine {
       this.droneNodes.stop();
       this.droneNodes = null;
     }
+    if (this.songPrefetch !== null) {
+      clearTimeout(this.songPrefetch);
+      this.songPrefetch = null;
+    }
+    if (this.songSrc) {
+      try {
+        this.songSrc.stop();
+      } catch {
+        // already stopped
+      }
+      this.songSrc = null;
+      this.songGain = null;
+    }
     if (this.grooveSrc) {
       try {
         this.grooveSrc.stop();
@@ -217,6 +297,7 @@ class MusicEngine {
       if (ctx) this.nextTime = Math.max(this.nextTime, ctx.currentTime + 0.05);
       return;
     }
+    if (this.mode === 'boss' && this.songBuf && !this.songSrc) this.syncTracks();
     while (this.nextTime < ctx.currentTime + 0.14) {
       this.scheduleStep(this.step, this.nextTime);
       this.nextTime += 60 / this.bpm() / 4;
