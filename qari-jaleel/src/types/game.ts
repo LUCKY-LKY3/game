@@ -5,7 +5,8 @@ export type FightingStyle =
   | 'kushti_pehelwan'
   | 'kalari_kicker'
   | 'street_boxer'
-  | 'weapon_master';
+  | 'weapon_master'
+  | 'kung_fu_master';
 
 export type HeadgearType = 'none' | 'headband' | 'turban' | 'sunglasses' | 'glasses' | 'tilak';
 
@@ -39,6 +40,8 @@ export interface FighterAppearance {
   lowerOutfitStyle?: LowerOutfitStyle;
   plaidLungi?: boolean;
   hasAxe?: boolean;
+  /** Tailored henley-style top: no chest pocket or lapels */
+  fittedTop?: boolean;
 }
 
 export interface FighterStats {

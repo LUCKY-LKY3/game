@@ -2889,7 +2889,7 @@ export class StreetBrawlEngine {
 
     // Brisk Classic Double Dragon Arcade Rhythm movement!
     const styleSpeedBonus =
-      hero.style === 'kalari_kicker' ? 0.72 : hero.style === 'street_boxer' ? 0.42 : 0;
+      hero.style === 'kalari_kicker' ? 0.72 : hero.style === 'kung_fu_master' ? 0.6 : hero.style === 'street_boxer' ? 0.42 : 0;
     const baseSpeedX = 5.85 + hero.profile.stats.speed * 0.14 + styleSpeedBonus;
     const maxSpeedX = hero.isSprinting ? baseSpeedX * 1.48 : baseSpeedX;
     // Responsive Z-strafe for our +30% wider village lane
@@ -2978,7 +2978,7 @@ export class StreetBrawlEngine {
         return;
       }
       // Street Boxer gets a lightning 4-hit flurry (Jab -> Cross -> Body -> Uppercut Finisher!)
-      const maxChain = hero.style === 'street_boxer' ? 4 : 3;
+      const maxChain = hero.style === 'street_boxer' || hero.style === 'kung_fu_master' ? 4 : 3;
       const step = hero.lpChainStep;
       const nextMove: CombatAction =
         step === 0
@@ -3409,7 +3409,11 @@ export class StreetBrawlEngine {
     if (!spec) return;
     hero.action = move;
     hero.actionTime = 0;
-    const boxerBoost = hero.style === 'street_boxer' && (move === 'lp' || move === 'lp2') ? 0.8 : 1.0;
+    const boxerBoost =
+      (hero.style === 'street_boxer' && (move === 'lp' || move === 'lp2')) ||
+      (hero.style === 'kung_fu_master' && (move === 'lp' || move === 'lp2' || move === 'rp'))
+        ? 0.78
+        : 1.0;
     const dholBoost = this.hasBoon('double_dhol') ? 0.85 : 1.0;
     hero.actionDuration = spec.duration * boxerBoost * dholBoost;
     hero.hitIdsThisSwing.clear();
@@ -3911,7 +3915,7 @@ export class StreetBrawlEngine {
         } else if (isCriticalSlap) {
           popup = 'THAPPAD!';
         } else if (isFinisher) {
-          popup = hero.style === 'bollywood_hero' ? 'THAPPAD!' : hero.comboCount >= 4 ? 'KHALLAS!' : 'DHISHUM!';
+          popup = hero.style === 'kung_fu_master' ? 'WATAAAH!' : hero.style === 'bollywood_hero' ? 'THAPPAD!' : hero.comboCount >= 4 ? 'KHALLAS!' : 'DHISHUM!';
         } else if (isThrow) {
           popup = 'DHISHUM!';
         } else if (isCriticalKO) {

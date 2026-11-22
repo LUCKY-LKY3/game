@@ -129,6 +129,13 @@ export const FIGHTING_STYLES: Record<
     signatureMove: '4-Hit Bob & Weave Uppercut Flurry',
     color: '#38BDF8',
   },
+  kung_fu_master: {
+    label: 'Kung Fu Master',
+    shortLabel: 'Kung Fu',
+    description: 'Elegant side-on stance, lightning straight punches, flowing 4-hit chain and a high flying kick.',
+    signatureMove: 'Dragon Chain & Flying Side Kick',
+    color: '#EF4444',
+  },
   weapon_master: {
     label: 'Weapon Master',
     shortLabel: 'Weapons',
@@ -150,7 +157,7 @@ export function resolveFighterStyle(profile: FighterProfile): FightingStyle {
     case 'rebel_enforcer':
       return 'street_boxer';
     case 'rebel_striker':
-      return 'bollywood_hero';
+      return 'kung_fu_master';
     case 'rebel_shadow':
       return 'kalari_kicker';
     default:
@@ -279,15 +286,16 @@ export function createStarterRoster(): FighterProfile[] {
       portraitFaceRect: { cx: 0.505, cy: 0.215, size: 0.23 },
       appearance: {
         skinTone: '#BD7E50',
-        vestColor: '#BDB5A8',
-        pantsColor: '#566170',
+        vestColor: '#16181D',
+        pantsColor: '#2A303B',
         wrapColor: '#E2E8F0',
         hairColor: '#191412',
         headgear: 'none',
         buildScale: 1.0,
         bald: true,
-        lowerOutfitStyle: 'pathani_salwar',
+        lowerOutfitStyle: 'rolled_trousers',
         plaidLungi: false,
+        fittedTop: true,
       },
       stats: { power: 7, speed: 9, reach: 9, defense: 6 },
       specialMoveName: 'Red Ford Runover',

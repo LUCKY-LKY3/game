@@ -28,16 +28,16 @@ export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec
 
   switch (profile.id) {
     case 'rebel_striker':
-      // Chet: balanced athletic V-taper baseline
+      // Chet: tall, lean and muscular - broad shoulders tapering to a narrow waist (proportionate athlete)
       return {
-        heightScale: 1.0,
-        widthScale: 1.0 + buildDelta * 0.4,
-        depthScale: 1.0 + buildDelta * 0.3,
-        bellyBulge: 0,
-        limbScale: 1.02 + buildDelta * 0.4,
-        headScale: 1.0,
-        shoulderMass: 1.08 + buildDelta * 0.5,
-        vTaper: 1.12,
+        heightScale: 1.05,
+        widthScale: 0.9,
+        depthScale: 0.88,
+        bellyBulge: -0.05,
+        limbScale: 0.98,
+        headScale: 0.98,
+        shoulderMass: 1.16,
+        vTaper: 1.26,
       };
 
     case 'rebel_tactician':
@@ -1669,8 +1669,10 @@ export function createFighterRig(
   const rightCollar = new THREE.Mesh(collarGeo, vestMat);
   rightCollar.position.set(0.092, 0.542, 0.15 + bellyFrontPad * 0.12);
   rightCollar.rotation.set(0.32, 0.48, 0.38);
-  torso.add(leftCollar, rightCollar);
-  shirtParts.push(leftCollar, rightCollar);
+  if (!appearance.fittedTop) {
+    torso.add(leftCollar, rightCollar);
+    shirtParts.push(leftCollar, rightCollar);
+  }
 
   // Vertical kurta button placket & stitched horn buttons
   const placket = new THREE.Mesh(
@@ -1700,8 +1702,10 @@ export function createFighterRig(
   );
   pocket.position.set(0.132 * bodySpec.shoulderMass, 0.358, 0.222 + bellyFrontPad * 0.32);
   pocket.rotation.y = 0.22;
-  torso.add(pocket);
-  shirtParts.push(pocket);
+  if (!appearance.fittedTop) {
+    torso.add(pocket);
+    shirtParts.push(pocket);
+  }
 
   // Qari Jaleel's signature forged double-bladed battle axe strapped across his back!
   if (appearance.hasAxe) {
@@ -2709,6 +2713,29 @@ export function applyFighterPose(
         lKneeX = 0.52;
         rHipX = 0.28;
         rKneeX = 0.46;
+      } else if (style === 'kung_fu_master') {
+        // Bruce Lee: light, bouncing side-on stance, lead hand open at chest height, rear hand guarding the jaw
+        const hop = Math.abs(Math.sin(time * 5.4));
+        const beckon = Math.pow(Math.max(0, Math.sin(time * 1.6)), 6);
+        hipsY = 0.93 + hop * 0.03;
+        hipsRotY = -0.42;
+        torsoRotX = 0.05;
+        torsoRotY = -0.3;
+        headRotX = -0.02;
+        headRotY = 0.42;
+        headRotZ = 0;
+        hipsX = 0;
+        hipsRotZ = 0;
+        lShX = -1.3;
+        lShZ = -0.2;
+        lElX = -0.8 - beckon * 0.55;
+        rShX = -1.02;
+        rShZ = 0.28;
+        rElX = -1.78;
+        lHipX = -0.4;
+        lKneeX = 0.54 + hop * 0.1;
+        rHipX = 0.3;
+        rKneeX = 0.48 + hop * 0.08;
       } else if (style === 'weapon_master') {
         // Wide balanced akhara stance poised for broad horizontal weapon arcs
         hipsY = 0.9 + bounce * 0.028;
@@ -3052,6 +3079,23 @@ export function applyFighterPose(
         rShX = -0.78;
         rShZ = 0.42;
         rElX = -1.25;
+      } else if (style === 'kung_fu_master') {
+        // Bruce Lee lead straight: whip-fast, shoulder height, rear hand stays guarding the jaw
+        hipsY = 0.92 - tp.wind * 0.02;
+        hipsRotY = -0.42 + 0.55 * tp.strike;
+        torsoRotY = -0.3 + 0.62 * tp.strike;
+        torsoRotX = 0.05 + tp.strike * 0.08;
+        headRotY = 0.3;
+        lShX = -1.34 - tp.strike * 0.2;
+        lShZ = -0.16;
+        lElX = -1.15 - tp.wind * 0.45 + tp.strike * 1.2;
+        rShX = -1.02;
+        rShZ = 0.28;
+        rElX = -1.78;
+        lHipX = -0.4 - tp.strike * 0.22;
+        lKneeX = 0.54 + tp.strike * 0.12;
+        rHipX = 0.3 + tp.strike * 0.12;
+        rKneeX = 0.48;
       } else if (style === 'weapon_master') {
         // Broad horizontal forehand weapon arc!
         hipsY = 0.89 - tp.wind * 0.04;
@@ -3131,6 +3175,23 @@ export function applyFighterPose(
         lShZ = -0.45;
         rShX = -0.85;
         rShZ = 0.48;
+      } else if (style === 'kung_fu_master') {
+        // Rear straight right: full hip rotation, left hand guard
+        hipsY = 0.91 - tp.wind * 0.02;
+        hipsRotY = -0.1 * tp.wind - 0.55 * tp.strike;
+        torsoRotY = -0.1 * tp.wind - 0.62 * tp.strike;
+        torsoRotX = 0.06 + tp.strike * 0.1;
+        headRotY = 0.3;
+        rShX = -1.48 - tp.strike * 0.12;
+        rShZ = 0.1;
+        rElX = -1.8 + tp.strike * 1.68;
+        lShX = -1.22;
+        lShZ = -0.22;
+        lElX = -1.4;
+        lHipX = -0.46;
+        lKneeX = 0.6;
+        rHipX = 0.34 + tp.strike * 0.1;
+        rKneeX = 0.4;
       } else if (style === 'weapon_master') {
         // Broad horizontal backhand return weapon arc!
         hipsY = 0.88 - tp.wind * 0.04;
@@ -3211,6 +3272,23 @@ export function applyFighterPose(
         rShX = -1.24;
         rShZ = 0.26;
         rElX = -1.08;
+      } else if (style === 'kung_fu_master') {
+        // Dragon thrust: long gliding lunge into a perfectly straight rear punch, off-hand sweeping back for balance
+        hipsY = 0.9 - tp.wind * 0.12 - tp.strike * 0.04;
+        hipsRotY = 0.25 * tp.wind - 0.7 * tp.strike;
+        torsoRotY = 0.25 * tp.wind - 0.82 * tp.strike;
+        torsoRotX = 0.08 + tp.strike * 0.24;
+        headRotY = 0.25;
+        rShX = -1.5;
+        rShZ = 0.08;
+        rElX = -1.7 + tp.strike * 1.62;
+        lShX = -0.55;
+        lShZ = -0.95 - tp.strike * 0.3;
+        lElX = -0.45;
+        lHipX = -0.62 - tp.strike * 0.8;
+        lKneeX = 0.9 + tp.strike * 0.22;
+        rHipX = 0.52 * (0.5 + tp.strike);
+        rKneeX = 0.16;
       } else if (style === 'weapon_master') {
         // Heavy power horizontal weapon sweep with deep stance drive!
         hipsY = 0.88 - tp.wind * 0.08 + tp.strike * 0.05;
@@ -3295,6 +3373,23 @@ export function applyFighterPose(
         rShX = -1.28;
         rShZ = 0.28;
         rElX = -1.12;
+      } else if (style === 'kung_fu_master') {
+        // Flying high side kick, arms spread for balance
+        hipsY = 0.94 - tp.wind * 0.14 + tp.strike * 0.34;
+        hipsRotY = -0.3 * tp.wind - 0.6 * tp.strike;
+        torsoRotY = -0.3 * tp.wind - 0.7 * tp.strike;
+        torsoRotX = 0.14 * tp.wind - 0.34 * tp.strike;
+        headRotY = 0.5;
+        rHipX = -0.5 * tp.wind - 1.9 * tp.strike;
+        rKneeX = 1.0 * tp.wind + 0.08;
+        lHipX = -0.2 + 0.3 * tp.strike;
+        lKneeX = 0.5 * tp.wind + 0.2;
+        lShX = -0.5;
+        lShZ = -1.25;
+        lElX = -0.3;
+        rShX = -0.6;
+        rShZ = 1.15;
+        rElX = -0.3;
       } else if (style === 'street_boxer') {
         // Sky-piercing rising uppercut launcher finisher!
         hipsY = 0.88 - tp.wind * 0.2 + tp.strike * 0.26;
