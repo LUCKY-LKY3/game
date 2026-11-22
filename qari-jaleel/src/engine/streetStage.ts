@@ -740,6 +740,40 @@ export function buildStreetStage(
   }
   group.add(fgParallaxGroup);
 
+  // ── FESTIVE PENNANT BUNTING strung across the street (sways in the breeze, visible above the lane) ──
+  const buntingGroup = new THREE.Group();
+  const pennantGeo = trackGeo(
+    (() => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-0.17, 0, 0, 0.17, 0, 0, 0, -0.42, 0]), 3));
+      g.computeVertexNormals();
+      return g;
+    })()
+  );
+  const flagColors = ['#EF4444', '#FACC15', '#22C55E', '#38BDF8', '#F97316', '#EC4899'];
+  const flagMats = flagColors.map((c) =>
+    trackMat(new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }))
+  );
+  const buntingRopeMat = trackMat(new THREE.LineBasicMaterial({ color: '#3B2A1E' }));
+  const pennants: { m: THREE.Mesh; ph: number }[] = [];
+  for (let st = 0; st < 10; st++) {
+    const x0 = -13 + st * 7.2;
+    const x1 = x0 + 7.2;
+    const pts: THREE.Vector3[] = [];
+    for (let k = 0; k <= 12; k++) {
+      const t = k / 12;
+      pts.push(new THREE.Vector3(x0 + (x1 - x0) * t, 3.75 - Math.sin(t * Math.PI) * 0.55, -3.95));
+    }
+    buntingGroup.add(new THREE.Line(trackGeo(new THREE.BufferGeometry().setFromPoints(pts)), buntingRopeMat));
+    for (let k = 1; k < 12; k++) {
+      const pn = new THREE.Mesh(pennantGeo, flagMats[(k + st) % flagMats.length]);
+      pn.position.copy(pts[k]);
+      buntingGroup.add(pn);
+      pennants.push({ m: pn, ph: k * 0.6 + st });
+    }
+  }
+  group.add(buntingGroup);
+
   // ── AMBIENT VILLAGE LIFE: drifting clouds, pigeon flocks, strolling villagers, dusk fireflies ──
   const cloudGroup = new THREE.Group();
   const cloudMat = trackMat(
@@ -2025,6 +2059,11 @@ export function buildStreetStage(
       g.group.rotation.z = Math.cos(time * 1.6 + g.phase) * 0.03;
     }
 
+    for (let i = 0; i < pennants.length; i++) {
+      const pn = pennants[i];
+      pn.m.rotation.z = Math.sin(time * 2.6 + pn.ph) * 0.14;
+      pn.m.rotation.y = Math.sin(time * 1.9 + pn.ph) * 0.35;
+    }
     // Drifting clouds, pigeon flocks, strolling villagers, dusk fireflies
     cloudGroup.position.x = cameraX * 0.7;
     cloudMat.color.setRGB(
