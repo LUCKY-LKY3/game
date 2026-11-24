@@ -59,3 +59,90 @@ export const HERO_QUIPS: Record<'dodge' | 'streak' | 'lowhp' | 'bossdown' | 'fla
 export function pick<T>(list: T[]): T {
   return list[Math.floor(Math.random() * list.length)];
 }
+
+/** Each fighter's own random chatter during fights (keyed by profile id). Bleeps and mild innuendo only. */
+export const FIGHTER_LINES: Record<string, string[]> = {
+  // Fady: constant Punjabi
+  qari_jaleel: [
+    'Oye balle balle!',
+    'Chak de phatte!',
+    'Ki haal aa, paaji?',
+    'Oye hoye, ki karda pea?',
+    'Kamaal kar ditta, yaar!',
+    'Roti kha lai pehlan, fer ladai!',
+    'Tusi great ho, par main greater!',
+    'Ajj mood vich aan, oye!',
+    'Shava shava, bhaiyo!',
+    'Ohh teri, eh ki ho gaya!',
+    'Chal oye, kam shuru kar!',
+    'Lassi peeni aa, fight baad vich!',
+  ],
+  // Saf: love everybody
+  rebel_aviator: [
+    'I love you all, even the tiny cousin!',
+    'Peace, love and biryani, everybody!',
+    'Group hug after this, yeah?',
+    "Everyone's beautiful! Even the guy I'm hitting!",
+    'Sending love and a flying kick!',
+    'No hate, only samosas!',
+    'You are all my brothers! Brothers who need hitting!',
+    'The world needs more hugs!',
+    'I forgive you before I punch you!',
+    'Love is the real power, bhai!',
+  ],
+  // Jav: swears, but it is all bleeped
+  rebel_tactician: [
+    'What the #£&@ is this?!',
+    'Not another one, ##£&!',
+    'Who woke me up, you #£&@?!',
+    "I'm too sleepy for this ##£&!",
+    'Oh for #£&@\'s sake, more of them?!',
+    'Move, you #£&@ cousin!',
+    '#£&@ me, that was loud!',
+    'Five more minutes, you ##£&!',
+    "That's it, I'm #£&@ annoyed now!",
+  ],
+  // Jam: wants a lift home, plus dad jokes
+  rebel_enforcer: [
+    'Bro drop me off, my uncle from Pakistan has a cousin in Poland who needs to go to a shaadi tomorrow.',
+    'Bro, drop me home, my aunt\'s neighbour\'s goat is getting married!',
+    'Can you drop me? My mum\'s WhatsApp group needs urgent tech support.',
+    'Drop me home bro, I left the gas on in 2019.',
+    'Bro drop me off, my cousin\'s friend\'s dog has a visa interview.',
+    'Drop me, my Nani\'s cat is stuck in a lift in Lahore.',
+    "Bro, quick drop? It's an emergency. I forgot why.",
+    'I told my wife she drew her eyebrows too high. She looked surprised.',
+    "I'm reading a book on anti-gravity. Impossible to put down!",
+    "Why don't eggs tell jokes? They'd crack up!",
+    'Why did the scarecrow win? Outstanding in his field!',
+    "Parallel lines have so much in common. Shame they'll never meet.",
+    'I would tell you a chemistry joke, but I know I would get no reaction.',
+  ],
+  // Chet: investments
+  rebel_striker: [
+    'Buy the dip, sell the cousin!',
+    'Diversify your punches, bro.',
+    'My portfolio is up 12%. So is my fist.',
+    'Cousins are overvalued. Short them!',
+    'That hit had great returns.',
+    'Crypto? No. Kung Fu? Blue chip.',
+    'Compound interest works on combos too.',
+    'Risk management: duck first, punch later.',
+    "I'd invest in you, but you're a bad asset.",
+    'Bull market for fists, bear market for you!',
+  ],
+  // Immy: cheeky and crude (PG-13)
+  immy_girls: [
+    'Careful, I bite. Sometimes.',
+    'Is that a lathi or are you just happy to see me?',
+    "Your uncle called. He wants his pride back.",
+    "I've handled bigger men. Before breakfast.",
+    "Size isn't everything, but it's something, bhai.",
+    "Come closer, I won't bite... hard.",
+    'Spicy? I invented spicy!',
+    "You call that a punch? My Nani's slap has more oomph!",
+    'Boys, boys, take a number!',
+    "That's what she said!",
+    'You sweat like a buffalo in a sauna!',
+  ],
+};

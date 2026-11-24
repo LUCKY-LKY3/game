@@ -223,7 +223,12 @@ export default function App() {
     !hasNextArcadeOpponent;
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-[#141210]">
+    <main className="relative h-dvh w-dvw overflow-hidden bg-[#141210]">
+      <div className="rotate-hint" aria-hidden="true">
+        <div className="text-5xl">📱↻</div>
+        <div className="mt-3 font-display text-2xl font-black tracking-wider text-[#F59E0B] uppercase">Rotate your phone</div>
+        <div className="mt-1 text-sm text-[#D6CEC2]">Mafia Bhaiyas plays in landscape</div>
+      </div>
       {/* Live 2.5D Three.js Fighting Canvas (Attract showcase on Title, active combat in Playing) */}
       {showArenaCanvas && (
         <ArenaCanvas

@@ -88,12 +88,12 @@ function TutorialHint() {
     <button
       type="button"
       onClick={close}
-      className="pointer-events-auto fixed top-[18%] left-1/2 z-40 w-[min(22rem,88vw)] -translate-x-1/2 rounded-xl bg-[#141210]/92 p-3 text-left shadow-xl ring-1 ring-[#F59E0B]/50"
+      className="pointer-events-auto fixed top-[18%] left-1/2 z-40 w-[min(22rem,88vw)] -translate-x-1/2 rounded-xl bg-[#141210]/92 p-3 text-left [@media(max-height:400px)]:top-[33%] [@media(max-height:400px)]:w-[min(17rem,60vw)] [@media(max-height:400px)]:p-2 shadow-xl ring-1 ring-[#F59E0B]/50"
     >
       <div className="mb-1 text-[11px] font-black uppercase tracking-[0.2em] text-[#F59E0B]">Quick tips · tap to close</div>
       <div className="grid grid-cols-2 gap-x-3 gap-y-1">
         {tips.map(([k, v]) => (
-          <div key={k} className="text-[11px] leading-tight text-[#D6CEC2]">
+          <div key={k} className="text-[11px] leading-tight text-[#D6CEC2] [@media(max-height:400px)]:text-[9px]">
             <span className="font-black text-[#F8F4EC]">{k}</span> {v}
           </div>
         ))}
@@ -352,9 +352,9 @@ export function CombatHud({
                   opacity: popup.opacity,
                   transform: `translate(-50%, -50%) rotate(${tilt}deg) scale(${sc.toFixed(3)})`,
                   textShadow:
-                    '3px 3px 0 #141210, -2px -2px 0 #141210, 2px -2px 0 #141210, -2px 2px 0 #141210',
+                    '2px 2px 0 #141210, -1px -1px 0 #141210, 1px -1px 0 #141210, -1px 1px 0 #141210',
                 }}
-                className="absolute font-display text-2xl font-black tracking-wider uppercase sm:text-4xl whitespace-nowrap will-change-transform"
+                className="comic-popup absolute font-display text-base font-black tracking-wider uppercase sm:text-2xl whitespace-nowrap will-change-transform"
               >
                 {popup.text}
               </div>
@@ -585,9 +585,9 @@ export function CombatHud({
       )}
 
       {/* TOP COMBAT HUD (Compact, zero-pill, high contrast, no backdrop-filter) */}
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="hud-safe mx-auto w-full max-w-6xl">
         {brawl ? (
-          <div className="hud-top grid grid-cols-[1.15fr_auto_1fr] items-start gap-2 sm:gap-4">
+          <div className="hud-top hud-safe grid grid-cols-[1.15fr_auto_1fr] items-start gap-2 sm:gap-4">
             {/* LEFT: TAG-TEAM HERO 1 & HERO 2 SQUAD BARS */}
             <div className="flex flex-col gap-1.5">
               {([0, 1] as const).map((idx) => {

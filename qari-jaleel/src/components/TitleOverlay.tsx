@@ -29,7 +29,7 @@ export function TitleOverlay({
       : 'Infinite Escalating Waves';
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-[#141210] via-[#141210]/35 to-[#141210]/65 p-5 sm:p-10">
+    <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-[#141210] via-[#141210]/35 to-[#141210]/65 p-5 sm:p-10 [@media(max-height:480px)]:p-3">
       {/* Top quiet header */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-[min(26vh,10.5rem)] w-auto select-none drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)]" />
@@ -66,9 +66,9 @@ export function TitleOverlay({
           </p>
         </div>
 
-        <div className="pointer-events-auto flex w-full max-w-md flex-col gap-2.5">
+        <div className="pointer-events-auto flex w-full max-w-md flex-col gap-2.5 landscape:max-w-lg">
           {/* Primary Arcade Modes: Street Brawl + Endless Mohalla */}
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2.5 landscape:grid-cols-2">
             <button
               type="button"
               onClick={() => onSelectMode('street_brawl')}
@@ -102,7 +102,7 @@ export function TitleOverlay({
           </div>
 
           {/* Secondary Modes */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 landscape:grid-cols-2">
             <button
               type="button"
               onClick={() => onSelectMode('arcade')}

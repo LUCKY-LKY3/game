@@ -124,6 +124,7 @@ export class StreetBrawlEngine {
   scoreMult = 1;
   quipCooldown = 0;
   tauntTimer = 7;
+  chatTimer = 6;
   buffedUids = new Set<number>();
   endlessBestWave = 0;
   runElapsedSec = 0;
@@ -593,6 +594,7 @@ export class StreetBrawlEngine {
     this.scoreMult = 1;
     this.quipCooldown = 0;
     this.tauntTimer = 7;
+    this.chatTimer = 6;
     this.buffedUids.clear();
     this.endlessBestWave = loadArcadeRecords().endlessBestWave;
     this.runElapsedSec = 0;

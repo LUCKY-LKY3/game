@@ -79,3 +79,35 @@
   .hud-top { zoom: 0.72; }
   .touch-cluster { zoom: 0.84; margin-bottom: max(4px, env(safe-area-inset-bottom)); }
 }
+/* Very short screens (small phones, browser bars showing) */
+@media (max-height: 400px) {
+  .hud-top { zoom: 0.62; }
+  .touch-cluster { zoom: 0.72; }
+  .comic-popup { font-size: 0.85rem; }
+}
+@media (max-height: 340px) {
+  .hud-top { zoom: 0.54; }
+  .touch-cluster { zoom: 0.62; }
+}
+/* Notches and rounded corners */
+.hud-safe {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+/* Portrait phones: ask the player to rotate */
+.rotate-hint {
+  display: none;
+}
+@media (orientation: portrait) and (max-width: 820px) {
+  .rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #141210;
+    text-align: center;
+  }
+}
