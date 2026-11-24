@@ -9,6 +9,47 @@ const TIPS = [
   'Warming up the dhol...',
   'Counting the clay pots...',
   'Polishing Raju’s Splendor...',
+  'Asking the sheep for permission...',
+  'Blowing on the cartridge...',
+  'Inflating the cricket ball...',
+  'Ironing the lungis...',
+  'Arguing about who pays for the pizza...',
+  'Buffering the samosas...',
+  'Looking for the TV remote...',
+  'Untangling the phone chargers...',
+  'Sharpening the chappals...',
+  'Waking up the rickshaw...',
+  'Dusting off the clay pots...',
+  'Finding a parking spot for the bullock cart...',
+  'Loading 4 percent of 100 percent...',
+  'Checking if the WiFi is plugged in...',
+  'Frying the jalebis...',
+  'Hiding the last biscuit...',
+  'Negotiating with a pigeon...',
+  'Turning it off and on again...',
+  'Calling the neighbour to ask what is going on...',
+  'Adding extra sugar to the chai...',
+  'Waiting for the uncle to finish his story...',
+  'Rolling out the red carpet. It is a bedsheet.',
+  'Stretching before the fight...',
+  'Looking for matching socks...',
+  'Dividing the last samosa into seven...',
+  'Putting the tiffin in the fridge...',
+  'Practising the dramatic stare...',
+  'Shooing the monkey off the roof...',
+  'Counting to ten before punching...',
+  'Borrowing sugar from next door...',
+  'Pretending to know how this works...',
+  'Locating the good lathi...',
+  'Making the dramatic slow-motion entrance...',
+  'Shaking the dhol until it behaves...',
+  'Reading the terms and conditions. Just kidding.',
+  'Messaging the cousins in the group chat...',
+  'Sweeping the street. Mostly the dust moved.',
+  'Charging the phone to 1 percent...',
+  'Arranging the folding chairs...',
+  'Checking the weather. It is spicy.',
+  'Cooking up some trouble. And dal.',
 ];
 
 interface LoadingScreenProps {
@@ -50,7 +91,7 @@ export function LoadingScreen({ visible, durationMs }: LoadingScreenProps) {
           />
         )}
       </div>
-      <div className="mt-3 text-[11px] font-black uppercase tracking-[0.22em] text-[#F8F4EC]/80">{tip}</div>
+      <div className="mt-3 max-w-[min(90vw,28rem)] px-4 text-center text-[11px] leading-snug font-black uppercase tracking-[0.22em] text-[#F8F4EC]/80">{tip}</div>
     </div>
   );
 }
