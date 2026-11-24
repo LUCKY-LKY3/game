@@ -5,14 +5,14 @@
  */
 export const WEB_BOARD = {
   /** https://docs.google.com/forms/d/e/<FORM_ID>/formResponse */
-  formUrl: '',
+  formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSf2a-GrNmK3sBGz8rjhTA1wUmcebwcym6LlTf9in8wbKVcSJw/formResponse',
   /** Field ids from the pre-filled link, like 'entry.1234567890' */
-  entryNick: '',
-  entryFighter: '',
-  entryScore: '',
-  entryWave: '',
+  entryNick: 'entry.1611354872',
+  entryFighter: 'entry.324219132',
+  entryScore: 'entry.2138772026',
+  entryWave: 'entry.1454779527',
   /** Sheet > File > Share > Publish to web > CSV link */
-  csvUrl: '',
+  csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTs9V8p1W6LyNSOmbxa-bAgEKOOo5uuzo89meN2oLHgHT0Uq0tYHLUkw2OCZ0NcQKt7B-ZzxYQZt8nY/pub?gid=1696784378&single=true&output=csv',
 };
 
 export const webBoardConfigured = (): boolean =>

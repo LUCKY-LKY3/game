@@ -22,7 +22,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.52.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.53.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -60,4 +60,4 @@ Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_
 5. Ask the user for one in-joke or catchphrase per fighter before writing the gag.
 
 ## Later (web release)
-Web leaderboard code is BUILT but switched off: fill `src/config.ts` (formUrl, entry ids, csvUrl) after the user makes the Google Form + Sheet, steps in `qari-jaleel/WEB_LEADERBOARD.md` (`utils/webBoard.ts`). Waiting on the user for the links.
+Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). It only runs on a normal website; the Artifact uses its own db. Not yet tested against Google (sandbox cannot reach it). Needs web hosting to use. See `qari-jaleel/WEB_LEADERBOARD.md`.
