@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { webBoardConfigured } from '../config';
+import { fetchWebBoard, postWebScore } from './webBoard';
 
 /**
  * Endless Mohalla Hall of Fame.
@@ -140,7 +142,11 @@ export async function submitScore(entry: LBEntry, toLocal = true, toGlobal = tru
   if (toLocal) writeLocal([...readLocal(), entry]);
   if (!toGlobal) return { global: false };
   const online = await getOnline();
-  if (!online) return { global: false };
+  if (!online) {
+    const sent = webBoardConfigured() ? await postWebScore(entry) : false;
+    if (sent) window.setTimeout(() => window.dispatchEvent(new Event('lb-refresh')), 5000); // Sheets takes a few seconds to publish
+    return { global: sent };
+  }
   try {
     const ref = online.db.doc(`scores/${online.uid}`);
     const snap = await ref.get();
@@ -166,13 +172,29 @@ export function useBoards(): Boards {
   useEffect(() => {
     let alive = true;
     let unsub: (() => void) | null = null;
+    let webTimer = 0;
+    let refreshHandler: (() => void) | null = null;
     const offline = () => alive && setState((s) => ({ ...s, local: readLocal(), globalStatus: 'offline' }));
     const fallback = window.setTimeout(() => {
       if (alive) setState((s) => (s.globalStatus === 'loading' ? { ...s, globalStatus: 'offline' } : s));
     }, 11000);
     getOnline().then((online) => {
       if (!alive) return;
-      if (!online) return offline();
+      if (!online) {
+        if (!webBoardConfigured()) return offline();
+        // Normal website: read the published Google Sheet, refresh every minute
+        const load = async () => {
+          const list = await fetchWebBoard();
+          if (!alive) return;
+          if (list) setState({ local: readLocal(), global: top(list, BOARD_SIZE), globalStatus: 'online' });
+          else offline();
+        };
+        void load();
+        webTimer = window.setInterval(load, 60000);
+        window.addEventListener('lb-refresh', load);
+        refreshHandler = load;
+        return;
+      }
       unsub = online.db.collection('scores').onSnapshot(
         (snap) => {
           if (!alive) return;
@@ -193,6 +215,8 @@ export function useBoards(): Boards {
       alive = false;
       clearTimeout(fallback);
       if (unsub) unsub();
+      if (webTimer) clearInterval(webTimer);
+      if (refreshHandler) window.removeEventListener('lb-refresh', refreshHandler);
     };
   }, []);
   return state;

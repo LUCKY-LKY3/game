@@ -22,7 +22,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.51.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.52.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -60,4 +60,4 @@ Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_
 5. Ask the user for one in-joke or catchphrase per fighter before writing the gag.
 
 ## Later (web release)
-Public leaderboard on a normal website (outside the Artifact): Google Form (nickname, fighter, score, wave) posts scores, published-to-web Google Sheet CSV is read for the top 10. Delete entries by deleting sheet rows. Needs the form link + CSV link from the user. Keep the Artifact `db` boards as they are (the Artifact blocks outside connections). Not started.
+Web leaderboard code is BUILT but switched off: fill `src/config.ts` (formUrl, entry ids, csvUrl) after the user makes the Google Form + Sheet, steps in `qari-jaleel/WEB_LEADERBOARD.md` (`utils/webBoard.ts`). Waiting on the user for the links.
