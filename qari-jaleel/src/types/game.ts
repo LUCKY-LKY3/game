@@ -6,7 +6,8 @@ export type FightingStyle =
   | 'kalari_kicker'
   | 'street_boxer'
   | 'weapon_master'
-  | 'kung_fu_master';
+  | 'kung_fu_master'
+  | 'lazy_giant';
 
 export type HeadgearType = 'none' | 'headband' | 'turban' | 'sunglasses' | 'glasses' | 'tilak';
 

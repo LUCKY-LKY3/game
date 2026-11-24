@@ -42,7 +42,8 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
   const effectiveRangeX = spec.rangeX + bonusRange;
   const effectiveRangeZ = spec.rangeZ + (isBollywoodSlap || isKushtiShockwave ? 0.55 : 0);
   const counterMul = hero.counterTimer > 0 ? 1.5 : 1;
-  const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul);
+  const lazyMul = hero.style === 'lazy_giant' && (hero.action === 'lp' || hero.action === 'lp2' || hero.action === 'rp' || hero.action === 'combo_finisher') ? 1.9 : 1;
+  const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul * lazyMul);
 
   // 1. Smashable terracotta clay pots
   for (let i = 0; i < this.stage.pots.length; i++) {
@@ -123,7 +124,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
       hero.hitIdsThisSwing.add(e.uid);
       usedWeaponOnEnemy = true;
 
-      const heavy = spec.heavy || weapon?.kind === 'chair' || isBollywoodSlap;
+      const heavy = spec.heavy || weapon?.kind === 'chair' || isBollywoodSlap || lazyMul > 1;
       if (isBollywoodSlap) soundEngine.playSlap();
       else if (weapon?.kind === 'lathi') soundEngine.playWoodWhack();
       else soundEngine.playHit(heavy);
@@ -133,8 +134,8 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
         : is360Sweep
           ? (e.x >= hero.x ? 1 : -1)
           : hero.facing;
-      const kb = (spec.knockbackX + (weapon?.kind === 'chair' ? 1.15 : 0) + (isBollywoodSlap ? 0.9 : 0)) * pushDir;
-      const launchY = weapon?.kind === 'chair' ? Math.max(spec.launchY, 4.1) : spec.launchY;
+      const kb = (spec.knockbackX + (weapon?.kind === 'chair' ? 1.15 : 0) + (isBollywoodSlap ? 0.9 : 0) + (lazyMul > 1 ? 2.2 : 0)) * pushDir;
+      const launchY = weapon?.kind === 'chair' ? Math.max(spec.launchY, 4.1) : lazyMul > 1 ? Math.max(spec.launchY, 3.6) : spec.launchY;
 
       // Clean Hit Feedback: limit comic callouts strictly to combo finishers, throws, back-elbows, and critical hits!
       const isFinisher = hero.action === 'combo_finisher';
@@ -183,6 +184,14 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
       }
 
       this.damageEnemy(e, hero, effectiveDmg, heavy, kb, launchY, popup);
+      if (hero.style === 'lazy_giant' && Math.random() < 0.45) {
+        // Everyone nearby is in awe of how big he is
+        const onlooker = this.enemies.find((o) => o.alive && o.uid !== e.uid && Math.abs(o.x - hero.x) < 6.5);
+        if (onlooker) {
+          const AWE = ['BAAP RE!', 'SO BIG!', 'WOW...', 'HE IS HUGE!', 'MAMA MIA!', 'ARMS?!'];
+          this.spawnComicPopup(onlooker.x, 2.05, onlooker.z, AWE[Math.floor(Math.random() * AWE.length)], '#FDE047');
+        }
+      }
 
       // Landing normal JAB or HOOK hits restores Recoverable Green Health back into solid HP!
       if (

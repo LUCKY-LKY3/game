@@ -42,7 +42,7 @@ Artifact pages cannot load anything from the internet except Google Fonts, so ke
 
 ## Fighters and their power moves
 Qari (`qari_jaleel`, kind `fady_smoke`) is DONE: "I'll be 2 mins bro". Red plastic chair, chai, smoke, countdown clock that stalls on 0:01 then +10:00, cousin banter bubbles, chair smash. Use it as the template for the others.
-Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_striker`) look + Kung Fu style is DONE (his Ford runover move still needs comic polish). Jam (`rebel_enforcer`) is DONE: very tall/skinny speedy boxer, snooker move with chalk, practice strokes, ball break and PG-13 innuendo jokes. Still to polish: Dara/Jav (`jav_story`), Immy (`immy_girls`), Qari's look, Chet's Ford move.
+Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_striker`) look + Kung Fu style is DONE (his Ford runover move still needs comic polish). Jam (`rebel_enforcer`) is DONE: very tall/skinny speedy boxer, snooker move with chalk, practice strokes, ball break and PG-13 innuendo jokes. Jav (`rebel_tactician`) is DONE: huge lazy giant (`lazy_giant` style: slouchy idle, slow uninterruptible 1.9x damage punches, awe popups from onlookers) with the dozing "Nap Time Knockout" move. Still to polish: Immy (`immy_girls`), Qari's look, Chet's Ford move.
 
 ## Comic move recipe (from Qari)
 1. Speech bubbles via `this.speechBubble` + `this.speechTimer` in the engine.

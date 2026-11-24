@@ -41,16 +41,16 @@ export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec
       };
 
     case 'rebel_tactician':
-      // Jav: larger Pehelwan-broad frame (taller & broader deltoids)
+      // Jav: enormous, thick-armed lazy giant with a comically small head
       return {
-        heightScale: 1.1,
-        widthScale: 1.0,
-        depthScale: 1.0,
-        bellyBulge: 0.03,
-        limbScale: 1.08,
-        headScale: 1.08,
-        shoulderMass: 1.06,
-        vTaper: 1.06,
+        heightScale: 1.2,
+        widthScale: 1.34,
+        depthScale: 1.22,
+        bellyBulge: 0.05,
+        limbScale: 1.32,
+        headScale: 0.92,
+        shoulderMass: 1.28,
+        vTaper: 1.22,
       };
 
     case 'rebel_aviator':
@@ -2713,6 +2713,28 @@ export function applyFighterPose(
         lKneeX = 0.52;
         rHipX = 0.28;
         rKneeX = 0.46;
+      } else if (style === 'lazy_giant') {
+        // Slouched, unbothered giant: arms hang like sandbags, head drooped, slow sway
+        const sway = Math.sin(time * 1.3);
+        const breath = Math.sin(time * 2.1);
+        hipsY = 0.85 + breath * 0.012;
+        hipsRotY = -0.1;
+        hipsX = sway * 0.03;
+        torsoRotX = 0.24 + breath * 0.012;
+        torsoRotY = -0.14;
+        headRotX = 0.22;
+        headRotY = 0.16 + sway * 0.08;
+        headRotZ = sway * 0.05;
+        lShX = -0.1 + breath * 0.02;
+        lShZ = -0.18;
+        lElX = -0.28;
+        rShX = -0.08 - breath * 0.02;
+        rShZ = 0.2;
+        rElX = -0.32;
+        lHipX = -0.2;
+        lKneeX = 0.26;
+        rHipX = 0.16;
+        rKneeX = 0.22;
       } else if (style === 'kung_fu_master') {
         // Bruce Lee: light, bouncing side-on stance, lead hand open at chest height, rear hand guarding the jaw
         const hop = Math.abs(Math.sin(time * 5.4));
@@ -3079,6 +3101,23 @@ export function applyFighterPose(
         rShX = -0.78;
         rShZ = 0.42;
         rElX = -1.25;
+      } else if (style === 'lazy_giant') {
+        // Slow right haymaker: huge lazy wind-up, then a freight-train swing
+        hipsY = 0.85 - tp.wind * 0.06 + tp.strike * 0.03;
+        hipsRotY = 0.55 * tp.wind - 0.8 * tp.strike;
+        torsoRotY = 0.62 * tp.wind - 0.9 * tp.strike;
+        torsoRotX = 0.22 + tp.strike * 0.18;
+        headRotX = 0.15;
+        rShX = -1.3 - tp.strike * 0.2;
+        rShZ = 1.25 * tp.wind + 0.3 * (1 - tp.wind) - tp.strike * 1.45;
+        rElX = -0.35;
+        lShX = -0.1;
+        lShZ = -0.2;
+        lElX = -0.3;
+        lHipX = -0.3;
+        lKneeX = 0.34;
+        rHipX = 0.22;
+        rKneeX = 0.3;
       } else if (style === 'kung_fu_master') {
         // Bruce Lee lead straight: whip-fast, shoulder height, rear hand stays guarding the jaw
         hipsY = 0.92 - tp.wind * 0.02;
@@ -3175,6 +3214,23 @@ export function applyFighterPose(
         lShZ = -0.45;
         rShX = -0.85;
         rShZ = 0.48;
+      } else if (style === 'lazy_giant') {
+        // Slow left haymaker
+        hipsY = 0.85 - tp.wind * 0.06 + tp.strike * 0.03;
+        hipsRotY = -0.55 * tp.wind + 0.8 * tp.strike;
+        torsoRotY = -0.62 * tp.wind + 0.9 * tp.strike;
+        torsoRotX = 0.22 + tp.strike * 0.18;
+        headRotX = 0.15;
+        lShX = -1.3 - tp.strike * 0.2;
+        lShZ = -1.25 * tp.wind - 0.3 * (1 - tp.wind) + tp.strike * 1.45;
+        lElX = -0.35;
+        rShX = -0.1;
+        rShZ = 0.2;
+        rElX = -0.3;
+        lHipX = -0.3;
+        lKneeX = 0.34;
+        rHipX = 0.22;
+        rKneeX = 0.3;
       } else if (style === 'kung_fu_master') {
         // Rear straight right: full hip rotation, left hand guard
         hipsY = 0.91 - tp.wind * 0.02;
@@ -3272,6 +3328,23 @@ export function applyFighterPose(
         rShX = -1.24;
         rShZ = 0.26;
         rElX = -1.08;
+      } else if (style === 'lazy_giant') {
+        // Overhead hammer fist: both arms up, then a lazy but crushing drop
+        hipsY = 0.85 - tp.wind * 0.1 + tp.strike * 0.02;
+        hipsRotY = 0;
+        torsoRotX = -0.28 * tp.wind + 0.62 * tp.strike;
+        torsoRotY = 0;
+        headRotX = -0.12 * tp.wind + 0.2 * tp.strike;
+        rShX = -2.5 * tp.wind - 0.7 * tp.strike - 0.4 * (1 - tp.wind - tp.strike);
+        rShZ = 0.45;
+        rElX = -0.55;
+        lShX = -2.4 * tp.wind - 0.6 * tp.strike - 0.3 * (1 - tp.wind - tp.strike);
+        lShZ = -0.45;
+        lElX = -0.55;
+        lHipX = -0.34;
+        lKneeX = 0.42;
+        rHipX = 0.26;
+        rKneeX = 0.36;
       } else if (style === 'kung_fu_master') {
         // Dragon thrust: long gliding lunge into a perfectly straight rear punch, off-hand sweeping back for balance
         hipsY = 0.9 - tp.wind * 0.12 - tp.strike * 0.04;
@@ -3373,6 +3446,22 @@ export function applyFighterPose(
         rShX = -1.28;
         rShZ = 0.28;
         rElX = -1.12;
+      } else if (style === 'lazy_giant') {
+        // Finisher: colossal two-fisted slam
+        hipsY = 0.85 - tp.wind * 0.14 + tp.strike * 0.02;
+        torsoRotX = -0.4 * tp.wind + 0.72 * tp.strike;
+        torsoRotY = 0;
+        headRotX = -0.2 * tp.wind + 0.25 * tp.strike;
+        rShX = -2.75 * tp.wind - 0.5 * tp.strike - 0.3 * (1 - tp.wind - tp.strike);
+        rShZ = 0.38;
+        rElX = -0.4;
+        lShX = -2.65 * tp.wind - 0.45 * tp.strike - 0.3 * (1 - tp.wind - tp.strike);
+        lShZ = -0.38;
+        lElX = -0.4;
+        lHipX = -0.4;
+        lKneeX = 0.5;
+        rHipX = 0.3;
+        rKneeX = 0.44;
       } else if (style === 'kung_fu_master') {
         // Flying high side kick, arms spread for balance
         hipsY = 0.94 - tp.wind * 0.14 + tp.strike * 0.34;
@@ -3859,42 +3948,93 @@ export function applyFighterPose(
     }
 
     case 'powerup_jav': {
-      if (phase < 0.68) {
-        const talk = Math.sin(time * 10);
-        const talk2 = Math.cos(time * 7.5);
-        hipsY = 0.95;
-        torsoRotY = talk * 0.14;
-        torsoRotX = 0.04;
-        headRotX = talk2 * 0.12;
-        headRotY = 0.18 + talk * 0.12;
-        lShX = -1.05 + talk * 0.32;
-        lShZ = -0.25 + talk2 * 0.15;
-        lElX = -1.1 + talk * 0.38;
-        rShX = -1.18 - talk * 0.36;
-        rShZ = 0.25 - talk2 * 0.15;
-        rElX = -1.05 - talk * 0.45;
-      } else if (phase < 0.8) {
-        const w = (phase - 0.68) / 0.12;
-        hipsY = 0.92;
-        hipsRotY = 0.45 * w;
-        torsoRotY = 0.65 * w;
-        torsoRotX = -0.08 * w;
+      // 0-.10 big yawn + stretch, .10-.46 dozing (slumped, head nodding, zzz), .46-.62 slow giant wind-up,
+      // .62-.72 THE punch, .72-.84 afterwards, .84-1 stretches and dozes off again
+      const nod = Math.sin(time * 1.6);
+      if (phase < 0.1) {
+        const k = snap(phase / 0.1);
+        hipsY = 0.9 + k * 0.04;
+        torsoRotX = -0.3 * k;
+        headRotX = -0.45 * k;
+        lShX = -2.7 * k;
+        lShZ = -0.5;
+        lElX = -0.3;
+        rShX = -2.7 * k;
+        rShZ = 0.5;
+        rElX = -0.3;
+      } else if (phase < 0.46) {
+        hipsY = 0.8;
+        hipsRotY = -0.08;
+        torsoRotX = 0.38 + nod * 0.03;
+        headRotX = 0.5 + nod * 0.06;
+        headRotY = 0.1;
+        lShX = -0.08;
+        lShZ = -0.16;
+        lElX = -0.2;
+        rShX = -0.06;
+        rShZ = 0.16;
+        rElX = -0.22;
+        lHipX = -0.25;
+        lKneeX = 0.34;
+        rHipX = 0.2;
+        rKneeX = 0.3;
+      } else if (phase < 0.62) {
+        const w = (phase - 0.46) / 0.16;
+        hipsY = 0.84 - w * 0.08;
+        hipsRotY = 0.7 * w;
+        torsoRotY = 0.85 * w;
+        torsoRotX = 0.3 - w * 0.12;
+        headRotX = 0.3 - w * 0.2;
         rShX = -1.35;
-        rShZ = 1.15 * w;
-        rElX = -0.2;
-        lShX = -0.85;
-        lElX = -1.1;
+        rShZ = 1.5 * w + 0.16 * (1 - w);
+        rElX = -0.35;
+        lShX = -0.2;
+        lShZ = -0.3;
+        lElX = -0.5;
+        lHipX = -0.4;
+        lKneeX = 0.5;
+        rHipX = 0.28;
+        rKneeX = 0.4;
+      } else if (phase < 0.72) {
+        hipsY = 0.78 + Math.min(1, (phase - 0.62) / 0.06) * 0.06;
+        hipsRotY = THREE.MathUtils.lerp(0.7, -0.95, Math.min(1, (phase - 0.62) / 0.06));
+        torsoRotY = THREE.MathUtils.lerp(0.85, -1.1, Math.min(1, (phase - 0.62) / 0.06));
+        torsoRotX = 0.3;
+        rShX = -1.6;
+        rShZ = THREE.MathUtils.lerp(1.5, -0.2, Math.min(1, (phase - 0.62) / 0.06));
+        rElX = -0.1;
+        lShX = -0.5;
+        lShZ = -0.4;
+        lElX = -0.8;
+        lHipX = -0.5;
+        lKneeX = 0.62;
+        rHipX = 0.34;
+        rKneeX = 0.46;
+      } else if (phase < 0.84) {
+        hipsY = 0.84;
+        hipsRotY = -0.5;
+        torsoRotY = -0.6;
+        torsoRotX = 0.16;
+        headRotX = 0.05;
+        rShX = -1.5;
+        rShZ = -0.1;
+        rElX = -0.1;
+        lShX = -0.2;
+        lShZ = -0.25;
+        lElX = -0.4;
       } else {
-        const slapT = Math.min(1, (phase - 0.8) / 0.12);
-        hipsY = 0.92;
-        hipsRotY = THREE.MathUtils.lerp(0.45, -0.65, slapT);
-        torsoRotY = THREE.MathUtils.lerp(0.65, -0.85, slapT);
-        torsoRotX = 0.2;
-        rShX = -1.55;
-        rShZ = THREE.MathUtils.lerp(1.15, -0.2, slapT);
-        rElX = -0.14;
-        lShX = -0.7;
-        lElX = -1.25;
+        const k = (phase - 0.84) / 0.16;
+        hipsY = 0.86 - k * 0.06;
+        torsoRotX = 0.1 + k * 0.3;
+        headRotX = 0.1 + k * 0.4 + Math.sin(time * 5) * 0.03;
+        lShX = -1.8 * (1 - k) - 0.08;
+        lShZ = -0.4;
+        lElX = -0.5;
+        rShX = -1.8 * (1 - k) - 0.06;
+        rShZ = 0.4;
+        rElX = -0.5;
+        lHipX = -0.2 * k;
+        rHipX = 0.16 * k;
       }
       break;
     }

@@ -555,7 +555,7 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
 
   // Brisk Classic Double Dragon Arcade Rhythm movement!
   const styleSpeedBonus =
-    hero.profile.id === 'rebel_enforcer' ? 1.15 : hero.style === 'kalari_kicker' ? 0.72 : hero.style === 'kung_fu_master' ? 0.6 : hero.style === 'street_boxer' ? 0.42 : 0;
+    hero.profile.id === 'rebel_enforcer' ? 1.15 : hero.style === 'lazy_giant' ? -1.3 : hero.style === 'kalari_kicker' ? 0.72 : hero.style === 'kung_fu_master' ? 0.6 : hero.style === 'street_boxer' ? 0.42 : 0;
   const baseSpeedX = 5.85 + hero.profile.stats.speed * 0.14 + styleSpeedBonus;
   const maxSpeedX = hero.isSprinting ? baseSpeedX * 1.48 : baseSpeedX;
   // Responsive Z-strafe for our +30% wider village lane
@@ -997,7 +997,10 @@ export function startHeroMove(this: StreetBrawlEngine, hero: HeroRuntime, move: 
       ? 0.78
       : 1.0;
   const dholBoost = this.hasBoon('double_dhol') ? 0.85 : 1.0;
-  hero.actionDuration = spec.duration * boxerBoost * dholBoost;
+  const lazyPunch = hero.style === 'lazy_giant' && (move === 'lp' || move === 'lp2' || move === 'rp' || move === 'combo_finisher');
+  hero.actionDuration = spec.duration * boxerBoost * dholBoost * (lazyPunch ? 1.45 : 1);
+  // Too big to flinch: lazy giant swings cannot be interrupted
+  if (lazyPunch) hero.superArmorTimer = Math.max(hero.superArmorTimer, hero.actionDuration * 0.9);
   hero.hitIdsThisSwing.clear();
   // Auto-aim: strikes turn toward a close enemy standing behind you and slide a little toward its lane
   if (getSettings().autoAim && (move === 'lp' || move === 'lp2' || move === 'rp' || move === 'kick')) {

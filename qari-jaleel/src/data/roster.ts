@@ -129,6 +129,13 @@ export const FIGHTING_STYLES: Record<
     signatureMove: '4-Hit Bob & Weave Uppercut Flurry',
     color: '#38BDF8',
   },
+  lazy_giant: {
+    label: 'Lazy Giant',
+    shortLabel: 'Giant',
+    description: 'Slouchy and unbothered. Slow swings, but every punch is a freight train that cannot be interrupted.',
+    signatureMove: 'Slow Haymaker & Overhead Slam',
+    color: '#A855F7',
+  },
   kung_fu_master: {
     label: 'Kung Fu Master',
     shortLabel: 'Kung Fu',
@@ -153,7 +160,7 @@ export function resolveFighterStyle(profile: FighterProfile): FightingStyle {
     case 'rebel_aviator':
       return 'kushti_pehelwan';
     case 'rebel_tactician':
-      return 'bollywood_hero';
+      return 'lazy_giant';
     case 'rebel_enforcer':
       return 'street_boxer';
     case 'rebel_striker':
@@ -229,7 +236,7 @@ export function createStarterRoster(): FighterProfile[] {
     {
       id: 'rebel_tactician',
       name: "Dara 'Jav' Malik",
-      nickname: 'The Tactician',
+      nickname: 'Sleepy Giant',
       isCustom: false,
       archetype: 'boxer',
       portraitUrl: '/src/assets/images/rebel_glasses_tactician_1795104809936.jpg',
@@ -246,9 +253,9 @@ export function createStarterRoster(): FighterProfile[] {
         lowerOutfitStyle: 'pathani_salwar',
         plaidLungi: false,
       },
-      stats: { power: 7, speed: 9, reach: 7, defense: 8 },
-      specialMoveName: 'Storytime Mega Slap',
-      taunt: 'I read your next three moves before the bell even rang.',
+      stats: { power: 10, speed: 3, reach: 8, defense: 9 },
+      specialMoveName: 'Nap Time Knockout',
+      taunt: 'Wake me up when you are done, bro.',
       wins: 0,
     },
     {

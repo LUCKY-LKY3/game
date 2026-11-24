@@ -54,14 +54,15 @@ export function startHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime) {
       break;
     case 'jav_story':
       hero.action = 'powerup_jav';
-      hero.actionDuration = 2.7;
-      hero.callout = 'STORYTIME MEGA SLAP!';
+      hero.actionDuration = 6.8;
+      hero.invulnTimer = 7.0;
+      hero.callout = 'NAP TIME KNOCKOUT!';
       this.speechBubble = {
         side: hero.index === 0 ? 1 : 2,
         speaker: hero.profile.name,
-        text: 'Listen cousin, let me tell you a quick story...',
+        text: 'Ughhh... I was napping.',
       };
-      this.speechTimer = 2.1;
+      this.speechTimer = 1.4;
       break;
     case 'jam_snooker':
       hero.action = 'powerup_jam';
@@ -229,11 +230,48 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
       say(side, hero.profile.name, '...sorry bro. Love you though.', 1.6);
     });
   } else if (hero.powerupKind === 'jav_story') {
-    if (phase > 0.72 && (hero.powerupHitsMask & 1) === 0) {
-      hero.powerupHitsMask |= 1;
-      soundEngine.playSlap();
-      this.dealPowerupAoeDamage(hero, tx, tz, 4.8, 65, true, 'MEGA THAPPAD!');
+    const side = hero.index === 0 ? 1 : 2;
+    const otherSide = side === 1 ? 2 : 1;
+    const say = (s: 1 | 2, speaker: string, text: string, secs: number) => {
+      this.speechBubble = { side: s, speaker, text };
+      this.speechTimer = secs;
+    };
+    const once = (bit: number, at: number, fn: () => void) => {
+      if (phase > at && (hero.powerupHitsMask & bit) === 0) {
+        hero.powerupHitsMask |= bit;
+        fn();
+      }
+    };
+    const name = hero.profile.name;
+    // Zzz floats up while he dozes
+    if (phase > 0.12 && phase < 0.46 && Math.floor(phase * 40) % 5 === 0 && (hero.powerupHitsMask & 4096) === 0) {
+      hero.powerupHitsMask |= 4096;
+      this.spawnComicPopup(hero.x + hero.facing * 0.4, 2.6, hero.z, 'Zzz...', '#93C5FD');
     }
+    if (Math.floor(phase * 40) % 5 !== 0) hero.powerupHitsMask &= ~4096;
+    once(1, 0.08, () => this.spawnComicPopup(hero.x, 2.5, hero.z, 'YAAAWN!', '#FDE047'));
+    once(2, 0.15, () => say(otherSide, 'Cousin', 'Bhai... look how BIG he is.', 1.7));
+    once(4, 0.25, () => say(otherSide, 'Cousin 2', 'His arm is bigger than my whole body!', 1.8));
+    once(8, 0.34, () => say(side, name, 'Five more minutes, bro.', 1.4));
+    once(16, 0.4, () => say(otherSide, 'Cousin', 'Should we... wake him up?', 1.4));
+    once(32, 0.47, () => {
+      this.shakeIntensity = Math.max(this.shakeIntensity, 0.2);
+      say(side, name, 'Fine. One punch.', 1.4);
+    });
+    once(64, 0.54, () => {
+      this.shakeIntensity = Math.max(this.shakeIntensity, 0.3);
+      this.spawnParticles(hero.x, 0.2, hero.z, 18, 3.4);
+    });
+    once(128, 0.67, () => {
+      soundEngine.playSlap();
+      this.shakeIntensity = Math.max(this.shakeIntensity, 0.55);
+      this.hitstopTimer = Math.max(this.hitstopTimer, 0.14);
+      this.spawnParticles(tx, 1.0, tz, 40, 7);
+      this.dealPowerupAoeDamage(hero, tx, tz, 6.5, 90, true, 'LAZY PUNCH!');
+    });
+    once(256, 0.76, () => say(otherSide, 'Cousin', '...He did that while yawning.', 1.8));
+    once(512, 0.86, () => say(side, name, 'Wake me when it is lunch.', 1.6));
+    once(1024, 0.92, () => this.spawnComicPopup(hero.x + hero.facing * 0.4, 2.6, hero.z, 'Zzz...', '#93C5FD'));
   } else if (hero.powerupKind === 'jam_snooker') {
     this.powerupDirector.updateJamSnooker(phase, hero.x, hero.y, hero.z, hero.facing);
     const side = hero.index === 0 ? 1 : 2;
