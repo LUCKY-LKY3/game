@@ -136,8 +136,9 @@ export function cleanNickname(raw: string): string {
  * Save a score. Always stored on this device; also posted to the shared board when online and allowed.
  * Resolves whether it reached the shared board.
  */
-export async function submitScore(entry: LBEntry): Promise<{ global: boolean }> {
-  writeLocal([...readLocal(), entry]);
+export async function submitScore(entry: LBEntry, toLocal = true, toGlobal = true): Promise<{ global: boolean }> {
+  if (toLocal) writeLocal([...readLocal(), entry]);
+  if (!toGlobal) return { global: false };
   const online = await getOnline();
   if (!online) return { global: false };
   try {
@@ -152,21 +153,26 @@ export async function submitScore(entry: LBEntry): Promise<{ global: boolean }> 
   }
 }
 
-/** Live board: this device's scores first, upgraded to the shared board when it answers. */
-export function useBoard(): BoardState {
-  const [state, setState] = useState<BoardState>({ entries: readLocal(), source: 'loading' });
+export interface Boards {
+  local: LBEntry[];
+  global: LBEntry[];
+  /** loading until the shared board answers; offline means no shared board is reachable */
+  globalStatus: 'loading' | 'online' | 'offline';
+}
+
+/** Both boards: this device's scores, and the public shared board when it answers. */
+export function useBoards(): Boards {
+  const [state, setState] = useState<Boards>({ local: readLocal(), global: [], globalStatus: 'loading' });
   useEffect(() => {
     let alive = true;
     let unsub: (() => void) | null = null;
+    const offline = () => alive && setState((s) => ({ ...s, local: readLocal(), globalStatus: 'offline' }));
     const fallback = window.setTimeout(() => {
-      if (alive) setState((s) => (s.source === 'loading' ? { entries: readLocal(), source: 'local' } : s));
+      if (alive) setState((s) => (s.globalStatus === 'loading' ? { ...s, globalStatus: 'offline' } : s));
     }, 11000);
     getOnline().then((online) => {
       if (!alive) return;
-      if (!online) {
-        setState({ entries: readLocal(), source: 'local' });
-        return;
-      }
+      if (!online) return offline();
       unsub = online.db.collection('scores').onSnapshot(
         (snap) => {
           if (!alive) return;
@@ -178,11 +184,9 @@ export function useBoard(): BoardState {
               if (e) all.push(e);
             }
           }
-          setState({ entries: top(all, BOARD_SIZE), source: 'global' });
+          setState({ local: readLocal(), global: top(all, BOARD_SIZE), globalStatus: 'online' });
         },
-        () => {
-          if (alive) setState({ entries: readLocal(), source: 'local' });
-        }
+        offline
       );
     });
     return () => {

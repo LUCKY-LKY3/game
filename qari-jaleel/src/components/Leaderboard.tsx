@@ -1,27 +1,37 @@
 import { useState } from 'react';
 import { Crown, Trophy } from 'lucide-react';
 import {
-  BoardState,
+  Boards,
   cleanNickname,
   fighterLabel,
   LBEntry,
   qualifies,
   submitScore,
-  useBoard,
+  useBoards,
 } from '../utils/leaderboard';
 
 const MEDALS = ['#FACC15', '#CBD5E1', '#F59E0B'];
 
 /** Old-arcade style top 10 table */
-export function LeaderboardTable({ board, highlightTs }: { board: BoardState; highlightTs?: number }) {
-  const rows = Array.from({ length: 10 }, (_, i) => board.entries[i] ?? null);
+export function LeaderboardTable({
+  entries,
+  title,
+  tag,
+  tagColor,
+  highlightTs,
+}: {
+  entries: LBEntry[];
+  title: string;
+  tag: string;
+  tagColor: string;
+  highlightTs?: number;
+}) {
+  const rows = Array.from({ length: 10 }, (_, i) => entries[i] ?? null);
   return (
     <div className="border border-[#F59E0B]/40 bg-[#0B0B0B] p-3 font-mono-num">
       <div className="mb-2 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em]">
-        <span className="text-[#FACC15]">Global Challenge · Top 10</span>
-        <span className={board.source === 'global' ? 'text-[#4ADE80]' : 'text-[#B6AA9A]'}>
-          {board.source === 'global' ? '● Everyone' : board.source === 'loading' ? 'Loading...' : 'This device'}
-        </span>
+        <span className="text-[#FACC15]">{title}</span>
+        <span style={{ color: tagColor }}>{tag}</span>
       </div>
       <div className="grid grid-cols-[1.6rem_1fr_auto_auto] gap-x-3 gap-y-0.5 text-xs">
         <div className="text-[#B6AA9A]">#</div>
@@ -53,28 +63,78 @@ export function LeaderboardTable({ board, highlightTs }: { board: BoardState; hi
   );
 }
 
+type Tab = 'public' | 'local';
+
+/** Two boards with a tab switch: Public (everyone) and This device */
+function BoardTabs({ boards, highlightTs, initial }: { boards: Boards; highlightTs?: number; initial?: Tab }) {
+  const [tab, setTab] = useState<Tab>(initial ?? 'public');
+  const pub = boards.globalStatus;
+  return (
+    <div>
+      <div className="mb-2 flex gap-2">
+        {(['public', 'local'] as Tab[]).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`px-3 py-1.5 text-[11px] font-black uppercase tracking-widest ${
+              tab === t ? 'bg-[#F59E0B] text-[#141210]' : 'border border-[#F59E0B]/40 text-[#F59E0B]'
+            }`}
+          >
+            {t === 'public' ? 'Public' : 'This device'}
+          </button>
+        ))}
+      </div>
+      {tab === 'public' ? (
+        <>
+          <LeaderboardTable
+            entries={boards.global}
+            title="Global Challenge · Top 10"
+            tag={pub === 'online' ? '● Everyone' : pub === 'loading' ? 'Loading...' : 'Offline'}
+            tagColor={pub === 'online' ? '#4ADE80' : '#B6AA9A'}
+            highlightTs={highlightTs}
+          />
+          {pub === 'offline' && (
+            <div className="mt-1 text-[10px] text-[#B6AA9A]">Public board not reachable right now.</div>
+          )}
+        </>
+      ) : (
+        <LeaderboardTable
+          entries={boards.local}
+          title="My Scores · Top 10"
+          tag="This device"
+          tagColor="#B6AA9A"
+          highlightTs={highlightTs}
+        />
+      )}
+    </div>
+  );
+}
+
 /** Hall of Fame for the title screen */
 export function HallOfFame() {
-  const board = useBoard();
-  return <LeaderboardTable board={board} />;
+  const boards = useBoards();
+  return <BoardTabs boards={boards} />;
 }
 
 /**
- * Shown on the Endless Mohalla results: arcade-style name entry when the run makes the top 10,
- * then the board with your entry highlighted.
+ * Shown on the Endless Mohalla results: arcade-style name entry when the run makes either top 10,
+ * then the boards with your entry highlighted.
  */
 export function EndlessScoreEntry({ score, wave, fighterName }: { score: number; wave: number; fighterName: string }) {
-  const board = useBoard();
+  const boards = useBoards();
   const [nick, setNick] = useState('');
   const [saved, setSaved] = useState<{ ts: number; global: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
-  const earned = board.source !== 'loading' && qualifies(score, board.entries);
+  const earnedLocal = qualifies(score, boards.local);
+  const earnedGlobal = boards.globalStatus === 'online' && qualifies(score, boards.global);
+  const earned = earnedLocal || earnedGlobal || (boards.globalStatus === 'loading' && score > 0 && boards.local.length < 10);
 
   const submit = async () => {
     const name = cleanNickname(nick) || 'PLAYER';
     setBusy(true);
     const ts = Date.now();
-    const res = await submitScore({ nick: name, fighter: fighterLabel(fighterName), score, wave, ts });
+    const res = await submitScore({ nick: name, fighter: fighterLabel(fighterName), score, wave, ts }, earnedLocal, earnedGlobal);
     setSaved({ ts, global: res.global });
     setBusy(false);
   };
@@ -113,12 +173,12 @@ export function EndlessScoreEntry({ score, wave, fighterName }: { score: number;
           </div>
         </div>
       )}
-      {saved && !saved.global && board.source === 'global' && (
+      {saved && earnedGlobal && !saved.global && (
         <div className="mb-2 text-[11px] text-[#F87171]">
-          Saved on this device. Ask for Contributor access to post to the shared board.
+          Could not post to the public board (needs Contributor access). Saved on this device.
         </div>
       )}
-      <LeaderboardTable board={board} highlightTs={saved?.ts} />
+      <BoardTabs boards={boards} highlightTs={saved?.ts} initial={earnedGlobal ? 'public' : 'local'} />
     </div>
   );
 }
