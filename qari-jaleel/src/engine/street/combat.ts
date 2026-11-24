@@ -364,12 +364,12 @@ export function damageEnemy(this: StreetBrawlEngine,
       this.bossShockwaveCooldown = 1.6;
       soundEngine.playBossRoar();
       this.spawnParticles(e.x, 1.35, e.z, 28, 5.8);
-      this.spawnComicPopup(e.x, 2.25, e.z, 'MOUSTACHE RAGE!', '#FACC15');
+      this.spawnComicPopup(e.x, 2.25, e.z, e.spec.ragePopup ?? 'MOUSTACHE RAGE!', '#FACC15');
       this.shakeIntensity = Math.max(this.shakeIntensity, 0.38);
       this.speechBubble = {
         side: 2,
         speaker: e.spec.name,
-        text: 'ENOUGH! FEEL MY MOUSTACHE RAGE!',
+        text: e.spec.rageLine ?? 'ENOUGH! FEEL MY MOUSTACHE RAGE!',
       };
       this.speechTimer = 2.4;
       // Knock back nearby heroes cleanly when Bade Tau roars!

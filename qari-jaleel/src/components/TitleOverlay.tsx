@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { Flame, Swords, Trophy, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { SettingsPanel } from './SettingsPanel';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
@@ -14,6 +15,7 @@ export function TitleOverlay({
   onSelectMode,
 }: TitleOverlayProps) {
   const records = useMemo(() => loadArcadeRecords(), []);
+  const [showSettings, setShowSettings] = useState(false);
 
   const brawlMeta = records.brawlBestRank
     ? `Best Rank ${records.brawlBestRank} · ${records.brawlBestScore.toLocaleString()} pts`
@@ -31,6 +33,14 @@ export function TitleOverlay({
         <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-[min(26vh,10.5rem)] w-auto select-none drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)]" />
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F59E0B]/90">
           {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
+          <button
+            type="button"
+            onClick={() => setShowSettings(true)}
+            aria-label="Settings"
+            className="pointer-events-auto ml-3 inline-flex h-9 w-9 items-center justify-center border border-[#F8F4EC]/25 bg-[#141210]/90 align-middle text-[#F8F4EC] hover:border-[#F59E0B] hover:text-[#F59E0B] transition-colors"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -101,6 +111,19 @@ export function TitleOverlay({
           </div>
         </div>
       </div>
+      {showSettings && (
+        <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-[#141210]/88 p-4">
+          <div className="w-full max-w-sm border border-[#F8F4EC]/15 bg-[#1D1916] p-6">
+            <div className="flex items-center justify-between border-b border-[#F8F4EC]/10 pb-3">
+              <h2 className="font-display text-3xl font-black text-[#F8F4EC]">Settings</h2>
+              <button type="button" onClick={() => setShowSettings(false)} aria-label="Close settings" className="text-[#B6AA9A] hover:text-[#F8F4EC]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <SettingsPanel />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

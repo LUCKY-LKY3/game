@@ -1,3 +1,5 @@
+import { SettingsPanel } from './SettingsPanel';
+import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 import { useState } from 'react';
 import { Award, Flame, Play, RotateCcw, Swords, Users } from 'lucide-react';
 import {
@@ -23,14 +25,15 @@ export function PauseModal({
   onBackToRoster,
   onBackToTitle,
 }: PauseModalProps) {
-  const [tab, setTab] = useState<'menu' | 'moves'>('menu');
+  const [tab, setTab] = useState<'menu' | 'moves' | 'settings'>('menu');
   const isBrawl = isStreetBrawlMode(mode);
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#141210]/88 p-4">
       <div className="w-full max-w-lg border border-[#F8F4EC]/15 bg-[#1D1916] p-6">
         <div className="flex items-center justify-between border-b border-[#F8F4EC]/10 pb-4">
-          <h2 className="font-display text-4xl font-black text-[#F8F4EC]">Match Paused</h2>
+          <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-14 w-auto select-none" />
+          <h2 className="sr-only">Match Paused</h2>
           <div className="flex items-center gap-1 bg-[#141210] p-1">
             <button
               type="button"
@@ -42,6 +45,17 @@ export function PauseModal({
               }`}
             >
               Options
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('settings')}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                tab === 'settings'
+                  ? 'bg-[#F59E0B] text-[#141210]'
+                  : 'text-[#B6AA9A] hover:text-[#F8F4EC]'
+              }`}
+            >
+              Settings
             </button>
             <button
               type="button"
@@ -57,7 +71,9 @@ export function PauseModal({
           </div>
         </div>
 
-        {tab === 'menu' ? (
+        {tab === 'settings' ? (
+          <SettingsPanel />
+        ) : tab === 'menu' ? (
           <div className="mt-5 flex flex-col gap-2.5">
             <button
               type="button"
@@ -237,6 +253,7 @@ export function MatchOverModal({
       <div className="w-full max-w-2xl border border-[#F59E0B]/45 bg-[#1D1916] p-6 sm:p-8">
         {isBrawl && hud.brawl ? (
           <>
+            <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="mx-auto mb-3 h-12 w-auto select-none" />
             {/* Top Scorecard Header with Squad Portraits & Bollywood Style Rank Seal */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">

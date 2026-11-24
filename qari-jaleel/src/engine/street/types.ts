@@ -142,6 +142,12 @@ export interface EnemyRuntime {
   burnOwnerIdx: 0 | 1;
   dizzyTimer: number;
   rearGrabCooldown: number;
+  specialCooldown: number;
+  specialIdx: number;
+  special: 'volley' | 'summon' | 'charge' | 'stomp' | null;
+  specialFired: boolean;
+  chargeTimer: number;
+  phase3: boolean;
   phase2Rage: boolean;
   koFadeTimer: number;
   alive: boolean;

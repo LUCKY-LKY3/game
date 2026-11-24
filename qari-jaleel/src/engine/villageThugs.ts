@@ -43,6 +43,12 @@ export interface VillageThugSpec {
   battleCry: string;
   /** shield: blocks light frontal hits. rusher: dashes in fast. */
   trait?: 'shield' | 'rusher';
+  /** Boss special attacks, used in rotation (see street/bossMoves.ts) */
+  bossMoves?: ('volley' | 'summon' | 'charge' | 'stomp')[];
+  /** Specials only unlock once the boss enrages (below 50% HP) */
+  specialsAfterRage?: boolean;
+  rageLine?: string;
+  ragePopup?: string;
 }
 
 export interface VillageThugRig {
@@ -182,6 +188,56 @@ export const VILLAGE_COUSIN_ROSTER: Record<string, Omit<VillageThugSpec, 'id'>> 
     buckTeeth: false,
     battleCry: 'Try hitting a thali, na!',
     trait: 'shield',
+  },
+  chappal_chaudhary: {
+    name: 'Chappal Chaudhary',
+    subtitle: 'Slipper-Slinging Kingpin',
+    archetype: 'boss',
+    maxHp: 175,
+    damage: 14,
+    speed: 2.1,
+    scoreValue: 1100,
+    skinTone: '#B87345',
+    shirtColor: '#15803D',
+    pantsColor: '#F5F0E1',
+    gamchaColor: '#FACC15',
+    hairColor: '#1C1917',
+    heightScale: 1.12,
+    widthScale: 1.0,
+    bellyBulge: 0.1,
+    hasClub: false,
+    headAccessory: 'boss_turban',
+    goofyEyes: false,
+    buckTeeth: false,
+    battleCry: 'You dare enter my lane? CHAPPAL STORM!',
+    bossMoves: ['volley', 'charge', 'volley', 'summon'],
+    rageLine: 'NOW YOU SEE MY FASTEST FLIP-FLOP!',
+    ragePopup: 'SLIPPER RAGE!',
+  },
+  dhol_daku: {
+    name: 'Dhol Daku',
+    subtitle: 'Beat-Drop Bandit King',
+    archetype: 'boss',
+    maxHp: 215,
+    damage: 16,
+    speed: 1.95,
+    scoreValue: 1500,
+    skinTone: '#A8693D',
+    shirtColor: '#7C2D12',
+    pantsColor: '#1E3A8A',
+    gamchaColor: '#EF4444',
+    hairColor: '#0C0A09',
+    heightScale: 1.16,
+    widthScale: 1.18,
+    bellyBulge: 0.18,
+    hasClub: true,
+    headAccessory: 'boss_turban',
+    goofyEyes: false,
+    buckTeeth: false,
+    battleCry: 'Feel the beat, bhaiya! DHOL DROP!',
+    bossMoves: ['summon', 'stomp', 'charge', 'summon'],
+    rageLine: 'THE BEAT NEVER STOPS!',
+    ragePopup: 'DHOL RAGE!',
   },
   pappu: {
     name: 'Chacha Pappu',
@@ -336,6 +392,8 @@ export const VILLAGE_COUSIN_ROSTER: Record<string, Omit<VillageThugSpec, 'id'>> 
     goofyEyes: false,
     buckTeeth: false,
     battleCry: 'WHO TOUCHED MY LAND AND MY SHEEP?!',
+    bossMoves: ['charge', 'stomp', 'summon', 'charge'],
+    specialsAfterRage: true,
   },
 };
 

@@ -256,6 +256,17 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
         continue;
       }
 
+      if (e.special && e.action === 'taunt') {
+        if (!e.specialFired && e.actionTime >= e.actionDuration * 0.6) this.fireBossSpecial(e);
+        if (e.actionTime >= e.actionDuration) {
+          e.action = 'idle';
+          e.actionTime = 0;
+          e.actionDuration = 0;
+          if (e.chargeTimer <= 0) e.special = null;
+        }
+        continue;
+      }
+
       if (e.action === 'windup' && e.actionTime >= e.actionDuration) {
         e.action = 'attack';
         e.actionTime = 0;
@@ -322,6 +333,9 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
         continue;
       }
     }
+
+    // Boss special attacks (volley / summon / charge / stomp): rotates through spec.bossMoves
+    if (e.spec.archetype === 'boss' && this.updateBossSpecials(e, dt, targetHero)) continue;
 
     // Motorbike Cousin (Raju Splendor) zoom charge while still on bike!
     if (e.onBike) {
@@ -627,7 +641,7 @@ export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
   }
 }
 
-export function spawnEnemyChappal(this: StreetBrawlEngine, e: EnemyRuntime, target: HeroRuntime) {
+export function spawnEnemyChappal(this: StreetBrawlEngine, e: EnemyRuntime, target: HeroRuntime, vzOffset = 0, speed = 8.2) {
   const slot = this.projectiles.find((p) => !p.active && p.kind === 'chappal');
   if (!slot) return;
   slot.active = true;
@@ -640,9 +654,9 @@ export function spawnEnemyChappal(this: StreetBrawlEngine, e: EnemyRuntime, targ
   const dx = target.x - e.x;
   const dz = target.z - e.z;
   const len = Math.max(0.1, Math.hypot(dx, dz));
-  slot.vx = (dx / len) * 8.2;
+  slot.vx = (dx / len) * speed;
   slot.vy = 0;
-  slot.vz = (dz / len) * 2.2;
+  slot.vz = (dz / len) * 2.2 + vzOffset;
   slot.life = 1.9;
   slot.damage = e.spec.damage;
   slot.hitUids.clear();

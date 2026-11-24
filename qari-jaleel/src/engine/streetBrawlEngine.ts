@@ -14,6 +14,7 @@ import * as heroControl from './street/heroControl';
 import * as partnerAI from './street/partnerAI';
 import * as powerups from './street/powerups';
 import * as combat from './street/combat';
+import * as bossMoves from './street/bossMoves';
 import * as flow from './street/flow';
 import * as view from './street/view';
 
@@ -62,6 +63,8 @@ export class StreetBrawlEngine {
   releaseRearGrab = combat.releaseRearGrab;
   updateInteractiveProps = combat.updateInteractiveProps;
   updateBossShockwave = combat.updateBossShockwave;
+  updateBossSpecials = bossMoves.updateBossSpecials;
+  fireBossSpecial = bossMoves.fireBossSpecial;
   spawnEndlessWave = flow.spawnEndlessWave;
   spawnWave = flow.spawnWave;
   clearEnemies = flow.clearEnemies;

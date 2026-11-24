@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { CombatAction, PlayerInputState } from '../../types/game';
 import { soundEngine } from '../sound';
+import { getSettings } from '../../utils/settings';
 import { BufferedMoveKind, HeroRuntime, EnemyRuntime } from './types';
 import { HERO_MOVES, LANE_MIN_Z, LANE_MAX_Z, triggerHaptic } from './data';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
@@ -364,25 +365,25 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
 
     // Buffer next strike during short cancel window near end of recovery!
     const remaining = hero.actionDuration - hero.actionTime;
-    if (remaining <= 0.14 && hero.action !== 'hitstun' && hero.action !== 'knockdown') {
+    if (remaining <= 0.3 && hero.action !== 'hitstun' && hero.action !== 'knockdown') {
       if (wantLp) {
         hero.bufferedAction = 'lp';
-        hero.bufferTimer = 0.14;
+        hero.bufferTimer = 0.3;
       } else if (wantRp) {
         hero.bufferedAction = 'rp';
-        hero.bufferTimer = 0.14;
+        hero.bufferTimer = 0.3;
       } else if (wantKick) {
         hero.bufferedAction = 'kick';
-        hero.bufferTimer = 0.14;
+        hero.bufferTimer = 0.3;
       } else if (wantThrow) {
         hero.bufferedAction = 'throw';
-        hero.bufferTimer = 0.14;
+        hero.bufferTimer = 0.3;
       } else if (wantJump) {
         hero.bufferedAction = 'jump';
-        hero.bufferTimer = 0.14;
+        hero.bufferTimer = 0.3;
       } else if (wantSidestep) {
         hero.bufferedAction = 'dodge';
-        hero.bufferTimer = 0.14;
+        hero.bufferTimer = 0.3;
       }
     }
 
@@ -997,6 +998,22 @@ export function startHeroMove(this: StreetBrawlEngine, hero: HeroRuntime, move: 
   const dholBoost = this.hasBoon('double_dhol') ? 0.85 : 1.0;
   hero.actionDuration = spec.duration * boxerBoost * dholBoost;
   hero.hitIdsThisSwing.clear();
+  // Auto-aim: strikes turn toward a close enemy standing behind you and slide a little toward its lane
+  if (getSettings().autoAim && (move === 'lp' || move === 'lp2' || move === 'rp' || move === 'kick')) {
+    const near = this.findNearestLivingEnemy(hero.x, hero.z);
+    if (near) {
+      const dx = near.x - hero.x;
+      const dz = near.z - hero.z;
+      if (Math.abs(dx) <= 3.0 && Math.abs(dz) <= 1.5) {
+        const side: 1 | -1 = dx >= 0 ? 1 : -1;
+        const frontClear = !this.enemies.some(
+          (o) => o.alive && o.uid !== near.uid && (o.x - hero.x) * hero.facing > 0 && Math.abs(o.x - hero.x) < 2.4 && Math.abs(o.z - hero.z) < 1.0
+        );
+        if (side !== hero.facing && frontClear) hero.facing = side;
+        if (side === hero.facing) hero.z += Math.max(-0.35, Math.min(0.35, dz * 0.6));
+      }
+    }
+  }
   // Plant feet firmly on grounded attacks so characters never slide or teleport mid-swing
   const isAerialOrDash =
     move === 'jump_kick' ||

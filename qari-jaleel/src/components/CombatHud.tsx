@@ -17,6 +17,7 @@ import {
 import { GameMode, HudSnapshot, isStreetBrawlMode, VillageBoonId } from '../types/game';
 import { ArenaCanvasHandle } from './ArenaCanvas';
 import { VirtualThumbstick } from './VirtualThumbstick';
+import { BUTTON_SCALE, useSettings } from '../utils/settings';
 
 const BOON_SHORT_LABELS: Record<VillageBoonId, { label: string; color: string }> = {
   extra_mirchi: { label: 'EXTRA MIRCHI', color: '#EF4444' },
@@ -105,6 +106,7 @@ export function CombatHud({
   );
   const p2TrailPct = Math.max(p2Pct + p2RecPct, Math.min(100, (hud.p2.trailHp / hud.p2.maxHp) * 100));
 
+  const settings = useSettings();
   const guardPressTimeRef = useRef<number>(0);
   const swapHoldTimerRef = useRef<number | null>(null);
   const swapHoldFiredRef = useRef<boolean>(false);
@@ -1075,6 +1077,7 @@ export function CombatHud({
             {/* RIGHT THUMB ZONE: Ergonomic Thumb-Arc Combat Cluster */}
             <div
               className="touch-cluster relative h-[222px] w-[244px] shrink-0 sm:h-[232px] sm:w-[254px]"
+              style={{ transform: `scale(${BUTTON_SCALE[settings.buttonSize]})`, transformOrigin: 'bottom right' }}
               aria-label="Ergonomic thumb-arc combat buttons"
             >
               {/* UPPER-LEFT OF ARC (Street Brawl only): 52px SWAP / HOLD ASSIST button */}
@@ -1265,7 +1268,7 @@ export function CombatHud({
                 type="button"
                 {...bindGuardOrDodge}
                 aria-label="Tap to Dodge 3D or Hold to Guard and Parry"
-                className="touch-control absolute bottom-[8px] left-[16px] flex h-[52px] w-[52px] flex-col items-center justify-center rounded-full border-2 border-[#60A5FA]/90 bg-[#181614]/94 text-[#60A5FA] shadow-[0_0_14px_rgba(96,165,250,0.3)] active:scale-[0.92] active:bg-[#60A5FA] active:text-[#141210] transition-transform"
+                className="touch-control absolute bottom-[4px] left-[6px] flex h-[66px] w-[66px] flex-col items-center justify-center rounded-full border-[3px] border-[#60A5FA]/90 bg-[#181614]/94 text-[#60A5FA] shadow-[0_0_14px_rgba(96,165,250,0.3)] active:scale-[0.92] active:bg-[#60A5FA] active:text-[#141210] transition-transform"
               >
                 <Shield className="h-4.5 w-4.5 stroke-[2.4]" />
                 <span className="mt-0.5 text-[8px] font-black leading-none tracking-wider text-[#F8F4EC]">

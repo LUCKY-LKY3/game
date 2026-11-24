@@ -9,6 +9,7 @@ class AkharaSoundEngine {
   private ctx: AudioContext | null = null;
   private muted = false;
   private musicWanted = false;
+  private musicPrefMuted = false;
 
   private ensureContext(): AudioContext | null {
     if (this.muted) return null;
@@ -28,7 +29,7 @@ class AkharaSoundEngine {
 
   public setMuted(m: boolean) {
     this.muted = m;
-    musicEngine.setMuted(m);
+    musicEngine.setMuted(m || this.musicPrefMuted);
     if (!m && this.musicWanted) this.startDholLoop();
   }
 
@@ -598,6 +599,12 @@ class AkharaSoundEngine {
   public stopDholLoop() {
     this.musicWanted = false;
     musicEngine.stop();
+  }
+
+  /** Music-only mute from the settings screen (sound effects stay on) */
+  public setMusicMuted(m: boolean) {
+    this.musicPrefMuted = m;
+    musicEngine.setMuted(m || this.muted);
   }
 
   public setMusicVolume(v: number) {

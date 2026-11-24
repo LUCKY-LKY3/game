@@ -265,7 +265,7 @@ export const STREET_ZONES: StreetZoneConfig[] = [
     lockMaxX: 11.5,
     triggerX: -10,
     wave1: ['bunty', 'golu', 'chintu'],
-    wave2: ['chappal_chacha', 'thali_tiwari', 'pappu'],
+    wave2: ['pappu', 'thali_tiwari', 'chappal_chaudhary'],
   },
   {
     index: 2,
@@ -274,7 +274,7 @@ export const STREET_ZONES: StreetZoneConfig[] = [
     lockMaxX: 28.0,
     triggerX: 14.2,
     wave1: ['lathi_lala', 'raju_bike', 'chintu', 'bunty'],
-    wave2: ['moti_pehelwan', 'thali_tiwari', 'chappal_chacha', 'pappu'],
+    wave2: ['moti_pehelwan', 'thali_tiwari', 'chappal_chacha', 'dhol_daku'],
   },
   {
     index: 3,
