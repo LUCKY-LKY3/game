@@ -296,6 +296,7 @@ export function performPartnerAssist(this: StreetBrawlEngine) {
   if (partner.hp <= 0 || partner.assistState !== 'none') return;
 
   this.assistCooldown = 5.5;
+  this.triggerAssistCombo(active, partner);
   partner.assistReturnX = partner.x;
   partner.assistReturnZ = partner.z;
   // Dash in dramatically from behind the active hero's screen edge

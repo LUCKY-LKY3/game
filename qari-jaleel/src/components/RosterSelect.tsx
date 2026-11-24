@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowLeftRight,
+  Dices,
   ImagePlus,
   Pencil,
   Plus,
@@ -23,7 +24,7 @@ import {
   STAGE_CONFIGS,
 } from '../data/roster';
 import { parseImportedFighterJson } from '../utils/storage';
-import { getCombo } from '../data/combos';
+import { assistComboFor, getCombo } from '../data/combos';
 
 interface RosterSelectProps {
   mode: GameMode;
@@ -192,12 +193,29 @@ export function RosterSelect({
                   {isBrawl ? 'Swap Lead' : 'Swap Sides'}
                 </button>
               )}
+              {mode !== 'arcade' && fighters.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const a = Math.floor(Math.random() * fighters.length);
+                    let b = Math.floor(Math.random() * (fighters.length - 1));
+                    if (b >= a) b += 1;
+                    onSelectP1(fighters[a].id);
+                    onSelectP2(fighters[b].id);
+                  }}
+                  className="flex items-center gap-1.5 border border-[#F472B6]/40 bg-[#1D1916] px-3 py-1.5 text-xs font-semibold text-[#F472B6] transition-colors whitespace-nowrap hover:border-[#F472B6] short:px-2 short:py-0.5 short:text-[10px]"
+                >
+                  <Dices className="h-3.5 w-3.5" />
+                  Random squad
+                </button>
+              )}
               {isBrawl && (() => {
                 const combo = getCombo(p1.id, p2.id);
                 return combo ? (
                   <div className="basis-full rounded border border-[#F472B6]/40 bg-[#2A1020] px-2 py-1 text-center lg:max-w-[11rem] short:basis-full">
                     <div className="font-display text-sm leading-none font-black tracking-wide text-[#F472B6] uppercase">★ Combo: {combo.name}</div>
                     <div className="mt-0.5 text-[10px] leading-tight text-[#E9D5E0]">{combo.blurb}</div>
+                    <div className="text-[10px] leading-tight text-[#C9A6BE] short:hidden">{assistComboFor(combo).blurb}</div>
                   </div>
                 ) : null;
               })()}

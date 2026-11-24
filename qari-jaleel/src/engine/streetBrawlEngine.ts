@@ -71,6 +71,7 @@ export class StreetBrawlEngine {
   spawnEndlessWave = flow.spawnEndlessWave;
   spawnEndlessBatch = flow.spawnEndlessBatch;
   triggerSquadCombo = squadCombo.triggerSquadCombo;
+  triggerAssistCombo = squadCombo.triggerAssistCombo;
   sayQuip = endlessExtras.sayQuip;
   maybeDropPickup = endlessExtras.maybeDropPickup;
   clearPickups = endlessExtras.clearPickups;

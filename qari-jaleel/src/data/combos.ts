@@ -47,3 +47,23 @@ export const SQUAD_COMBOS: Record<string, SquadCombo> = {
 export function getCombo(idA: string, idB: string): SquadCombo | null {
   return SQUAD_COMBOS[key(idA, idB)] ?? null;
 }
+
+const ORDER: ComboEffect[] = ['heal', 'shield', 'rage', 'shockwave', 'charm'];
+const ASSIST_AMOUNT: Record<ComboEffect, number> = { heal: 12, shield: 1.6, rage: 15, shockwave: 18, charm: 2.2 };
+
+/** The second half of each combo: holding SWAP (partner assist) fires a different effect, two steps along the list. */
+export function assistComboFor(combo: SquadCombo): { effect: ComboEffect; amount: number; blurb: string } {
+  const effect = ORDER[(ORDER.indexOf(combo.effect) + 2) % ORDER.length];
+  const amount = ASSIST_AMOUNT[effect];
+  const blurb =
+    effect === 'heal'
+      ? `Hold Swap: both heal ${amount}.`
+      : effect === 'shield'
+        ? 'Hold Swap: a quick shield for the lead.'
+        : effect === 'rage'
+          ? `Hold Swap: the lead gains ${amount} power.`
+          : effect === 'shockwave'
+            ? `Hold Swap: a shockwave hits cousins for ${amount}.`
+            : 'Hold Swap: nearby cousins get dizzy.';
+  return { effect, amount, blurb };
+}
