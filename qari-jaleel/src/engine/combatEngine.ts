@@ -1615,7 +1615,7 @@ export class AkharaCombatEngine {
       if (this.rageFlashTimer === 0) this.rageFlashSide = null;
     }
     if (this.speechBubbleTimer > 0) {
-      this.speechBubbleTimer = Math.max(0, this.speechBubbleTimer - clampedDt);
+      this.speechBubbleTimer = Math.max(0, this.speechBubbleTimer - clampedDt * 0.7); // bubbles linger ~40% longer
       if (this.speechBubbleTimer === 0) this.speechBubble = null;
     }
     // Random fighter banter in 1v1 and versus fights

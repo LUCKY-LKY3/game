@@ -798,7 +798,7 @@ export class StreetBrawlEngine {
       if (this.rageFlashTimer <= 0) this.rageFlashSide = null;
     }
     if (this.speechTimer > 0) {
-      this.speechTimer -= realDt;
+      this.speechTimer -= realDt * 0.7; // bubbles linger ~40% longer
       if (this.speechTimer <= 0) this.speechBubble = null;
     }
     for (let i = this.popups.length - 1; i >= 0; i--) {
