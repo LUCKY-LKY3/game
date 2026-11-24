@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Crown, Trophy } from 'lucide-react';
+import { webBoardConfigured } from '../config';
 import {
   Boards,
   cleanNickname,
@@ -134,7 +135,8 @@ export function EndlessScoreEntry({ score, wave, fighterName }: { score: number;
     const name = cleanNickname(nick) || 'PLAYER';
     setBusy(true);
     const ts = Date.now();
-    const res = await submitScore({ nick: name, fighter: fighterLabel(fighterName), score, wave, ts }, earnedLocal, earnedGlobal);
+    // On the website the public board can't always be read (offline/blocked), but a score can still be sent to the Form
+    const res = await submitScore({ nick: name, fighter: fighterLabel(fighterName), score, wave, ts }, earnedLocal, earnedGlobal || webBoardConfigured());
     setSaved({ ts, global: res.global });
     setBusy(false);
   };
@@ -173,9 +175,10 @@ export function EndlessScoreEntry({ score, wave, fighterName }: { score: number;
           </div>
         </div>
       )}
-      {saved && earnedGlobal && !saved.global && (
+      {saved && saved.global && <div className="mb-2 text-[11px] text-[#4ADE80]">Sent to the public board. It can take a minute to appear.</div>}
+      {saved && !saved.global && (earnedGlobal || webBoardConfigured()) && (
         <div className="mb-2 text-[11px] text-[#F87171]">
-          Could not post to the public board (needs Contributor access). Saved on this device.
+          Could not post to the public board{webBoardConfigured() ? '' : ' (needs Contributor access)'}. Saved on this device.
         </div>
       )}
       <BoardTabs boards={boards} highlightTs={saved?.ts} initial={earnedGlobal ? 'public' : 'local'} />
