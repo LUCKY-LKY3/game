@@ -88,12 +88,16 @@ export function TitleOverlay({
                   type="button"
                   onClick={dismissInstallTip}
                   aria-label="Dismiss install tip"
-                  className="pointer-events-auto absolute top-full left-1/2 z-30 mt-1 w-44 -translate-x-1/2 text-center normal-case"
+                  className="neon-tip pointer-events-auto absolute top-full left-1/2 z-30 mt-0.5 flex w-[12.5rem] -translate-x-[72%] flex-col items-stretch normal-case"
                 >
-                  <ArrowUp className="mx-auto h-6 w-6 animate-bounce text-[#4ADE80] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
-                  <span className="block rounded-lg bg-[#4ADE80] px-2.5 py-1.5 text-[11px] leading-tight font-extrabold tracking-normal text-[#06210F] shadow-[0_4px_14px_rgba(0,0,0,0.5)]">
-                    Install here, bhai, for a better experience!
-                    <span className="mt-0.5 block text-[9px] font-bold opacity-70">(tap to hide)</span>
+                  {/* curved neon arrow up to the Install button */}
+                  <svg viewBox="0 0 90 56" className="neon-arrow mr-[18%] ml-auto h-11 w-[4.5rem]" fill="none" aria-hidden="true">
+                    <path d="M8 52 C 4 30, 30 34, 52 14 C 58 9, 64 6, 70 5" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" />
+                    <path d="M58 3 L 72 4.5 L 66 17" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="neon-sign relative rounded-xl border-2 px-3 py-1.5 text-center">
+                    <span className="neon-text block font-display text-[19px] leading-none font-black tracking-[0.08em] uppercase">Install here, bhai!</span>
+                    <span className="neon-text-soft mt-1 block font-display text-[11px] leading-none font-bold tracking-[0.2em] uppercase">for a better experience</span>
                   </span>
                 </button>
               )}
