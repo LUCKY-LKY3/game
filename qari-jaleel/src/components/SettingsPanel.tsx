@@ -1,10 +1,18 @@
+import { useEffect, useState } from 'react';
 import { updateSettings, useSettings, ButtonSize } from '../utils/settings';
+import { fullscreenSupported, isFullscreen, toggleFullscreen } from '../utils/fullscreen';
 
 const SIZES: ButtonSize[] = ['S', 'M', 'L'];
 
 /** Music volume, mute, touch button size and auto-aim */
 export function SettingsPanel() {
   const s = useSettings();
+  const [full, setFull] = useState(isFullscreen());
+  useEffect(() => {
+    const on = () => setFull(isFullscreen());
+    document.addEventListener('fullscreenchange', on);
+    return () => document.removeEventListener('fullscreenchange', on);
+  }, []);
   return (
     <div className="mt-5 flex flex-col gap-4 text-[#F8F4EC]">
       <div>
@@ -49,6 +57,11 @@ export function SettingsPanel() {
       <Row label="Auto-aim strikes">
         <Toggle on={s.autoAim} onLabel="On" offLabel="Off" onClick={() => updateSettings({ autoAim: !s.autoAim })} />
       </Row>
+      {fullscreenSupported() && (
+        <Row label="Full screen">
+          <Toggle on={full} onLabel="On" offLabel="Off" onClick={() => void toggleFullscreen()} />
+        </Row>
+      )}
       <Row label="Left-handed layout">
         <Toggle on={s.leftHanded} onLabel="On" offLabel="Off" onClick={() => updateSettings({ leftHanded: !s.leftHanded })} />
       </Row>

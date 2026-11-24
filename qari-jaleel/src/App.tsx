@@ -1,3 +1,4 @@
+import { enterFullscreen } from './utils/fullscreen';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Difficulty,
@@ -100,6 +101,17 @@ export default function App() {
   // Splash with the logo while the game boots (BOOT_MS) and briefly while a match is set up (MATCH_MS)
   const [bootLoading, setBootLoading] = useState(true);
   const [matchLoading, setMatchLoading] = useState(false);
+  // On phones, the first tap switches to full screen (once per visit; the Settings toggle undoes it)
+  useEffect(() => {
+    if (!(window.matchMedia?.('(pointer: coarse)').matches ?? false)) return;
+    const go = () => {
+      window.removeEventListener('pointerup', go);
+      void enterFullscreen();
+    };
+    window.addEventListener('pointerup', go);
+    return () => window.removeEventListener('pointerup', go);
+  }, []);
+
   useEffect(() => {
     let alive = true;
     const minWait = new Promise<void>((r) => window.setTimeout(r, BOOT_MS));

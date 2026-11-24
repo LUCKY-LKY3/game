@@ -465,15 +465,26 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+    // Phones report stale sizes right after rotating, so re-measure a few times and watch the container itself
+    const handleRotate = () => {
+      handleResize();
+      window.setTimeout(handleResize, 150);
+      window.setTimeout(handleResize, 500);
+    };
+    window.addEventListener('resize', handleRotate);
+    window.addEventListener('orientationchange', handleRotate);
+    window.visualViewport?.addEventListener('resize', handleRotate);
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(handleResize) : null;
+    resizeObserver?.observe(container);
 
     return () => {
       disposed = true;
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      window.removeEventListener('resize', handleRotate);
+      window.removeEventListener('orientationchange', handleRotate);
+      window.visualViewport?.removeEventListener('resize', handleRotate);
+      resizeObserver?.disconnect();
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
       if (!(engine instanceof StreetBrawlEngine)) soundEngine.stopDholLoop();
