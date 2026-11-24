@@ -376,7 +376,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     }
 
     // Strict Max-2-Attackers Slot Manager: only 2 enemies may engage/attack at once; the rest circle & wait!
-    const MAX_ATTACKERS = 2;
+    const MAX_ATTACKERS = this.endlessMode && this.endlessWave >= 6 ? 3 : 2;
     let activeAttackers = 0;
     for (let k = 0; k < this.enemies.length; k++) {
       const o = this.enemies[k];

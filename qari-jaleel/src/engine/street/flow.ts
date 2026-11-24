@@ -27,7 +27,7 @@ export function planEndlessWave(waveNum: number): { keys: string[]; sub: string;
   const tier2 = ['pappu', 'lathi_lala', 'chappal_chacha', 'thali_tiwari'];
   let pool = waveNum < 3 ? tier1 : waveNum < 6 ? [...tier1, ...tier2.slice(0, 2)] : [...tier1, ...tier2, 'kalu_goon'];
   if (mod === 'mela') pool = tier1;
-  let total = Math.min(10, 3 + Math.floor(waveNum * 0.7));
+  let total = Math.min(12, 3 + Math.floor(waveNum * 0.85));
   if (mod === 'mela') total = Math.min(14, Math.round(total * 1.7));
   const keys: string[] = [];
   let sub = 'FRESH COUSIN WAVE INCOMING';
@@ -71,9 +71,11 @@ export function spawnEndlessBatch(this: StreetBrawlEngine) {
     wave1: [],
     wave2: [],
   };
-  const batch = this.endlessQueue.splice(0, 3);
-  const scale = Math.min(2.2, 1 + (this.endlessWave - 1) * 0.08) * (this.endlessMod === 'mela' ? 0.72 : 1);
-  if (batch.length) this.spawnWave(batch, endlessZone, scale, this.endlessMod === 'lathi');
+  // Harder than before: tougher cousins sooner, bigger groups later, hits that hurt more
+  const batch = this.endlessQueue.splice(0, this.endlessWave >= 8 ? 4 : 3);
+  const scale = Math.min(3.0, 1 + (this.endlessWave - 1) * 0.11) * (this.endlessMod === 'mela' ? 0.72 : 1);
+  const dmgScale = Math.min(2.0, 1 + (this.endlessWave - 1) * 0.06);
+  if (batch.length) this.spawnWave(batch, endlessZone, scale, this.endlessMod === 'lathi', dmgScale);
 }
 
 export function spawnEndlessWave(this: StreetBrawlEngine, waveNum: number) {
@@ -84,7 +86,7 @@ export function spawnEndlessWave(this: StreetBrawlEngine, waveNum: number) {
   this.spawnEndlessBatch();
 }
 
-export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZoneConfig, waveScale = 1, armed = false) {
+export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZoneConfig, waveScale = 1, armed = false, dmgScale?: number) {
   keys.forEach((key, idx) => {
     const base = VILLAGE_COUSIN_ROSTER[key] ?? VILLAGE_COUSIN_ROSTER.bunty;
     const uid = this.nextEnemyUid++;
@@ -92,7 +94,7 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       ...base,
       id: `${key}_${uid}`,
       maxHp: Math.round(base.maxHp * this.difficultyScale * waveScale),
-      damage: Math.max(4, Math.round(base.damage * this.difficultyScale * Math.min(1.5, waveScale))),
+      damage: Math.max(4, Math.round(base.damage * this.difficultyScale * (dmgScale ?? Math.min(1.5, waveScale)))),
       hasClub: armed || base.hasClub,
     };
     const rig = createVillageThugRig(spec);
@@ -227,7 +229,7 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
       }
       this.endlessWave += 1;
       this.endlessDamaged = false;
-      const heal = bossCleared ? 45 : 16;
+      const heal = bossCleared ? 35 : 12;
       this.heroes.forEach((h) => {
         if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + heal);
       });
