@@ -1,49 +1,29 @@
 /**
- * Game music: the user's own recordings, nothing synthesised.
+ * Game music: the user's own track "Rain-Slicked Escape" (src/assets/audio/rain-slicked-escape.mp3,
+ * 3:02, ~120 BPM), used for every game mode. Nothing is synthesised.
  *
- * - groove  : src/assets/audio/groove.mp3, a 96-beat (24 bar) loop at 132.99 BPM (street fighting)
- * - song    : src/assets/audio/rain-slicked-escape.mp3, 3:02 at ~120 BPM (bosses and duels)
- *
- * The fight mode picks the track and nudges its tempo with playbackRate (small steps, so the
- * pitch shift stays subtle). Tracks crossfade when the mode changes.
+ * The fight mode only changes the tempo (playbackRate, in small steps so the pitch shift stays
+ * subtle) and the level. Tempo changes glide smoothly.
  */
-import grooveUrl from '../assets/audio/groove.mp3?inline';
 import songUrl from '../assets/audio/rain-slicked-escape.mp3?inline';
 
 export type MusicMode = 'normal' | 'hype' | 'danger' | 'boss' | 'rage' | 'duel';
 
-type TrackId = 'groove' | 'song';
-
-/** Groove is trimmed to exactly 96 beats on its grid so it loops seamlessly. */
-const GROOVE_SECONDS = 96 * 0.45113;
-
 interface Plan {
-  track: TrackId;
-  /** playbackRate: 1 = original tempo */
+  /** playbackRate: 1 = original tempo (~120 BPM) */
   rate: number;
   level: number;
 }
 
 /** Tune tempo and loudness per point of the fight here. */
 const PLANS: Record<MusicMode, Plan> = {
-  normal: { track: 'groove', rate: 1.0, level: 3.4 }, // street fighting at the recorded 133 BPM
-  hype: { track: 'groove', rate: 1.05, level: 3.7 }, // big combo / crowd hype: ~140 BPM
-  danger: { track: 'groove', rate: 1.09, level: 3.7 }, // a hero is nearly down: ~145 BPM
-  boss: { track: 'song', rate: 1.0, level: 0.9 }, // boss fight at the recorded 120 BPM
-  rage: { track: 'song', rate: 1.06, level: 0.95 }, // boss phase 2: ~127 BPM
-  duel: { track: 'song', rate: 1.0, level: 0.9 }, // arcade 1v1 and local 2P
+  normal: { rate: 1.0, level: 0.9 }, // street fighting: original tempo, 120 BPM
+  hype: { rate: 1.05, level: 0.95 }, // big combo / crowd hype: ~126 BPM
+  danger: { rate: 1.09, level: 0.95 }, // a hero is nearly down: ~131 BPM
+  boss: { rate: 1.03, level: 1.0 }, // boss fight: ~124 BPM
+  rage: { rate: 1.09, level: 1.0 }, // boss phase 2: ~131 BPM
+  duel: { rate: 1.0, level: 0.9 }, // arcade 1v1 and local 2P
 };
-
-const CROSSFADE = 0.45; // time constant, seconds
-
-interface TrackState {
-  buf: AudioBuffer | null;
-  loading: boolean;
-  failed: boolean;
-  delay: number;
-  src: AudioBufferSourceNode | null;
-  gain: GainNode | null;
-}
 
 /**
  * Turn an inlined `data:` URI into bytes without fetch(): sandboxed pages (like the phone Artifact)
@@ -64,14 +44,15 @@ function decode(ctx: AudioContext, ab: ArrayBuffer): Promise<AudioBuffer> {
   });
 }
 
-const newTrack = (): TrackState => ({ buf: null, loading: false, failed: false, delay: 0, src: null, gain: null });
-
 class MusicEngine {
   private ctx: AudioContext | null = null;
   public master: GainNode | null = null;
-  private tracks: Record<TrackId, TrackState> = { groove: newTrack(), song: newTrack() };
+  private buf: AudioBuffer | null = null;
+  private loading = false;
+  private failed = false;
+  private src: AudioBufferSourceNode | null = null;
+  private gain: GainNode | null = null;
   private timer: number | null = null;
-  private songPrefetch: number | null = null;
   private mode: MusicMode = 'normal';
   private muted = false;
   private volume = 0.55;
@@ -93,27 +74,24 @@ class MusicEngine {
     if (typeof window !== 'undefined' && window.location.search.includes('musicdebug')) {
       (window as unknown as { __music: MusicEngine }).__music = this;
     }
-    this.load('groove');
+    this.load();
   }
 
-  private load(id: TrackId) {
+  private load() {
     const ctx = this.ctx;
-    const tr = this.tracks[id];
-    if (!ctx || tr.buf || tr.loading || tr.failed) return;
-    tr.loading = true;
+    if (!ctx || this.buf || this.loading || this.failed) return;
+    this.loading = true;
     Promise.resolve()
-      .then(() => decode(ctx, dataUriToArrayBuffer(id === 'groove' ? grooveUrl : songUrl)))
+      .then(() => decode(ctx, dataUriToArrayBuffer(songUrl)))
       .then((buf) => {
-        // MP3 decoders can leave encoder delay at the head; skip any excess so the loop stays on its grid
-        if (id === 'groove') tr.delay = Math.min(0.06, Math.max(0, buf.duration - GROOVE_SECONDS));
-        tr.buf = buf;
+        this.buf = buf;
       })
       .catch((err) => {
-        console.warn('music: could not load', id, err);
-        tr.failed = true;
+        console.warn('music: could not load track', err);
+        this.failed = true;
       })
       .finally(() => {
-        tr.loading = false;
+        this.loading = false;
       });
   }
 
@@ -130,7 +108,6 @@ class MusicEngine {
   public setMode(mode: MusicMode) {
     if (mode === this.mode) return;
     this.mode = mode;
-    if (PLANS[mode].track === 'song') this.load('song');
     this.sync();
   }
 
@@ -150,9 +127,6 @@ class MusicEngine {
   public start(ctx: AudioContext) {
     this.attach(ctx);
     if (this.timer !== null || typeof window === 'undefined') return;
-    // The song is large: fetch it a few seconds in, unless this mode needs it right away
-    if (PLANS[this.mode].track === 'song') this.load('song');
-    else this.songPrefetch = window.setTimeout(() => this.load('song'), 4000);
     this.timer = window.setInterval(() => this.sync(), 250);
     this.sync();
   }
@@ -162,81 +136,43 @@ class MusicEngine {
       clearInterval(this.timer);
       this.timer = null;
     }
-    if (this.songPrefetch !== null) {
-      clearTimeout(this.songPrefetch);
-      this.songPrefetch = null;
-    }
-    for (const id of ['groove', 'song'] as TrackId[]) this.halt(id);
-  }
-
-  private halt(id: TrackId) {
-    const tr = this.tracks[id];
-    if (tr.src) {
+    if (this.src) {
       try {
-        tr.src.stop();
+        this.src.stop();
       } catch {
         // already stopped
       }
     }
-    tr.src = null;
-    tr.gain = null;
+    this.src = null;
+    this.gain = null;
   }
 
-  /** Make the right track play at the right tempo/level; crossfade away from the other one */
+  /** Start the track if needed and glide to the tempo/level of the current mode */
   private sync() {
     const ctx = this.ctx;
-    if (!ctx || !this.master) return;
+    if (!ctx || !this.master || !this.buf) return;
     if (ctx.state !== 'running') {
       ctx.resume().catch(() => {});
       return;
     }
     const plan = PLANS[this.mode];
-    // If the wanted track hasn't decoded yet, keep (or start) the other one meanwhile
-    let active: TrackId = plan.track;
-    if (!this.tracks[active].buf) active = active === 'song' ? 'groove' : 'song';
-    if (!this.tracks[active].buf) return;
-    const planned = active === plan.track;
-    const rate = planned ? plan.rate : 1;
-    const level = planned ? plan.level : PLANS[active === 'groove' ? 'normal' : 'boss'].level;
     const now = ctx.currentTime;
-
-    for (const id of ['groove', 'song'] as TrackId[]) {
-      const tr = this.tracks[id];
-      if (id === active) {
-        if (!tr.src && tr.buf) {
-          const g = ctx.createGain();
-          g.gain.setValueAtTime(0.0001, now);
-          const src = ctx.createBufferSource();
-          src.buffer = tr.buf;
-          src.loop = true;
-          if (id === 'groove') {
-            src.loopStart = tr.delay;
-            src.loopEnd = tr.delay + GROOVE_SECONDS;
-          }
-          src.playbackRate.value = rate;
-          src.connect(g);
-          g.connect(this.master);
-          src.start(now + 0.02, id === 'groove' ? tr.delay : 0);
-          tr.src = src;
-          tr.gain = g;
-        }
-        if (tr.src && tr.gain) {
-          tr.gain.gain.setTargetAtTime(level, now, CROSSFADE);
-          tr.src.playbackRate.setTargetAtTime(rate, now, 0.7);
-        }
-      } else if (tr.src && tr.gain) {
-        const old = tr.src;
-        tr.gain.gain.setTargetAtTime(0.0001, now, CROSSFADE);
-        tr.src = null;
-        tr.gain = null;
-        window.setTimeout(() => {
-          try {
-            old.stop();
-          } catch {
-            // already stopped
-          }
-        }, 2500);
-      }
+    if (!this.src) {
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      const src = ctx.createBufferSource();
+      src.buffer = this.buf;
+      src.loop = true;
+      src.playbackRate.value = plan.rate;
+      src.connect(g);
+      g.connect(this.master);
+      src.start(now + 0.02, 0);
+      this.src = src;
+      this.gain = g;
+    }
+    if (this.src && this.gain) {
+      this.gain.gain.setTargetAtTime(plan.level, now, 0.45);
+      this.src.playbackRate.setTargetAtTime(plan.rate, now, 0.8);
     }
   }
 }

@@ -19,6 +19,10 @@ import { CombatHud } from './components/CombatHud';
 import { TitleOverlay } from './components/TitleOverlay';
 import { RosterSelect } from './components/RosterSelect';
 import { MatchOverModal, PauseModal } from './components/MatchOverlays';
+import { LoadingScreen } from './components/LoadingScreen';
+
+const BOOT_MS = 2400;
+const MATCH_MS = 1500;
 
 export default function App() {
   const starterRoster = useMemo(() => createStarterRoster(), []);
@@ -93,6 +97,20 @@ export default function App() {
   const [showTouchControls, setShowTouchControls] = useState(true);
 
   const arenaRef = useRef<ArenaCanvasHandle | null>(null);
+  // Splash with the logo while the game boots (BOOT_MS) and briefly while a match is set up (MATCH_MS)
+  const [bootLoading, setBootLoading] = useState(true);
+  const [matchLoading, setMatchLoading] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const minWait = new Promise<void>((r) => window.setTimeout(r, BOOT_MS));
+    const fonts = document.fonts?.ready ?? Promise.resolve();
+    Promise.all([minWait, fonts]).then(() => {
+      if (alive) setBootLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Load saved custom friends from IndexedDB on startup
   useEffect(() => {
@@ -169,6 +187,8 @@ export default function App() {
       setArcadeBracket(bracket.length > 0 ? bracket : [starterRoster[1].id]);
       setArcadeStageIdx(0);
     }
+    setMatchLoading(true);
+    window.setTimeout(() => setMatchLoading(false), MATCH_MS);
     setScreen('PLAYING');
   };
 
@@ -311,6 +331,7 @@ export default function App() {
           }}
         />
       )}
+      <LoadingScreen visible={bootLoading || matchLoading} durationMs={bootLoading ? BOOT_MS : MATCH_MS} />
     </main>
   );
 }
