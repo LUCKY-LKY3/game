@@ -607,9 +607,25 @@ class AkharaSoundEngine {
     const ctx = this.ensureContext();
     if (!ctx) return;
     musicEngine.start(ctx);
-    if (ctx.state === 'suspended') {
-      window.addEventListener('pointerdown', () => ctx.resume().catch(() => {}), { once: true });
-    }
+    this.bindUnlock();
+  }
+
+  private unlockBound = false;
+  /**
+   * iPhone Safari (and Chrome on iPhone) only allow audio after a real touch end / click, not pointerdown,
+   * and may suspend it again later. Keep trying on every such gesture until it is running.
+   */
+  public bindUnlock() {
+    if (this.unlockBound || typeof window === 'undefined') return;
+    this.unlockBound = true;
+    const events = ['touchend', 'pointerup', 'click', 'keydown'];
+    const unlock = () => {
+      const ctx = this.ensureContext();
+      if (!ctx) return;
+      ctx.resume().catch(() => {});
+      if (this.musicWanted) musicEngine.start(ctx);
+    };
+    events.forEach((ev) => window.addEventListener(ev, unlock, { passive: true }));
   }
 
   public setDholIntensity(mode: MusicMode) {

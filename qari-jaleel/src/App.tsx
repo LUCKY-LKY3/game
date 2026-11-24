@@ -102,6 +102,18 @@ export default function App() {
   // Splash with the logo while the game boots (BOOT_MS) and briefly while a match is set up (MATCH_MS)
   const [bootLoading, setBootLoading] = useState(true);
   const [matchLoading, setMatchLoading] = useState(false);
+  // iPhone: make sure audio can unlock, and stop Safari's pinch / double-tap zoom from fighting the game
+  useEffect(() => {
+    soundEngine.bindUnlock();
+    const stop = (e: Event) => e.preventDefault();
+    document.addEventListener('gesturestart', stop);
+    document.addEventListener('gesturechange', stop);
+    return () => {
+      document.removeEventListener('gesturestart', stop);
+      document.removeEventListener('gesturechange', stop);
+    };
+  }, []);
+
   // On phones, the first tap switches to full screen (once per visit; the Settings toggle undoes it)
   useEffect(() => {
     if (!(window.matchMedia?.('(pointer: coarse)').matches ?? false)) return;
@@ -116,7 +128,8 @@ export default function App() {
   useEffect(() => {
     let alive = true;
     const minWait = new Promise<void>((r) => window.setTimeout(r, BOOT_MS));
-    const fonts = document.fonts?.ready ?? Promise.resolve();
+    // Never wait forever for web fonts (blocked or slow networks, content blockers)
+    const fonts = Promise.race([document.fonts?.ready ?? Promise.resolve(), new Promise<void>((r) => window.setTimeout(r, 4000))]);
     Promise.all([minWait, fonts]).then(() => {
       if (alive) setBootLoading(false);
     });

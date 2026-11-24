@@ -38,6 +38,9 @@
     font-family: var(--font-sans);
     overflow: hidden;
     overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   button {

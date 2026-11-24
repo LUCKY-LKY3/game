@@ -8,6 +8,8 @@ const appVersion = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.j
 
 export default defineConfig(() => {
   return {
+    // Older iPhones: compile syntax down so Safari 15+ can run it
+    build: { target: ['es2020', 'safari15', 'chrome90', 'firefox90'] },
     base: './', // relative URLs so the build works under any web path (GitHub Pages sub-folder, Netlify, Artifact)
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
