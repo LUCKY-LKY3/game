@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { createStarterRoster } from '../data/roster';
 import { renderCousinSnapshots } from '../utils/cousinSnapshots';
+import { renderHeroSnapshots } from '../utils/heroSnapshots';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 
 export const INTRO_KEY = 'mafia-bhaiyas-intro-v1';
@@ -14,6 +15,15 @@ const NAMES: Record<Who, string> = {
   rebel_enforcer: 'Jam',
   rebel_striker: 'Chet',
   rebel_shadow: 'Immy',
+};
+
+const BURSTS: Record<Who, string> = {
+  qari_jaleel: 'radial-gradient(circle at 50% 65%, #FDE68A, #F59E0B 55%, #B45309)',
+  rebel_aviator: 'radial-gradient(circle at 50% 65%, #FBCFE8, #EC4899 55%, #9D174D)',
+  rebel_tactician: 'radial-gradient(circle at 50% 65%, #BBF7D0, #22C55E 55%, #166534)',
+  rebel_enforcer: 'radial-gradient(circle at 50% 65%, #BAE6FD, #0EA5E9 55%, #075985)',
+  rebel_striker: 'radial-gradient(circle at 50% 65%, #DDD6FE, #8B5CF6 55%, #5B21B6)',
+  rebel_shadow: 'radial-gradient(circle at 50% 65%, #FECACA, #EF4444 55%, #991B1B)',
 };
 
 function Panel({ children, delay = 0, tilt = 0, grow = 1 }: { children: React.ReactNode; delay?: number; tilt?: number; grow?: number }) {
@@ -47,22 +57,34 @@ function Caption({ text, className = '' }: { text: string; className?: string })
 
 export function IntroComic({ onDone }: { onDone: () => void }) {
   const [page, setPage] = useState(0);
+  const roster = useMemo(() => createStarterRoster(), []);
   const portraits = useMemo(() => {
     const map = {} as Record<Who, string>;
-    createStarterRoster().forEach((f) => {
+    roster.forEach((f) => {
       map[f.id as Who] = f.portraitUrl ?? '';
     });
     return map;
-  }, []);
+  }, [roster]);
   const [cousins, setCousins] = useState<string[]>([]);
+  const [bodies, setBodies] = useState<Record<string, string>>({});
   useEffect(() => {
-    const t = window.setTimeout(() => setCousins(renderCousinSnapshots(['tinku', 'moti_pehelwan', 'bunty'])), 50);
+    // Draw the real in-game 3D fighters and cousins (falls back to portraits while loading or if WebGL fails)
+    const t = window.setTimeout(() => {
+      setBodies(renderHeroSnapshots(roster));
+      setCousins(renderCousinSnapshots(['tinku', 'moti_pehelwan', 'bunty']));
+    }, 50);
     return () => clearTimeout(t);
-  }, []);
+  }, [roster]);
 
-  const Hero = ({ who, pos = 'object-top' }: { who: Who; pos?: string }) => (
-    <img src={portraits[who]} alt={NAMES[who]} draggable={false} className={`absolute inset-0 h-full w-full object-cover ${pos}`} />
-  );
+  const Hero = ({ who, tall = false }: { who: Who; tall?: boolean }) =>
+    bodies[who] ? (
+      <>
+        <div className="absolute inset-0" style={{ background: BURSTS[who] }} />
+        <img src={bodies[who]} alt={NAMES[who]} draggable={false} className={`absolute bottom-0 left-0 w-full object-contain object-bottom ${tall ? 'h-full' : 'h-[72%]'}`} />
+      </>
+    ) : (
+      <img src={portraits[who]} alt={NAMES[who]} draggable={false} className="absolute inset-0 h-full w-full object-cover object-top" />
+    );
 
   const pages: React.ReactNode[] = [
     // 1: all the Bhaiyas
@@ -74,7 +96,7 @@ export function IntroComic({ onDone }: { onDone: () => void }) {
       <div className="flex min-h-0 flex-1 gap-2">
         {(Object.keys(NAMES) as Who[]).map((w, i) => (
           <Panel key={w} delay={i * 0.12} tilt={i % 2 === 0 ? -1.5 : 1.5}>
-            <Hero who={w} />
+            <Hero who={w} tall />
             <Caption text={NAMES[w]} className="bottom-0 left-0" />
           </Panel>
         ))}
