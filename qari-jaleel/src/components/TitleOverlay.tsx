@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Clapperboard, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { Clapperboard, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { Credits } from './Credits';
+import { usePwaInstall } from '../utils/pwa';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
@@ -20,6 +21,8 @@ export function TitleOverlay({
   const [showSettings, setShowSettings] = useState(false);
   const [showBoard, setShowBoard] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
+  const pwa = usePwaInstall();
+  const [showIosHelp, setShowIosHelp] = useState(false);
 
   const brawlMeta = records.brawlBestRank
     ? `Best Rank ${records.brawlBestRank} · ${records.brawlBestScore.toLocaleString()} pts`
@@ -50,6 +53,17 @@ export function TitleOverlay({
             <Trophy className="h-3.5 w-3.5" />
             Hall of Fame
           </button>
+          {pwa.available && (
+            <button
+              type="button"
+              onClick={() => (pwa.manualIos ? setShowIosHelp(true) : void pwa.install())}
+              aria-label="Install the app"
+              className="pointer-events-auto ml-3 inline-flex h-9 items-center gap-1.5 border border-[#4ADE80]/60 bg-[#06210F]/90 px-2.5 align-middle text-[10px] font-black uppercase tracking-[0.14em] text-[#4ADE80] hover:border-[#4ADE80] transition-colors"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="[@media(max-height:400px)]:hidden">Install</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowCredits(true)}
@@ -150,6 +164,20 @@ export function TitleOverlay({
               </button>
             </div>
             <SettingsPanel />
+          </div>
+        </div>
+      )}
+      {showIosHelp && (
+        <div className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-[#141210]/90 p-4" onClick={() => setShowIosHelp(false)}>
+          <div className="w-full max-w-sm border border-[#4ADE80]/50 bg-[#1A1714] p-5 text-left text-[#F8F4EC]">
+            <div className="font-display text-xl font-black tracking-wider text-[#4ADE80] uppercase">Install on iPhone</div>
+            <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm">
+              <li>Open this page in <b>Safari</b>.</li>
+              <li>Tap the <b>Share</b> button (the square with an arrow).</li>
+              <li>Scroll and tap <b>Add to Home Screen</b>.</li>
+              <li>Tap <b>Add</b>. Open it from the new icon: full screen, no browser bars.</li>
+            </ol>
+            <button type="button" className="mt-4 w-full bg-[#F59E0B] py-2 text-sm font-black text-[#141210] uppercase">Got it</button>
           </div>
         </div>
       )}

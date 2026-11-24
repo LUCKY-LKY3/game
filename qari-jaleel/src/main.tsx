@@ -3,7 +3,10 @@ import App from './App.tsx';
 import { HeadLab } from './components/HeadLab';
 import { EndlessScoreEntry } from './components/Leaderboard';
 import { WEB_BOARD } from './config';
+import { registerServiceWorker } from './utils/pwa';
 import './index.css';
+
+registerServiceWorker();
 
 const showLab = new URLSearchParams(window.location.search).has('headlab');
 const params = new URLSearchParams(window.location.search);
