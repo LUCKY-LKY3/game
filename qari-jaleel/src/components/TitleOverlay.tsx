@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Clapperboard, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { ArrowUp, Clapperboard, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { Credits } from './Credits';
@@ -23,6 +23,21 @@ export function TitleOverlay({
   const [showCredits, setShowCredits] = useState(false);
   const pwa = usePwaInstall();
   const [showIosHelp, setShowIosHelp] = useState(false);
+  const [showInstallTip, setShowInstallTip] = useState(() => {
+    try {
+      return !localStorage.getItem('mafia-bhaiyas-install-tip-v1');
+    } catch {
+      return true;
+    }
+  });
+  const dismissInstallTip = () => {
+    setShowInstallTip(false);
+    try {
+      localStorage.setItem('mafia-bhaiyas-install-tip-v1', '1');
+    } catch {
+      // ignore
+    }
+  };
 
   const brawlMeta = records.brawlBestRank
     ? `Best Rank ${records.brawlBestRank} · ${records.brawlBestScore.toLocaleString()} pts`
@@ -54,15 +69,35 @@ export function TitleOverlay({
             Hall of Fame
           </button>
           {pwa.available && (
-            <button
-              type="button"
-              onClick={() => (pwa.manualIos ? setShowIosHelp(true) : void pwa.install())}
-              aria-label="Install the app"
-              className="pointer-events-auto ml-3 inline-flex h-9 items-center gap-1.5 border border-[#4ADE80]/60 bg-[#06210F]/90 px-2.5 align-middle text-[10px] font-black uppercase tracking-[0.14em] text-[#4ADE80] hover:border-[#4ADE80] transition-colors"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span className="[@media(max-height:400px)]:hidden">Install</span>
-            </button>
+            <span className="relative ml-3 inline-block align-middle">
+              <button
+                type="button"
+                onClick={() => {
+                  dismissInstallTip();
+                  if (pwa.manualIos) setShowIosHelp(true);
+                  else void pwa.install();
+                }}
+                aria-label="Install the app"
+                className="pointer-events-auto inline-flex h-9 items-center gap-1.5 border border-[#4ADE80]/60 bg-[#06210F]/90 px-2.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#4ADE80] hover:border-[#4ADE80] transition-colors"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span className="[@media(max-height:400px)]:hidden">Install</span>
+              </button>
+              {showInstallTip && (
+                <button
+                  type="button"
+                  onClick={dismissInstallTip}
+                  aria-label="Dismiss install tip"
+                  className="pointer-events-auto absolute top-full left-1/2 z-30 mt-1 w-44 -translate-x-1/2 text-center normal-case"
+                >
+                  <ArrowUp className="mx-auto h-6 w-6 animate-bounce text-[#4ADE80] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" />
+                  <span className="block rounded-lg bg-[#4ADE80] px-2.5 py-1.5 text-[11px] leading-tight font-extrabold tracking-normal text-[#06210F] shadow-[0_4px_14px_rgba(0,0,0,0.5)]">
+                    Install here, bhai, for a better experience!
+                    <span className="mt-0.5 block text-[9px] font-bold opacity-70">(tap to hide)</span>
+                  </span>
+                </button>
+              )}
+            </span>
           )}
           <button
             type="button"
