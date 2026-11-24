@@ -104,6 +104,9 @@ export const FIGHTER_LINES: Record<string, string[]> = {
   ],
   // Jav: swears, but it is all bleeped
   rebel_tactician: [
+    'Cricket is coming to Olympics!',
+    'Cricket is coming to the Olympics, you #£&@! Finally!',
+    'Forget the #£&@ fight, cricket is coming to Olympics!',
     'Oh, #£&@ off, I just sat down!',
     'This is so #£&@ annoying, bro.',
     'Holy #£&@, who ordered all these?!',
