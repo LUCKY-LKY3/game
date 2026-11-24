@@ -2,7 +2,7 @@
 
 /** Generic cousin trash talk, said by a random cousin on screen */
 export const COUSIN_TAUNTS: string[] = [
-  'I told Mummy I was getting milk!',
+  'I told Uncle I was getting milk!',
   "My cousin's cousin is bigger than you!",
   'I only came for the free chai!',
   'Wait, is this the wedding?',
@@ -12,7 +12,7 @@ export const COUSIN_TAUNTS: string[] = [
   'I have a degree in beating people up!',
   'This is for the last cricket match!',
   'Who stole my slippers? YOU?!',
-  "I'll tell your Mummy!",
+  "I'll tell your Aunty!",
   'Come here, I will sell you insurance!',
   "My horoscope said don't fight today...",
   'Brother, I am just the intern!',
@@ -48,7 +48,7 @@ export const SPECIFIC_TAUNTS: Record<string, string[]> = {
 export const HERO_QUIPS: Record<'dodge' | 'streak' | 'lowhp' | 'bossdown' | 'flawless' | 'chai' | 'snack' | 'tag', string[]> = {
   dodge: ['Too slow, bro!', 'Missed me, cousin!', 'Not today!', 'Was that your best?', 'Whoosh!'],
   streak: ["I'm on fire! Not literally!", "Can't touch this!", 'Smooth like ghee!', 'Is this too easy?'],
-  lowhp: ["I'm fine! Totally fine!", 'Tell my Mummy I tried!', 'Just a scratch!', 'Chai break soon, please?'],
+  lowhp: ["I'm fine! Totally fine!", 'Tell my Aunty I tried!', 'Just a scratch!', 'Chai break soon, please?'],
   bossdown: ['And STAY down!', 'That was for the Mohalla!', 'Boss? More like Bore-ss!', 'Next!'],
   flawless: ['Not a scratch! Look at this hair!', 'Perfect! Like my biryani!', 'Spotless, bhai!'],
   chai: ['Chai! Life saver!', 'Extra sugar, thank you!', 'Now THAT is medicine!'],
@@ -127,14 +127,14 @@ export const FIGHTER_LINES: Record<string, string[]> = {
   rebel_enforcer: [
     'Bro drop me off, my neighbour\'s uncle\'s parrot has a driving test.',
     'Drop me home, I think I left my soul in Karachi.',
-    'Quick drop? My mum thinks I am still seven.',
+    'Quick drop? My uncle thinks I am still seven.',
     'Bro, can you drop me? The biryani is calling my name.',
     'Why did the cousin bring a ladder? To reach a higher level of fighting!',
     'I used to hate facial hair, but then it grew on me.',
     'What do you call fake spaghetti? An impasta!',
     'Bro drop me off, my uncle from Pakistan has a cousin in Poland who needs to go to a shaadi tomorrow.',
     'Bro, drop me home, my aunt\'s neighbour\'s goat is getting married!',
-    'Can you drop me? My mum\'s WhatsApp group needs urgent tech support.',
+    'Can you drop me? My aunty\'s WhatsApp group needs urgent tech support.',
     'Drop me home bro, I left the gas on in 2019.',
     'Bro drop me off, my cousin\'s friend\'s dog has a visa interview.',
     'Drop me, my Nani\'s cat is stuck in a lift in Lahore.',
@@ -176,7 +176,7 @@ export const FIGHTER_LINES: Record<string, string[]> = {
     'My love language is flying kicks and compliments.',
     'Mind if I stand next to you? Makes me look taller.',
     "Come here often? I do. I'm a local legend.",
-    'I introduce myself as Immy. Your mum already knows me.',
+    'I introduce myself as Immy. Your aunty already knows me.',
     'Fight later, dinner first? I know a great chaat stall.',
     'You, me, a moonlit rickshaw ride. Think about it.',
     'Smooth? I invented smooth. Ghee took notes.',

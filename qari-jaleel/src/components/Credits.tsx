@@ -16,7 +16,7 @@ const SECTIONS: { title: string; rows: [string, string][] }[] = [
     title: 'Design',
     rows: [
       ['Game Design', 'Several Strongly Worded WhatsApp Messages'],
-      ['Art Direction', 'Mummy (She Chose The Curtains)'],
+      ['Art Direction', 'Aunty (She Chose The Curtains)'],
       ['Character Design', 'A Mirror, Mostly'],
       ['3D Modelling', '400 Triangles And A Dream'],
       ['Level Design', 'A Street. Some Pots.'],
@@ -65,7 +65,7 @@ const SECTIONS: { title: string; rows: [string, string][] }[] = [
 ];
 
 const THANKS = [
-  'Mummy',
+  'Aunty',
   'Nani (Her Slap Is Legendary)',
   'The WiFi (Sometimes)',
   "Harry's Pizza",
