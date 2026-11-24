@@ -6,6 +6,15 @@
 }
 .bubble-pop { animation: bubble-pop 0.18s ease-out; }
 
+@keyframes comic-pop {
+  0% { opacity: 0; scale: 0.7; }
+  70% { opacity: 1; scale: 1.05; }
+  100% { opacity: 1; scale: 1; }
+}
+.comic-panel { animation: comic-pop 0.32s ease-out both; }
+@keyframes comic-page { from { opacity: 0; } to { opacity: 1; } }
+.comic-page { animation: comic-page 0.2s ease-out; }
+
 @theme {
   --font-display: "Big Shoulders Display", system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;

@@ -1,4 +1,5 @@
 import { enterFullscreen } from './utils/fullscreen';
+import { IntroComic, INTRO_KEY } from './components/IntroComic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Difficulty,
@@ -100,6 +101,25 @@ export default function App() {
   const arenaRef = useRef<ArenaCanvasHandle | null>(null);
   // Splash with the logo while the game boots (BOOT_MS) and briefly while a match is set up (MATCH_MS)
   const [bootLoading, setBootLoading] = useState(true);
+  // Comic-book intro: plays on the very first visit (or with ?intro), skippable, replayable from the title
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      if (q.has('intro')) return true;
+      if (window.location.search) return false; // debug URLs skip it
+      return !localStorage.getItem(INTRO_KEY);
+    } catch {
+      return false;
+    }
+  });
+  const finishIntro = useCallback(() => {
+    setShowIntro(false);
+    try {
+      localStorage.setItem(INTRO_KEY, '1');
+    } catch {
+      // ignore
+    }
+  }, []);
   const [matchLoading, setMatchLoading] = useState(false);
   // On phones, the first tap switches to full screen (once per visit; the Settings toggle undoes it)
   useEffect(() => {
@@ -262,6 +282,7 @@ export default function App() {
         <TitleOverlay
           customCount={customFighters.length}
           onSelectMode={handleSelectMode}
+          onReplayIntro={() => setShowIntro(true)}
         />
       )}
 
@@ -348,6 +369,7 @@ export default function App() {
           }}
         />
       )}
+      {showIntro && !bootLoading && <IntroComic onDone={finishIntro} />}
       <LoadingScreen visible={bootLoading || matchLoading} durationMs={bootLoading ? BOOT_MS : MATCH_MS} />
     </main>
   );

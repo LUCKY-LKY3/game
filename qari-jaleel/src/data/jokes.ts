@@ -166,7 +166,7 @@ export const FIGHTER_LINES: Record<string, string[]> = {
     'Bull market for fists, bear market for you!',
   ],
   // Immy: smooth-talking sleazy charmer (PG-13)
-  immy_girls: [
+  rebel_shadow: [
     "Is it hot in here, or is it just my charm?",
     'I would say God bless you, but He clearly already did.',
     "Baby, are you a lathi? Because you're striking!",
@@ -205,7 +205,7 @@ export const PARTNER_LINES: Record<string, string[]> = {
   rebel_tactician: ['{p}, you #£&@, watch my back!', 'Cover me, {p}, I am too sleepy!', '{p}, you are a good #£&@, you know that?'],
   rebel_enforcer: ['{p}, bro, can you drop me home after this?', '{p}, I know a joke about you. It is long.', "{p}, my uncle's cousin knows your cousin!"],
   rebel_striker: ['{p}, I would invest in you any day.', '{p}, our partnership has great returns.', 'Diversify, {p}! Do not stand there!'],
-  immy_girls: ['{p}, relax, I will handle the charming.', "{p}, you're welcome for my presence.", 'Stay close, {p}, I make everyone look good.'],
+  rebel_shadow: ['{p}, relax, I will handle the charming.', "{p}, you're welcome for my presence.", 'Stay close, {p}, I make everyone look good.'],
 };
 
 /** Taunts at the opponent in 1v1 fights ({p} = opponent nickname) */

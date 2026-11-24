@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { BookOpen, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { GameMode } from '../types/game';
@@ -9,11 +9,13 @@ import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 interface TitleOverlayProps {
   customCount: number;
   onSelectMode: (mode: GameMode) => void;
+  onReplayIntro?: () => void;
 }
 
 export function TitleOverlay({
   customCount,
   onSelectMode,
+  onReplayIntro,
 }: TitleOverlayProps) {
   const records = useMemo(() => loadArcadeRecords(), []);
   const [showSettings, setShowSettings] = useState(false);
@@ -46,6 +48,17 @@ export function TitleOverlay({
             <Trophy className="h-3.5 w-3.5" />
             Hall of Fame
           </button>
+          {onReplayIntro && (
+            <button
+              type="button"
+              onClick={onReplayIntro}
+              aria-label="Watch the story intro"
+              className="pointer-events-auto ml-3 inline-flex h-9 items-center gap-1.5 border border-[#F8F4EC]/25 bg-[#141210]/90 px-2.5 align-middle text-[10px] font-black uppercase tracking-[0.14em] text-[#F8F4EC] hover:border-[#F59E0B] hover:text-[#F59E0B] transition-colors"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Intro
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowSettings(true)}
