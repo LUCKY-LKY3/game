@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
+import { HallOfFame } from './Leaderboard';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
@@ -16,6 +17,7 @@ export function TitleOverlay({
 }: TitleOverlayProps) {
   const records = useMemo(() => loadArcadeRecords(), []);
   const [showSettings, setShowSettings] = useState(false);
+  const [showBoard, setShowBoard] = useState(false);
 
   const brawlMeta = records.brawlBestRank
     ? `Best Rank ${records.brawlBestRank} · ${records.brawlBestScore.toLocaleString()} pts`
@@ -33,6 +35,14 @@ export function TitleOverlay({
         <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-[min(26vh,10.5rem)] w-auto select-none drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)]" />
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F59E0B]/90">
           {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
+          <button
+            type="button"
+            onClick={() => setShowBoard(true)}
+            className="pointer-events-auto ml-3 inline-flex h-9 items-center gap-1.5 border border-[#FACC15]/60 bg-[#141210]/90 px-2.5 align-middle text-[10px] font-black uppercase tracking-[0.14em] text-[#FACC15] hover:border-[#FACC15] transition-colors"
+          >
+            <Trophy className="h-3.5 w-3.5" />
+            Hall of Fame
+          </button>
           <button
             type="button"
             onClick={() => setShowSettings(true)}
@@ -78,9 +88,12 @@ export function TitleOverlay({
               onClick={() => onSelectMode('endless_mohalla')}
               className="flex flex-col items-start justify-between border border-[#DC2626] bg-[#241312]/95 px-4 py-3 text-left text-[#F8F4EC] hover:border-[#F59E0B] hover:bg-[#2F1715] transition-colors"
             >
-              <span className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-[#FCD34D] whitespace-nowrap">
+              <span className="flex items-center gap-1.5 text-[13px] font-black uppercase tracking-wide text-[#FCD34D] whitespace-nowrap">
                 <Flame className="h-4 w-4 shrink-0 text-[#EF4444]" />
                 Endless Mohalla
+                <span className="rounded-sm bg-gradient-to-r from-[#FACC15] to-[#F59E0B] px-1.5 py-0.5 text-[8px] font-black tracking-widest text-[#141210]">
+                  PREMIUM
+                </span>
               </span>
               <span className="mt-1 font-mono-num text-[11px] font-semibold text-[#D6CEC2]">
                 {endlessMeta}
@@ -121,6 +134,19 @@ export function TitleOverlay({
               </button>
             </div>
             <SettingsPanel />
+          </div>
+        </div>
+      )}
+      {showBoard && (
+        <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-[#141210]/90 p-4">
+          <div className="w-full max-w-md">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="font-display text-3xl font-black uppercase tracking-wider text-[#FACC15]">Hall of Fame</h2>
+              <button type="button" onClick={() => setShowBoard(false)} aria-label="Close" className="text-[#B6AA9A] hover:text-[#F8F4EC]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <HallOfFame />
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { SettingsPanel } from './SettingsPanel';
+import { EndlessScoreEntry } from './Leaderboard';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 import { useState } from 'react';
 import { Award, Flame, Play, RotateCcw, Swords, Users } from 'lucide-react';
@@ -329,6 +330,14 @@ export function MatchOverModal({
                 </div>
               )}
             </div>
+
+            {isEndless && (
+              <EndlessScoreEntry
+                score={scorecard?.score ?? hud.brawl.score}
+                wave={scorecard?.endlessWave ?? hud.brawl.endlessWave}
+                fighterName={p1Profile.name}
+              />
+            )}
 
             {/* Clean Tabular Arcade Tally Grid */}
             <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 border-y border-[#F8F4EC]/12 py-5 sm:grid-cols-3">
