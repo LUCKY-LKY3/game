@@ -30,6 +30,9 @@ export function TitleOverlay({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-[#141210] via-[#141210]/35 to-[#141210]/65 p-5 sm:p-10 [@media(max-height:480px)]:p-3">
+      <div className="pointer-events-none fixed right-2 bottom-1 z-30 font-mono-num text-[10px] font-bold tracking-widest text-[#F8F4EC]/60">
+        v{__APP_VERSION__}
+      </div>
       {/* Top quiet header */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-[min(26vh,10.5rem)] w-auto select-none drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)]" />
