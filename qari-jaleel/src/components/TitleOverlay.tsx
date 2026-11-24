@@ -28,7 +28,7 @@ export function TitleOverlay({
     <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-[#141210] via-[#141210]/35 to-[#141210]/65 p-5 sm:p-10">
       {/* Top quiet header */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
-        <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-11 w-auto select-none drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)]" />
+        <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-[min(26vh,10.5rem)] w-auto select-none drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)]" />
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F59E0B]/90">
           {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
         </div>
@@ -37,15 +37,7 @@ export function TitleOverlay({
       {/* Bottom-left hero title & mode hub leaving the live 3D village akhara battle unobstructed */}
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 pb-2 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-xl">
-          <h1 className="m-0">
-            <img
-              src={logoUrl}
-              alt="Mafia Bhaiyas"
-              className="h-[min(24vh,11rem)] w-auto select-none drop-shadow-[0_8px_26px_rgba(0,0,0,0.8)]"
-              draggable={false}
-            />
-          </h1>
-          <div className="mt-1 [@media(max-height:480px)]:hidden font-display text-lg font-extrabold uppercase tracking-[0.22em] text-[#DC2626] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] sm:text-2xl">
+          <div className="[@media(max-height:480px)]:hidden font-display text-lg font-extrabold uppercase tracking-[0.22em] text-[#DC2626] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] sm:text-2xl">
             Blood and Honour
           </div>
           <p className="mt-3 max-w-lg [@media(max-height:480px)]:hidden text-sm font-bold uppercase tracking-[0.14em] leading-relaxed text-[#F8F4EC] drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] sm:text-base">
