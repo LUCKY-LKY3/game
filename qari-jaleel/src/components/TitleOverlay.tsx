@@ -3,7 +3,7 @@ import { ArrowUp, Clapperboard, Download, Flame, Settings, Swords, Trophy, Users
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { Credits } from './Credits';
-import { usePwaInstall } from '../utils/pwa';
+import { usePwaInstall, useUpdateAvailable } from '../utils/pwa';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
@@ -22,6 +22,7 @@ export function TitleOverlay({
   const [showBoard, setShowBoard] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
   const pwa = usePwaInstall();
+  const update = useUpdateAvailable();
   const [showIosHelp, setShowIosHelp] = useState(false);
   const [showInstallTip, setShowInstallTip] = useState(() => {
     try {
@@ -53,6 +54,15 @@ export function TitleOverlay({
       <div className="pointer-events-none fixed right-2 bottom-1 z-30 font-mono-num text-[10px] font-bold tracking-widest text-[#F8F4EC]/60">
         v{__APP_VERSION__}
       </div>
+      {update.latest && (
+        <button
+          type="button"
+          onClick={update.reload}
+          className="pointer-events-auto fixed top-2 left-1/2 z-40 -translate-x-1/2 animate-pulse rounded-full border-2 border-[#FDE047] bg-[#F59E0B] px-4 py-1.5 text-[11px] [@media(max-height:400px)]:top-0.5 [@media(max-height:400px)]:py-0.5 [@media(max-height:400px)]:text-[10px] font-black tracking-wider whitespace-nowrap text-[#141210] uppercase shadow-[0_0_18px_rgba(250,204,21,0.7)]"
+        >
+          New version v{update.latest} ready · tap to update
+        </button>
+      )}
       {/* Top quiet header */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-[min(26vh,10.5rem)] w-auto select-none drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)]" />

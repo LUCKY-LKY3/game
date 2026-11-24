@@ -17,6 +17,14 @@ export default defineConfig(() => {
     plugins: [
       react(),
       tailwindcss(),
+      // version.json lets an installed copy of the game notice that a newer version is online
+      {
+        name: 'emit-version-json',
+        apply: 'build',
+        generateBundle(this: { emitFile: (f: { type: 'asset'; fileName: string; source: string }) => void }) {
+          this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version: appVersion }) });
+        },
+      },
       // Copies src/assets into dist/ so root-relative URLs like
       // "/src/assets/images/..." (e.g. generate_image output) still resolve
       // in production builds. Do not remove.

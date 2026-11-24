@@ -19,7 +19,12 @@ self.addEventListener('message', (event) => {
         data.urls
           .filter((u) => typeof u === 'string' && u.startsWith(self.location.origin))
           .map((u) => c.add(u).catch(() => {}))
-      )
+      ).then(async () => {
+        // Drop files from older builds (hashed bundle names that the current page no longer uses)
+        const keep = new Set(data.urls);
+        const keys = await c.keys();
+        await Promise.all(keys.filter((k) => /\/assets\/index-[^/]+\.(js|css)$/.test(k.url) && !keep.has(k.url)).map((k) => c.delete(k)));
+      })
     )
   );
 });
@@ -32,7 +37,7 @@ self.addEventListener('fetch', (event) => {
   const isPage = req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html');
   if (isPage) {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-cache' })
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy));

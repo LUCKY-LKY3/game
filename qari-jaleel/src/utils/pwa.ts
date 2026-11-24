@@ -96,3 +96,44 @@ export function usePwaInstall(): PwaInstall {
     },
   };
 }
+
+/** Notices when a newer build is online (compares version.json with this build). */
+export function useUpdateAvailable(): { latest: string | null; reload: () => void } {
+  const [latest, setLatest] = useState<string | null>(null);
+  useEffect(() => {
+    if (isInFrame() || typeof window === 'undefined') return;
+    let alive = true;
+    const check = async () => {
+      try {
+        const res = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as { version?: string };
+        if (alive && data.version && data.version !== __APP_VERSION__) setLatest(data.version);
+      } catch {
+        // offline: nothing to do
+      }
+    };
+    void check();
+    const id = window.setInterval(check, 5 * 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void check();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+  const reload = () => {
+    const done = () => window.location.reload();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .getRegistration()
+        .then((r) => r?.update())
+        .catch(() => {})
+        .finally(done);
+    } else done();
+  };
+  return { latest, reload };
+}
