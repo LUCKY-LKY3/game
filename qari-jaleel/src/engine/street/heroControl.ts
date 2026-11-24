@@ -555,7 +555,7 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
 
   // Brisk Classic Double Dragon Arcade Rhythm movement!
   const styleSpeedBonus =
-    hero.style === 'kalari_kicker' ? 0.72 : hero.style === 'kung_fu_master' ? 0.6 : hero.style === 'street_boxer' ? 0.42 : 0;
+    hero.profile.id === 'rebel_enforcer' ? 1.15 : hero.style === 'kalari_kicker' ? 0.72 : hero.style === 'kung_fu_master' ? 0.6 : hero.style === 'street_boxer' ? 0.42 : 0;
   const baseSpeedX = 5.85 + hero.profile.stats.speed * 0.14 + styleSpeedBonus;
   const maxSpeedX = hero.isSprinting ? baseSpeedX * 1.48 : baseSpeedX;
   // Responsive Z-strafe for our +30% wider village lane
@@ -991,6 +991,7 @@ export function startHeroMove(this: StreetBrawlEngine, hero: HeroRuntime, move: 
   hero.action = move;
   hero.actionTime = 0;
   const boxerBoost =
+    (hero.profile.id === 'rebel_enforcer' && (move === 'lp' || move === 'lp2' || move === 'rp')) ? 0.64 :
     (hero.style === 'street_boxer' && (move === 'lp' || move === 'lp2')) ||
     (hero.style === 'kung_fu_master' && (move === 'lp' || move === 'lp2' || move === 'rp'))
       ? 0.78

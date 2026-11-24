@@ -76,6 +76,7 @@ export class PowerupDirector {
 
   // Jam: Polished 3D Snooker Cue
   private snookerCueGroup: THREE.Group;
+  private snookerBalls: THREE.Mesh[] = [];
 
   // Chet: Glossy 3D Red Ford Car
   private fordCarGroup: THREE.Group;
@@ -186,6 +187,15 @@ export class PowerupDirector {
     this.snookerCueGroup = this.buildSnookerCue(trackGeo, trackMat);
     this.snookerCueGroup.visible = false;
     this.scene.add(this.snookerCueGroup);
+    const ballColors = ['#DC2626', '#DC2626', '#FACC15', '#16A34A', '#92400E', '#2563EB', '#EC4899', '#111111', '#F8F4EC'];
+    const ballGeo = trackGeo(new THREE.SphereGeometry(0.1, 14, 10));
+    for (const c of ballColors) {
+      const m = new THREE.Mesh(ballGeo, trackMat(new THREE.MeshStandardMaterial({ color: c, roughness: 0.18, metalness: 0.15 })));
+      m.visible = false;
+      m.castShadow = true;
+      this.scene.add(m);
+      this.snookerBalls.push(m);
+    }
 
     // ── 3. CHET'S 3D RED FORD CAR ───────────────────────────────────────────
     const ford = this.buildRedFordCar(trackGeo, trackMat, trackTex);
@@ -237,6 +247,7 @@ export class PowerupDirector {
     this.wispGroup.visible = false;
     this.debrisGroup.visible = false;
     this.snookerCueGroup.visible = false;
+    for (const b of this.snookerBalls) b.visible = false;
     this.fordCarGroup.visible = false;
     this.girlsGroup.visible = false;
     this.heartsGroup.visible = false;
@@ -373,7 +384,10 @@ export class PowerupDirector {
     }
   }
 
-  /** Jam: Swings a 3D polished wooden snooker cue 3 times, then rests it over his shoulder */
+  /**
+   * Jam: chalk the tip, line up the shot (3 practice strokes), BREAK a rack of snooker balls,
+   * rapid-fire potting whacks, a final smash, then rest the cue over his shoulder.
+   */
   public updateJamSnooker(
     phase: number,
     attackerX: number,
@@ -381,30 +395,53 @@ export class PowerupDirector {
     attackerZ: number,
     facing: 1 | -1
   ) {
-    this.snookerCueGroup.visible = true;
-    // Position cue anchored around Jam's right hand & swing arc
-    if (phase < 0.64) {
-      // Three distinct whacks across 0.12..0.64
-      const swingLocal = ((phase - 0.1) / 0.18) % 1;
-      const swingArc = phase < 0.1 ? -0.9 : Math.sin(Math.max(0, swingLocal) * Math.PI) * 2.2 - 0.7;
-      this.snookerCueGroup.position.set(
-        attackerX + facing * 0.46,
-        attackerY + 1.24,
-        attackerZ + 0.16
-      );
-      this.snookerCueGroup.rotation.set(
-        0.25,
-        facing === 1 ? -0.35 + swingArc * 0.3 : Math.PI + 0.35 - swingArc * 0.3,
-        -0.4 - swingArc * 0.85
-      );
+    const cue = this.snookerCueGroup;
+    cue.visible = true;
+    const f = facing;
+    const horiz = -f * Math.PI * 0.5; // rotate.z that points the cue (modelled along +Y) along the facing direction
+    if (phase < 0.1) {
+      // Chalking the tip: cue upright in front of the chest, little rubbing wobble
+      cue.position.set(attackerX + f * 0.4, attackerY + 1.3, attackerZ + 0.2);
+      cue.rotation.set(0.1, 0, -f * (0.12 + Math.sin(phase * 260) * 0.05));
+    } else if (phase < 0.58) {
+      // Lined up along the shot: slides back and forth for 3 practice strokes, pulls back, then thrusts through for the break
+      let off = 0;
+      if (phase < 0.26) off = 0;
+      else if (phase < 0.42) off = Math.sin(((phase - 0.26) / 0.16) * Math.PI * 3) * 0.32;
+      else if (phase < 0.5) off = -0.32 - ((phase - 0.42) / 0.08) * 0.3;
+      else off = -0.62 + Math.min(1, (phase - 0.5) / 0.04) * 1.45 * (phase < 0.56 ? 1 : 1 - (phase - 0.56) / 0.02 * 0.3);
+      cue.position.set(attackerX + f * (0.55 + off), attackerY + 0.82, attackerZ + 0.16);
+      cue.rotation.set(0, 0, horiz);
+    } else if (phase < 0.88) {
+      // Rapid potting whacks (three quick swings), then the big final smash
+      const local = phase < 0.78 ? Math.max(0, (phase - 0.58) / 0.067) % 1 : Math.min(1, (phase - 0.78) / 0.1);
+      const arc = Math.sin(local * Math.PI) * (phase < 0.78 ? 2.2 : 2.6) - 0.7;
+      cue.position.set(attackerX + f * 0.46, attackerY + 1.24, attackerZ + 0.16);
+      cue.rotation.set(0.25, f === 1 ? -0.35 + arc * 0.3 : Math.PI + 0.35 - arc * 0.3, -0.4 - arc * 0.85);
     } else {
-      // Casually propped over his shoulder while delivering "you know what bro just drop me off home"
-      this.snookerCueGroup.position.set(
-        attackerX - facing * 0.12,
-        attackerY + 1.48,
-        attackerZ + 0.18
+      // Casually propped over his shoulder
+      cue.position.set(attackerX - f * 0.12, attackerY + 1.48, attackerZ + 0.18);
+      cue.rotation.set(0.18, f === 1 ? 0.25 : Math.PI - 0.25, 0.88);
+    }
+
+    // Snooker balls scatter from the break and bounce around until the final smash
+    const t = phase - 0.5;
+    for (let i = 0; i < this.snookerBalls.length; i++) {
+      const ball = this.snookerBalls[i];
+      if (t < 0 || phase > 0.82) {
+        ball.visible = false;
+        continue;
+      }
+      ball.visible = true;
+      const ang = (i / this.snookerBalls.length) * Math.PI * 2 + 0.4;
+      const sp = 1.6 + (i % 4) * 0.55;
+      const tt = t * 5.2;
+      const bounce = Math.abs(Math.sin(tt * (2.4 + (i % 3) * 0.5))) * Math.max(0.12, 1.5 - tt * 0.9);
+      ball.position.set(
+        attackerX + f * (1.6 + Math.cos(ang) * sp * tt * 0.45),
+        attackerY + 0.12 + bounce,
+        attackerZ + Math.sin(ang) * sp * tt * 0.38
       );
-      this.snookerCueGroup.rotation.set(0.18, facing === 1 ? 0.25 : Math.PI - 0.25, 0.88);
     }
   }
 

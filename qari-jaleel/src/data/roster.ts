@@ -271,7 +271,7 @@ export function createStarterRoster(): FighterProfile[] {
         lowerOutfitStyle: 'pathani_salwar',
         plaidLungi: false,
       },
-      stats: { power: 8, speed: 8, reach: 8, defense: 7 },
+      stats: { power: 7, speed: 10, reach: 8, defense: 6 },
       specialMoveName: 'Snooker Cue Beatdown',
       taunt: 'Arms uncrossed means the fight is already finished.',
       wins: 0,

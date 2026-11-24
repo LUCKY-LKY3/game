@@ -65,8 +65,15 @@ export function startHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime) {
       break;
     case 'jam_snooker':
       hero.action = 'powerup_jam';
-      hero.actionDuration = 2.7;
-      hero.callout = 'SNOOKER CUE BEATDOWN!';
+      hero.actionDuration = 7.0;
+      hero.invulnTimer = 7.2;
+      hero.callout = 'CHALK MY TIP, BOYS!';
+      this.speechBubble = {
+        side: hero.index === 0 ? 1 : 2,
+        speaker: hero.profile.name,
+        text: 'Let me just chalk my tip real quick.',
+      };
+      this.speechTimer = 1.5;
       break;
     case 'chet_ford':
       hero.action = 'powerup_chet';
@@ -229,27 +236,54 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
     }
   } else if (hero.powerupKind === 'jam_snooker') {
     this.powerupDirector.updateJamSnooker(phase, hero.x, hero.y, hero.z, hero.facing);
-    if (phase > 0.16 && (hero.powerupHitsMask & 1) === 0) {
-      hero.powerupHitsMask |= 1;
+    const side = hero.index === 0 ? 1 : 2;
+    const otherSide = side === 1 ? 2 : 1;
+    const say = (s: 1 | 2, speaker: string, text: string, secs: number) => {
+      this.speechBubble = { side: s, speaker, text };
+      this.speechTimer = secs;
+    };
+    const once = (bit: number, at: number, fn: () => void) => {
+      if (phase > at && (hero.powerupHitsMask & bit) === 0) {
+        hero.powerupHitsMask |= bit;
+        fn();
+      }
+    };
+    const name = hero.profile.name;
+    const front = hero.x + hero.facing * 1.5;
+    once(1, 0.05, () => {
+      this.spawnParticles(hero.x + hero.facing * 0.5, 1.5, hero.z, 14, 2.2);
+      this.spawnComicPopup(hero.x, 2.2, hero.z, 'CHALK!', '#38BDF8');
+    });
+    once(2, 0.13, () => say(otherSide, 'Cousin', "Bro, you've been chalking that for five minutes.", 1.8));
+    once(4, 0.24, () => say(side, name, "Size isn't everything. It's all about technique.", 1.9));
+    once(8, 0.34, () => say(otherSide, 'Cousin', 'Nobody asked, bhai!', 1.4));
+    once(16, 0.5, () => {
+      soundEngine.playBilliardClack();
+      this.spawnParticles(front, 0.8, hero.z, 24, 5);
+      this.dealPowerupAoeDamage(hero, front, hero.z, 4.0, 24, false, 'BREAK!');
+      say(side, name, 'Look at the balls on this guy!', 1.6);
+    });
+    once(32, 0.6, () => {
       soundEngine.playWoodWhack();
-      this.dealPowerupAoeDamage(hero, hero.x + hero.facing * 1.4, hero.z, 3.6, 22, false, 'WHACK!');
-    }
-    if (phase > 0.36 && (hero.powerupHitsMask & 2) === 0) {
-      hero.powerupHitsMask |= 2;
+      this.dealPowerupAoeDamage(hero, front, hero.z, 3.8, 14, false, 'POTTED THE PINK!');
+      say(side, name, 'Potting the pink!', 1.0);
+    });
+    once(64, 0.665, () => {
       soundEngine.playWoodWhack();
-      this.dealPowerupAoeDamage(hero, hero.x + hero.facing * 1.4, hero.z, 3.8, 22, false, 'BONK!');
-    }
-    if (phase > 0.56 && (hero.powerupHitsMask & 4) === 0) {
-      hero.powerupHitsMask |= 4;
+      this.dealPowerupAoeDamage(hero, front, hero.z, 3.8, 14, false, 'AND THE BLACK!');
+      say(side, name, 'Nice and deep in the middle pocket.', 1.3);
+    });
+    once(128, 0.73, () => {
       soundEngine.playWoodWhack();
-      this.dealPowerupAoeDamage(hero, hero.x + hero.facing * 1.5, hero.z, 4.2, 28, true, 'DHISHUM!');
-      this.speechBubble = {
-        side: hero.index === 0 ? 1 : 2,
-        speaker: hero.profile.name,
-        text: 'you know what bro just drop me off home',
-      };
-      this.speechTimer = 2.4;
-    }
+      this.dealPowerupAoeDamage(hero, front, hero.z, 3.8, 14, false, 'LONG SHOT!');
+    });
+    once(256, 0.82, () => {
+      soundEngine.playWoodWhack();
+      this.dealPowerupAoeDamage(hero, front, hero.z, 4.4, 34, true, 'DHISHUM!');
+      say(side, name, 'Straight in the corner pocket. Every time.', 1.8);
+    });
+    once(512, 0.9, () => say(otherSide, 'Cousin', "Bhai, that's enough innuendo for one match.", 1.7));
+    once(1024, 0.96, () => say(side, name, 'you know what bro just drop me off home', 1.4));
   } else if (hero.powerupKind === 'chet_ford') {
     const car = this.powerupDirector.updateChetFord(phase, hero.powerupOriginX, tz, hero.facing);
     if (car.carActive) {

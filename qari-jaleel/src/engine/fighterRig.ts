@@ -67,16 +67,16 @@ export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec
       };
 
     case 'rebel_enforcer':
-      // Jam: tall, lean athletic wiry striker
+      // Jam: very tall, wiry and skinny speedster
       return {
-        heightScale: 1.0,
-        widthScale: 0.82,
-        depthScale: 0.84,
-        bellyBulge: -0.02,
-        limbScale: 0.88,
-        headScale: 1.04,
-        shoulderMass: 0.98,
-        vTaper: 1.15,
+        heightScale: 1.16,
+        widthScale: 0.7,
+        depthScale: 0.72,
+        bellyBulge: -0.06,
+        limbScale: 0.8,
+        headScale: 1.0,
+        shoulderMass: 0.92,
+        vTaper: 1.1,
       };
 
     case 'qari_jaleel':
@@ -3900,9 +3900,59 @@ export function applyFighterPose(
     }
 
     case 'powerup_jam': {
-      if (phase < 0.64) {
-        const swingLocal = Math.max(0, (phase - 0.1) / 0.18) % 1;
-        const swing = phase < 0.1 ? -0.6 : Math.sin(swingLocal * Math.PI) * 2 - 0.7;
+      // 0-.10 chalking the tip, .10-.50 lines up the shot (crouch, bridge hand, 3 practice strokes, wind-up),
+      // .50-.58 the break, .58-.78 rapid potting whacks, .78-.88 final smash, then casual shrug
+      const stroke = Math.sin(Math.max(0, (phase - 0.26) / 0.16) * Math.PI * 3);
+      if (phase < 0.1) {
+        const rub = Math.sin(time * 26);
+        hipsY = 0.94;
+        torsoRotX = 0.1;
+        headRotX = 0.22;
+        headRotY = 0.1;
+        rShX = -1.25;
+        rShZ = 0.3;
+        rElX = -1.5 + rub * 0.12;
+        lShX = -1.0;
+        lShZ = -0.15;
+        lElX = -1.55 + rub * 0.12;
+      } else if (phase < 0.5) {
+        const windUp = phase > 0.42 ? (phase - 0.42) / 0.08 : 0;
+        hipsY = 0.64;
+        hipsRotY = -0.3;
+        torsoRotX = 0.62;
+        torsoRotY = 0.3;
+        headRotX = 0.32;
+        headRotY = 0.1;
+        lHipX = -0.9;
+        lKneeX = 1.2;
+        rHipX = 0.5;
+        rKneeX = 0.9;
+        lShX = -1.45;
+        lShZ = 0.35;
+        lElX = -0.25;
+        rShX = -1.0;
+        rShZ = 0.2;
+        rElX = -1.35 - (phase > 0.26 && phase < 0.42 ? stroke * 0.5 : 0) - windUp * 0.7;
+      } else if (phase < 0.58) {
+        const k = snap((phase - 0.5) / 0.08);
+        hipsY = 0.68;
+        hipsRotY = -0.3;
+        torsoRotX = 0.62 + k * 0.2;
+        torsoRotY = 0.3;
+        headRotX = 0.3;
+        lHipX = -0.9;
+        lKneeX = 1.2;
+        rHipX = 0.5;
+        rKneeX = 0.9;
+        lShX = -1.45;
+        lShZ = 0.35;
+        lElX = -0.25;
+        rShX = -1.45;
+        rShZ = 0.15;
+        rElX = -2.05 + k * 1.9;
+      } else if (phase < 0.88) {
+        const local = Math.max(0, (phase - 0.58) / 0.067) % 1;
+        const swing = phase < 0.78 ? Math.sin(local * Math.PI) * 2 - 0.7 : Math.sin(Math.min(1, (phase - 0.78) / 0.1) * Math.PI) * 2.4 - 0.9;
         hipsY = 0.91;
         torsoRotY = -swing * 0.65;
         torsoRotX = 0.16 + Math.max(0, swing) * 0.12;
@@ -3921,8 +3971,8 @@ export function applyFighterPose(
         rShX = -2.15;
         rShZ = 0.22;
         rElX = -1.45;
-        lShX = -0.42;
-        lShZ = -0.45;
+        lShX = -0.5;
+        lShZ = -0.55 - Math.sin(time * 6) * 0.1;
         lElX = -1.25;
       }
       break;

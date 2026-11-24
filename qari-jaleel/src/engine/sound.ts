@@ -265,6 +265,26 @@ class AkharaSoundEngine {
   }
 
   /** Crisp hollow wooden snooker cue whack (Jam's Snooker Cue Beatdown) */
+  /** Hard glassy clack of snooker balls (Jam's break) */
+  public playBilliardClack() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [0, 0.035, 0.08, 0.13].forEach((d, k) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(2300 + k * 420, now + d);
+      osc.frequency.exponentialRampToValueAtTime(1500, now + d + 0.04);
+      g.gain.setValueAtTime(0.14, now + d);
+      g.gain.exponentialRampToValueAtTime(0.001, now + d + 0.05);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(now + d);
+      osc.stop(now + d + 0.06);
+    });
+  }
+
   public playWoodWhack() {
     const ctx = this.ensureContext();
     if (!ctx) return;
