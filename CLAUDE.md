@@ -22,7 +22,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.53.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.54.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -61,3 +61,6 @@ Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_
 
 ## Later (web release)
 Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). It only runs on a normal website; the Artifact uses its own db. Not yet tested against Google (sandbox cannot reach it). Needs web hosting to use. See `qari-jaleel/WEB_LEADERBOARD.md`.
+
+## Web hosting (GitHub Pages)
+`.github/workflows/deploy-web.yml` builds `qari-jaleel/` on every push to the dev branch (or main) and publishes `dist/` to the `gh-pages` branch; GitHub Pages serves that branch. Vite `base` is `./` and image paths in `roster.ts` are relative (`src/assets/...`) so it works at any URL path.

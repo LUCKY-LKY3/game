@@ -8,6 +8,7 @@ const appVersion = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.j
 
 export default defineConfig(() => {
   return {
+    base: './', // relative URLs so the build works under any web path (GitHub Pages sub-folder, Netlify, Artifact)
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
     },

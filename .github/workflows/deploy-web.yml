@@ -1,0 +1,35 @@
+# Builds the game and publishes it to the gh-pages branch (GitHub Pages serves that branch).
+name: Deploy game to GitHub Pages
+on:
+  push:
+    branches: [ccr-9174e2d3-aerkrs, main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: qari-jaleel/package-lock.json
+      - name: Install and build
+        working-directory: qari-jaleel
+        run: |
+          npm ci
+          npx vite build
+          touch dist/.nojekyll
+      - name: Publish dist to gh-pages
+        working-directory: qari-jaleel/dist
+        run: |
+          git init -q
+          git checkout -q -b gh-pages
+          git add -A
+          git -c user.name="github-actions" -c user.email="actions@users.noreply.github.com" commit -q -m "Deploy ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
