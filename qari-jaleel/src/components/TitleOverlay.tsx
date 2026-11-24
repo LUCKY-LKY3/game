@@ -91,9 +91,9 @@ export function TitleOverlay({
               <span className="flex items-center gap-1.5 text-[13px] font-black uppercase tracking-wide text-[#FCD34D] whitespace-nowrap">
                 <Flame className="h-4 w-4 shrink-0 text-[#EF4444]" />
                 Endless Mohalla
-                <span className="rounded-sm bg-gradient-to-r from-[#FACC15] to-[#F59E0B] px-1.5 py-0.5 text-[8px] font-black tracking-widest text-[#141210]">
-                  PREMIUM
-                </span>
+              </span>
+              <span className="mt-1 rounded-sm bg-gradient-to-r from-[#FACC15] to-[#F59E0B] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-[#141210]">
+                Global Challenge
               </span>
               <span className="mt-1 font-mono-num text-[11px] font-semibold text-[#D6CEC2]">
                 {endlessMeta}

@@ -18,7 +18,7 @@ export function LeaderboardTable({ board, highlightTs }: { board: BoardState; hi
   return (
     <div className="border border-[#F59E0B]/40 bg-[#0B0B0B] p-3 font-mono-num">
       <div className="mb-2 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em]">
-        <span className="text-[#FACC15]">Top 10 · Endless Mohalla</span>
+        <span className="text-[#FACC15]">Global Challenge · Top 10</span>
         <span className={board.source === 'global' ? 'text-[#4ADE80]' : 'text-[#B6AA9A]'}>
           {board.source === 'global' ? '● Everyone' : board.source === 'loading' ? 'Loading...' : 'This device'}
         </span>
