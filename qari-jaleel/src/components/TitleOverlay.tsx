@@ -50,7 +50,7 @@ export function TitleOverlay({
       : 'Infinite Escalating Waves';
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-[#141210] via-[#141210]/35 to-[#141210]/65 p-5 sm:p-10 [@media(max-height:480px)]:p-3">
+    <div className="safe-inset pointer-events-none fixed inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-[#141210] via-[#141210]/35 to-[#141210]/65 p-5 sm:p-10 [@media(max-height:480px)]:p-3">
       <div className="pointer-events-none fixed right-2 bottom-1 z-30 font-mono-num text-[10px] font-bold tracking-widest text-[#F8F4EC]/60">
         v{__APP_VERSION__}
       </div>
@@ -204,8 +204,8 @@ export function TitleOverlay({
         </div>
       </div>
       {showSettings && (
-        <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-[#141210]/88 p-4">
-          <div className="w-full max-w-sm border border-[#F8F4EC]/15 bg-[#1D1916] p-6">
+        <div className="safe-inset pointer-events-auto fixed inset-0 z-40 flex overflow-y-auto bg-[#141210]/88 p-4 short:p-2">
+          <div className="m-auto w-full max-w-sm border border-[#F8F4EC]/15 bg-[#1D1916] p-6 short:p-3">
             <div className="flex items-center justify-between border-b border-[#F8F4EC]/10 pb-3">
               <h2 className="font-display text-3xl font-black text-[#F8F4EC]">Settings</h2>
               <button type="button" onClick={() => setShowSettings(false)} aria-label="Close settings" className="text-[#B6AA9A] hover:text-[#F8F4EC]">
@@ -217,8 +217,8 @@ export function TitleOverlay({
         </div>
       )}
       {showIosHelp && (
-        <div className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-[#141210]/90 p-4" onClick={() => setShowIosHelp(false)}>
-          <div className="w-full max-w-sm border border-[#4ADE80]/50 bg-[#1A1714] p-5 text-left text-[#F8F4EC]">
+        <div className="safe-inset pointer-events-auto fixed inset-0 z-50 flex overflow-y-auto bg-[#141210]/90 p-4" onClick={() => setShowIosHelp(false)}>
+          <div className="m-auto w-full max-w-sm border border-[#4ADE80]/50 bg-[#1A1714] p-5 text-left text-[#F8F4EC]">
             <div className="font-display text-xl font-black tracking-wider text-[#4ADE80] uppercase">Install on iPhone</div>
             <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm">
               <li>Open this page in <b>Safari</b>.</li>
@@ -232,8 +232,8 @@ export function TitleOverlay({
       )}
       {showCredits && <Credits onClose={() => setShowCredits(false)} />}
       {showBoard && (
-        <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-[#141210]/90 p-4">
-          <div className="w-full max-w-md">
+        <div className="safe-inset pointer-events-auto fixed inset-0 z-40 flex overflow-y-auto bg-[#141210]/90 p-4 short:p-2">
+          <div className="m-auto w-full max-w-md">
             <div className="mb-2 flex items-center justify-between">
               <h2 className="font-display text-3xl font-black uppercase tracking-wider text-[#FACC15]">Hall of Fame</h2>
               <button type="button" onClick={() => setShowBoard(false)} aria-label="Close" className="text-[#B6AA9A] hover:text-[#F8F4EC]">

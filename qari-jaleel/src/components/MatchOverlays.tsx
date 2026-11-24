@@ -30,8 +30,8 @@ export function PauseModal({
   const isBrawl = isStreetBrawlMode(mode);
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#141210]/88 p-4">
-      <div className="w-full max-w-lg border border-[#F8F4EC]/15 bg-[#1D1916] p-6">
+    <div className="safe-inset fixed inset-0 z-30 flex overflow-y-auto bg-[#141210]/88 p-4 short:p-2">
+      <div className="m-auto w-full max-w-lg border border-[#F8F4EC]/15 bg-[#1D1916] p-6 short:p-3">
         <div className="flex items-center justify-between border-b border-[#F8F4EC]/10 pb-4">
           <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-14 w-auto select-none" />
           <h2 className="sr-only">Match Paused</h2>
@@ -250,8 +250,8 @@ export function MatchOverModal({
   const rankMeta = scorecard ? RANK_STYLE[scorecard.rank] : null;
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#141210]/88 p-4">
-      <div className="w-full max-w-2xl border border-[#F59E0B]/45 bg-[#1D1916] p-6 sm:p-8">
+    <div className="safe-inset fixed inset-0 z-30 flex overflow-y-auto bg-[#141210]/88 p-4 short:p-2">
+      <div className="m-auto w-full max-w-2xl border border-[#F59E0B]/45 bg-[#1D1916] p-6 sm:p-8 short:p-3">
         {isBrawl && hud.brawl ? (
           <>
             <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="mx-auto mb-3 h-12 w-auto select-none" />

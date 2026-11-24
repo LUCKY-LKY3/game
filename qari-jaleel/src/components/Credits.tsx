@@ -77,7 +77,7 @@ const THANKS = [
 /** Scrolling movie-style credits. Tap anywhere or press Close to leave. */
 export function Credits({ onClose }: { onClose: () => void }) {
   return (
-    <div className="pointer-events-auto fixed inset-0 z-50 overflow-hidden bg-[#0B0907]" onClick={onClose}>
+    <div className="safe-inset pointer-events-auto fixed inset-0 z-50 overflow-hidden bg-[#0B0907]" onClick={onClose}>
       <button
         type="button"
         onClick={(e) => {

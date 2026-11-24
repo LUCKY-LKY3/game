@@ -44,6 +44,14 @@
   .neon-text { font-size: 15px; }
 }
 
+@custom-variant short (@media (max-height: 520px));
+
+/* Keep full-screen overlays clear of the iPhone notch / rounded corners (viewport-fit=cover) */
+.safe-inset {
+  left: env(safe-area-inset-left);
+  right: env(safe-area-inset-right);
+}
+
 @theme {
   --font-display: "Big Shoulders Display", system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;

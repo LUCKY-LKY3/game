@@ -43,8 +43,8 @@ interface RosterSelectProps {
 
 function StatBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="w-14 text-[#B6AA9A]">{label}</span>
+    <div className="flex items-center gap-2 text-xs short:gap-1 short:text-[9px]">
+      <span className="w-14 text-[#B6AA9A] short:w-8">{label}</span>
       <div className="h-1.5 flex-1 bg-[#141210]">
         <div className="h-full" style={{ width: `${value * 10}%`, backgroundColor: color }} />
       </div>
@@ -105,9 +105,9 @@ export function RosterSelect({
           : 'Quick Exhibition';
 
   return (
-    <div className="fixed inset-0 z-20 flex flex-col bg-[#141210] text-[#F8F4EC]">
+    <div className="safe-inset fixed inset-0 z-20 flex flex-col bg-[#141210] text-[#F8F4EC]">
       {/* Top Bar */}
-      <header className="flex items-center justify-between gap-6 border-b border-[#F8F4EC]/12 px-4 py-3.5 sm:px-8">
+      <header className="flex items-center justify-between gap-6 border-b border-[#F8F4EC]/12 px-4 py-3.5 sm:px-8 short:gap-3 short:px-3 short:py-1.5">
         <button
           type="button"
           onClick={onBackToTitle}
@@ -117,33 +117,33 @@ export function RosterSelect({
           Menu
         </button>
 
-        <h1 className="font-display text-2xl font-black tracking-wide text-[#F8F4EC] sm:text-3xl whitespace-nowrap">
+        <h1 className="font-display text-2xl font-black tracking-wide text-[#F8F4EC] sm:text-3xl short:text-lg whitespace-nowrap">
           {modeTitle}
         </h1>
 
         <button
           type="button"
           onClick={handleStartMatchClick}
-          className="flex items-center gap-2 bg-[#F59E0B] px-5 py-2 text-xs font-bold text-[#141210] hover:bg-[#D97706] transition-colors whitespace-nowrap shrink-0 sm:text-sm"
+          className="flex items-center gap-2 bg-[#F59E0B] px-5 py-2 text-xs font-bold text-[#141210] hover:bg-[#D97706] transition-colors whitespace-nowrap shrink-0 sm:text-sm short:px-3 short:py-1.5"
         >
           <Swords className="h-4 w-4" />
           {isEndless ? 'Start Endless Mohalla' : isBrawl ? 'Start Street Brawl' : 'Start Match'}
         </button>
       </header>
 
-      <div className="akhara-scroll flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="mx-auto max-w-6xl space-y-6">
+      <div className="akhara-scroll min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 short:overflow-hidden short:p-2">
+        <div className="mx-auto max-w-6xl space-y-6 short:flex short:h-full short:max-w-none short:gap-2 short:space-y-0">
           {/* MATCHUP SHOWCASE (P1 vs P2/Arcade Bracket) */}
-          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_auto_1fr]">
+          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1fr_auto_1fr] short:flex short:w-[38%] short:shrink-0 short:flex-col short:gap-1.5 short:overflow-y-auto">
             {/* Player 1 Preview */}
             <button
               type="button"
               onClick={() => setActiveSlot(1)}
-              className={`flex items-center gap-4 border bg-[#1D1916] p-4 text-left transition-colors ${
+              className={`flex items-center gap-4 border bg-[#1D1916] p-4 text-left transition-colors short:gap-2 short:p-1.5 ${
                 activeSlot === 1 ? 'border-[#F59E0B]' : 'border-[#F8F4EC]/12 hover:border-[#F8F4EC]/30'
               }`}
             >
-              <div className="h-24 w-24 shrink-0 overflow-hidden border-2 border-[#F59E0B] bg-[#141210] sm:h-28 sm:w-28">
+              <div className="h-24 w-24 shrink-0 overflow-hidden border-2 border-[#F59E0B] bg-[#141210] sm:h-28 sm:w-28 short:h-14 short:w-14">
                 <img
                   src={p1.portraitUrl || p1.faceTextureUrl}
                   alt={p1.name}
@@ -155,10 +155,10 @@ export function RosterSelect({
                 <div className="text-xs font-semibold text-[#F59E0B]">
                   {isBrawl ? 'Hero 1 (Lead)' : 'Player 1'} {activeSlot === 1 ? '· Selecting' : ''}
                 </div>
-                <div className="truncate font-display text-3xl font-black leading-none text-[#F8F4EC]">
+                <div className="truncate font-display text-3xl font-black leading-none text-[#F8F4EC] short:text-lg">
                   {p1.name}
                 </div>
-                <div className="mt-0.5 truncate text-xs text-[#B6AA9A]">
+                <div className="mt-0.5 truncate text-xs text-[#B6AA9A] short:hidden">
                   {p1.nickname} · {ARCHETYPE_INFO[p1.archetype].label}
                 </div>
                 <div
@@ -167,7 +167,7 @@ export function RosterSelect({
                 >
                   Style: {FIGHTING_STYLES[resolveFighterStyle(p1)].label}
                 </div>
-                <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1">
+                <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 short:mt-1 short:gap-x-2 short:gap-y-0">
                   <StatBar label="Power" value={p1.stats.power} color="#F59E0B" />
                   <StatBar label="Speed" value={p1.stats.speed} color="#F59E0B" />
                   <StatBar label="Reach" value={p1.stats.reach} color="#F59E0B" />
@@ -177,15 +177,15 @@ export function RosterSelect({
             </button>
 
             {/* VS / Tag-Team + Swap Control */}
-            <div className="flex flex-row items-center justify-center gap-3 lg:flex-col">
-              <div className="font-display text-4xl font-black text-[#F59E0B]">
+            <div className="flex flex-row items-center justify-center gap-3 lg:flex-col short:flex-row short:gap-2">
+              <div className="font-display text-4xl font-black text-[#F59E0B] short:text-lg">
                 {isBrawl ? 'TAG' : 'VS'}
               </div>
               {mode !== 'arcade' && (
                 <button
                   type="button"
                   onClick={onSwapSides}
-                  className="flex items-center gap-1.5 border border-[#F8F4EC]/15 bg-[#1D1916] px-3 py-1.5 text-xs font-semibold text-[#B6AA9A] hover:border-[#F59E0B] hover:text-[#F8F4EC] transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 border border-[#F8F4EC]/15 bg-[#1D1916] px-3 py-1.5 text-xs font-semibold text-[#B6AA9A] short:px-2 short:py-0.5 short:text-[10px] hover:border-[#F59E0B] hover:text-[#F8F4EC] transition-colors whitespace-nowrap"
                 >
                   <ArrowLeftRight className="h-3.5 w-3.5" />
                   {isBrawl ? 'Swap Lead' : 'Swap Sides'}
@@ -195,14 +195,14 @@ export function RosterSelect({
 
             {/* Player 2 OR Arcade Ladder Overview */}
             {mode === 'arcade' ? (
-              <div className="flex flex-col justify-center border border-[#F8F4EC]/12 bg-[#1D1916] p-4">
+              <div className="flex flex-col justify-center border border-[#F8F4EC]/12 bg-[#1D1916] p-4 short:p-2">
                 <div className="text-xs font-semibold text-[#DC2626]">
                   4-Stage Village Tournament Ladder
                 </div>
-                <h2 className="mt-1 font-display text-3xl font-black text-[#F8F4EC]">
+                <h2 className="mt-1 font-display text-3xl font-black text-[#F8F4EC] short:text-lg">
                   Defeat the Village Champions
                 </h2>
-                <p className="mt-1 text-xs leading-relaxed text-[#B6AA9A]">
+                <p className="mt-1 text-xs leading-relaxed text-[#B6AA9A] short:hidden">
                   Your custom imported friends automatically enter the challenger bracket alongside
                   the village regulars across all 3 arenas.
                 </p>
@@ -230,7 +230,7 @@ export function RosterSelect({
               <button
                 type="button"
                 onClick={() => setActiveSlot(2)}
-                className={`flex flex-row-reverse items-center gap-4 border bg-[#1D1916] p-4 text-right transition-colors ${
+                className={`flex flex-row-reverse items-center gap-4 border bg-[#1D1916] p-4 text-right transition-colors short:flex-row short:gap-2 short:p-1.5 short:text-left ${
                   activeSlot === 2
                     ? isBrawl
                       ? 'border-[#38BDF8]'
@@ -239,7 +239,7 @@ export function RosterSelect({
                 }`}
               >
                 <div
-                  className={`h-24 w-24 shrink-0 overflow-hidden border-2 bg-[#141210] sm:h-28 sm:w-28 ${
+                  className={`h-24 w-24 shrink-0 overflow-hidden border-2 bg-[#141210] sm:h-28 sm:w-28 short:h-14 short:w-14 ${
                     isBrawl ? 'border-[#38BDF8]' : 'border-[#DC2626]'
                   }`}
                 >
@@ -263,10 +263,10 @@ export function RosterSelect({
                         : 'AI Opponent'}{' '}
                     {activeSlot === 2 ? '· Selecting' : ''}
                   </div>
-                  <div className="truncate font-display text-3xl font-black leading-none text-[#F8F4EC]">
+                  <div className="truncate font-display text-3xl font-black leading-none text-[#F8F4EC] short:text-lg">
                     {p2.name}
                   </div>
-                  <div className="mt-0.5 truncate text-xs text-[#B6AA9A]">
+                  <div className="mt-0.5 truncate text-xs text-[#B6AA9A] short:hidden">
                     {p2.nickname} · {ARCHETYPE_INFO[p2.archetype].label}
                   </div>
                   <div
@@ -275,7 +275,7 @@ export function RosterSelect({
                   >
                     Style: {FIGHTING_STYLES[resolveFighterStyle(p2)].label}
                   </div>
-                  <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 text-left">
+                  <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 text-left short:mt-1 short:gap-x-2 short:gap-y-0">
                     <StatBar label="Power" value={p2.stats.power} color={isBrawl ? '#38BDF8' : '#DC2626'} />
                     <StatBar label="Speed" value={p2.stats.speed} color={isBrawl ? '#38BDF8' : '#DC2626'} />
                     <StatBar label="Reach" value={p2.stats.reach} color={isBrawl ? '#38BDF8' : '#DC2626'} />
@@ -286,14 +286,15 @@ export function RosterSelect({
             )}
           </div>
 
+          <div className="space-y-6 short:min-w-0 short:flex-1 short:space-y-2 short:overflow-y-auto">
           {/* ROSTER GRID + IMPORT FRIEND CTA */}
           <section>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-display text-2xl font-bold text-[#F8F4EC]">
+                <h2 className="font-display text-2xl font-bold text-[#F8F4EC] short:text-base">
                   Choose Fighter ({fighters.length})
                 </h2>
-                <p className="text-xs text-[#B6AA9A]">
+                <p className="text-xs text-[#B6AA9A] short:hidden">
                   {isBrawl
                     ? `Pick 2 Squad Heroes (flip between both anytime with Tab/C or SWITCH!) — assigning Hero ${activeSlot}.`
                     : mode === 'arcade'
@@ -304,7 +305,7 @@ export function RosterSelect({
             </div>
 
 
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 short:mt-1 short:grid-cols-3 short:gap-1.5">
               {fighters.map((f) => {
                 const isP1 = f.id === p1.id;
                 const isP2 = mode !== 'arcade' && f.id === p2.id;
@@ -326,18 +327,18 @@ export function RosterSelect({
                       onClick={() => handleCardPick(f.id)}
                       className="flex flex-1 flex-col text-left"
                     >
-                      <div className="relative aspect-square w-full overflow-hidden bg-[#141210]">
+                      <div className="relative aspect-square w-full overflow-hidden bg-[#141210] short:aspect-[5/2]">
                         <img
                           src={f.portraitUrl || f.faceTextureUrl}
                           alt={f.name}
                           referrerPolicy="no-referrer"
                           className="h-full w-full object-cover object-top transition-transform duration-200 group-hover:scale-105"
                         />
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#141210] via-[#141210]/65 to-transparent p-2.5 pt-8">
-                          <div className="truncate font-display text-2xl font-black leading-none text-[#F8F4EC]">
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#141210] via-[#141210]/65 to-transparent p-2.5 pt-8 short:p-1 short:pt-4">
+                          <div className="truncate font-display text-2xl font-black leading-none text-[#F8F4EC] short:text-sm">
                             {f.name}
                           </div>
-                          <div className="mt-0.5 truncate text-[11px] text-[#B6AA9A]">
+                          <div className="mt-0.5 truncate text-[11px] text-[#B6AA9A] short:hidden">
                             {f.nickname} ·{' '}
                             <span
                               className="font-semibold"
@@ -371,7 +372,7 @@ export function RosterSelect({
                       </div>
                     </button>
 
-                    <div className="flex items-center justify-between gap-1 border-t border-[#F8F4EC]/10 bg-[#181512] px-2.5 py-1.5">
+                    <div className="flex items-center justify-between gap-1 border-t border-[#F8F4EC]/10 bg-[#181512] px-2.5 py-1.5 short:hidden">
                       {f.isCustom && !f.id.startsWith('qari_') && !f.id.startsWith('rebel_') && (
                         <button
                           type="button"
@@ -390,13 +391,13 @@ export function RosterSelect({
           </section>
 
           {/* STAGE SELECT & QUICK AI DIFFICULTY */}
-          <section className="border-t border-[#F8F4EC]/10 pt-5">
+          <section className="border-t border-[#F8F4EC]/10 pt-5 short:pt-1.5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-display text-2xl font-bold text-[#F8F4EC]">
+                <h2 className="font-display text-2xl font-bold text-[#F8F4EC] short:text-base">
                   Indian Village Arena
                 </h2>
-                <p className="text-xs text-[#B6AA9A]">
+                <p className="text-xs text-[#B6AA9A] short:hidden">
                   Pick your 3D battleground across the village.
                 </p>
               </div>
@@ -423,7 +424,7 @@ export function RosterSelect({
               )}
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 short:mt-1 short:grid-cols-3 short:gap-1.5">
               {STAGE_CONFIGS.map((stage) => {
                 const selected = stage.id === stageId;
                 return (
@@ -437,7 +438,7 @@ export function RosterSelect({
                         : 'border-[#F8F4EC]/15 hover:border-[#F8F4EC]/40'
                     }`}
                   >
-                    <div className="aspect-video w-full overflow-hidden bg-[#1D1916]">
+                    <div className="aspect-video w-full overflow-hidden bg-[#1D1916] short:aspect-[16/5]">
                       <img
                         src={stage.backdropUrl}
                         alt={stage.name}
@@ -446,11 +447,11 @@ export function RosterSelect({
                       />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#141210] via-[#141210]/35 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-3">
-                      <div className="font-display text-2xl font-black leading-none text-[#F8F4EC]">
+                    <div className="absolute inset-x-0 bottom-0 p-3 short:p-1">
+                      <div className="font-display text-2xl font-black leading-none text-[#F8F4EC] short:text-sm">
                         {stage.name}
                       </div>
-                      <div className="mt-0.5 text-xs text-[#B6AA9A]">
+                      <div className="mt-0.5 text-xs text-[#B6AA9A] short:hidden">
                         {stage.subtitle} · {stage.timeOfDay}
                       </div>
                     </div>
@@ -459,6 +460,7 @@ export function RosterSelect({
               })}
             </div>
           </section>
+          </div>
         </div>
       </div>
     </div>
