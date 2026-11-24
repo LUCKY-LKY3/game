@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Flame, Swords, Trophy, Users } from 'lucide-react';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
+import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 
 interface TitleOverlayProps {
   customCount: number;
@@ -28,7 +29,7 @@ export function TitleOverlay({
       {/* Top quiet header */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <div className="font-display text-2xl font-black tracking-wider text-[#F8F4EC] whitespace-nowrap">
-          MAFIA BHAYAS
+          MAFIA BHAIYAS
         </div>
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F59E0B]/90">
           {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
@@ -38,16 +39,18 @@ export function TitleOverlay({
       {/* Bottom-left hero title & mode hub leaving the live 3D village akhara battle unobstructed */}
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 pb-2 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-xl">
-          <h1
-            className="font-display text-6xl font-black leading-[0.88] tracking-tight text-[#F8F4EC] drop-shadow-[0_6px_24px_rgba(0,0,0,0.85)] sm:text-8xl"
-            style={{ textWrap: 'balance' }}
-          >
-            MAFIA BHAYAS
+          <h1 className="m-0">
+            <img
+              src={logoUrl}
+              alt="Mafia Bhaiyas"
+              className="h-[min(34vh,16rem)] w-auto select-none drop-shadow-[0_8px_26px_rgba(0,0,0,0.8)]"
+              draggable={false}
+            />
           </h1>
-          <div className="mt-1.5 font-display text-2xl font-extrabold uppercase tracking-[0.22em] text-[#DC2626] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] sm:text-4xl">
+          <div className="mt-1 [@media(max-height:480px)]:hidden font-display text-lg font-extrabold uppercase tracking-[0.22em] text-[#DC2626] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] sm:text-2xl">
             Blood and Honour
           </div>
-          <p className="mt-4 max-w-lg text-sm font-bold uppercase tracking-[0.14em] leading-relaxed text-[#F8F4EC] drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] sm:text-base">
+          <p className="mt-3 max-w-lg [@media(max-height:480px)]:hidden text-sm font-bold uppercase tracking-[0.14em] leading-relaxed text-[#F8F4EC] drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] sm:text-base">
             One Man. One Village. Absolute Power.{' '}
             <span className="text-[#F59E0B]">One Sheep.</span>
           </p>
