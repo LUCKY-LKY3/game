@@ -1,5 +1,4 @@
 import { RotateHint } from './components/RotateHint';
-import { enterFullscreen } from './utils/fullscreen';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Difficulty,
@@ -112,17 +111,6 @@ export default function App() {
       document.removeEventListener('gesturestart', stop);
       document.removeEventListener('gesturechange', stop);
     };
-  }, []);
-
-  // On phones, the first tap switches to full screen (once per visit; the Settings toggle undoes it)
-  useEffect(() => {
-    if (!(window.matchMedia?.('(pointer: coarse)').matches ?? false)) return;
-    const go = () => {
-      window.removeEventListener('pointerup', go);
-      void enterFullscreen();
-    };
-    window.addEventListener('pointerup', go);
-    return () => window.removeEventListener('pointerup', go);
   }, []);
 
   useEffect(() => {
