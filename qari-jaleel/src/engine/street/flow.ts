@@ -176,11 +176,27 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
       this.spawnEndlessBatch();
       return;
     }
+    // Track whether the squad took any damage during this wave (for the flawless bonus)
+    const hpSum = this.heroes[0].hp + this.heroes[1].hp;
+    if (hpSum < this.endlessLastHp - 0.01) this.endlessDamaged = true;
+    this.endlessLastHp = hpSum;
     if (livingCount === 0 && this.endlessQueue.length === 0 && this.slowMoTimer <= 0.05) {
+      const cleared = this.endlessWave;
+      const bossCleared = cleared % 5 === 0;
+      const clearBonus = cleared * 40;
+      const flawless = !this.endlessDamaged;
+      const flawlessBonus = flawless ? 50 + cleared * 10 : 0;
+      this.score += clearBonus + flawlessBonus;
+      const lead = this.getActiveHero();
+      this.spawnComicPopup(lead.x, 2.6, lead.z, `WAVE ${cleared} CLEAR +${clearBonus}`, '#FACC15');
+      if (flawless) this.spawnComicPopup(lead.x, 3.1, lead.z, `FLAWLESS +${flawlessBonus}`, '#4ADE80');
       this.endlessWave += 1;
+      this.endlessDamaged = false;
+      const heal = bossCleared ? 45 : 16;
       this.heroes.forEach((h) => {
-        if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + 16);
+        if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + heal);
       });
+      this.endlessLastHp = this.heroes[0].hp + this.heroes[1].hp;
       if (this.endlessWave % 3 === 1) {
         // Offer Village Boon + celebratory High-Five every 3 waves!
         this.highFiveTimer = 1.05;

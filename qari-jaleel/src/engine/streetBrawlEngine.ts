@@ -108,6 +108,8 @@ export class StreetBrawlEngine {
   endlessMode: boolean;
   endlessWave = 1;
   endlessQueue: string[] = [];
+  endlessDamaged = false;
+  endlessLastHp = 0;
   endlessBestWave = 0;
   runElapsedSec = 0;
   cousinsRickshawed = 0;
@@ -566,6 +568,8 @@ export class StreetBrawlEngine {
 
     this.endlessWave = 1;
     this.endlessQueue = [];
+    this.endlessDamaged = false;
+    this.endlessLastHp = 0;
     this.endlessBestWave = loadArcadeRecords().endlessBestWave;
     this.runElapsedSec = 0;
     this.cousinsRickshawed = 0;
