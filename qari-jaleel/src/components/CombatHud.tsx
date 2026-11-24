@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Flame,
   Gamepad2,
+  Hand,
   Pause,
   Shield,
   Sparkles,
@@ -1309,6 +1310,23 @@ export function CombatHud({
                   }`}
                 >
                   {brawl?.dizzyPrompt ? 'FINISH' : brawl?.isClinching ? 'THROW' : 'HEAVY'}
+                </span>
+              </button>
+
+              {/* GRAB (tap near a cousin to collar-grab, tap again to THROW) */}
+              <button
+                type="button"
+                {...bindTap('throw', 35)}
+                aria-label="Grab or Throw"
+                className={`touch-control absolute top-[96px] left-[112px] flex h-[46px] w-[46px] flex-col items-center justify-center rounded-full border-2 active:scale-[0.92] transition-transform ${
+                  brawl?.isClinching
+                    ? 'animate-pulse border-[#FDE047] bg-[#F59E0B] text-[#141210]'
+                    : 'border-[#C084FC]/90 bg-[#181614]/94 text-[#C084FC] active:bg-[#C084FC] active:text-[#141210]'
+                }`}
+              >
+                <Hand className="h-4 w-4 stroke-[2.5]" />
+                <span className="mt-0.5 text-[8.5px] font-black leading-none tracking-wider text-[#F8F4EC]">
+                  {brawl?.isClinching ? 'THROW' : 'GRAB'}
                 </span>
               </button>
 

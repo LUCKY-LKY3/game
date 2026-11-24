@@ -1,7 +1,7 @@
 // Endless Mohalla extras (bound onto StreetBrawlEngine): pickups, taunts, hero quips, no-hit streak, screamers.
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
-import { COUSIN_TAUNTS, CROWD_SCREAMS, FIGHTER_LINES, IMMY_CHATUP, HERO_QUIPS, pick, SPECIFIC_TAUNTS } from '../../data/jokes';
+import { COUSIN_TAUNTS, CROWD_SCREAMS, FIGHTER_LINES, IMMY_CHATUP, nickOf, PARTNER_LINES, HERO_QUIPS, pick, SPECIFIC_TAUNTS } from '../../data/jokes';
 import type { EnemyRuntime } from './types';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
@@ -127,9 +127,13 @@ export function updateEndlessExtras(this: StreetBrawlEngine, dt: number) {
     if (this.chatTimer <= 0) {
       this.chatTimer = 9 + Math.random() * 7;
       const hero = this.getActiveHero();
+      const partner = this.getPartnerHero();
+      const partnerLines = PARTNER_LINES[hero.profile.id];
       const lines = FIGHTER_LINES[hero.profile.id];
       if (lines && hero.hp > 0 && this.speechTimer <= 0 && !String(hero.action).startsWith('powerup')) {
-        this.speechBubble = { side: this.activeHeroIndex === 0 ? 1 : 2, speaker: hero.profile.name, text: pick(lines) };
+        const aboutPartner = partnerLines && partner.hp > 0 && Math.random() < 0.28;
+        const text = aboutPartner ? pick(partnerLines).replace('{p}', nickOf(partner.profile.name)) : pick(lines);
+        this.speechBubble = { side: this.activeHeroIndex === 0 ? 1 : 2, speaker: hero.profile.name, text };
         this.speechTimer = 3.2;
       }
     }

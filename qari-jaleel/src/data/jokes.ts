@@ -64,6 +64,12 @@ export function pick<T>(list: T[]): T {
 export const FIGHTER_LINES: Record<string, string[]> = {
   // Fady: constant Punjabi
   qari_jaleel: [
+    'Oye, mera dil karda hai lassi da!',
+    'Ki gal aa, paaji, tusi darr gaye?',
+    'Sat sri akaal, cousin! Hun maar kha!',
+    'Oye chakk de! Ajj main full josh vich haan!',
+    'Tenu pata main kaun haan? Fady paaji!',
+    'Hor ki haal ae? Mukka khana ae?',
     'Oye balle balle!',
     'Chak de phatte!',
     'Ki haal aa, paaji?',
@@ -79,6 +85,12 @@ export const FIGHTER_LINES: Record<string, string[]> = {
   ],
   // Saf: love everybody
   rebel_aviator: [
+    'Hugs fix everything. Except that guy. He needs a punch.',
+    'Spread love, not chappals!',
+    'Everyone gets a samosa, even you!',
+    'Be kind, rewind, then kick!',
+    'You are all valid. Duck, though.',
+    'Smile, my friends, life is beautiful!',
     'I love you all, even the tiny cousin!',
     'Peace, love and biryani, everybody!',
     'Group hug after this, yeah?',
@@ -92,6 +104,12 @@ export const FIGHTER_LINES: Record<string, string[]> = {
   ],
   // Jav: swears, but it is all bleeped
   rebel_tactician: [
+    'Oh, #£&@ off, I just sat down!',
+    'This is so #£&@ annoying, bro.',
+    'Holy #£&@, who ordered all these?!',
+    'I swear on my #£&@ pillow, I will end you!',
+    'Wake me when it is #£&@ over!',
+    'That tickled, you ##£&!',
     'What the #£&@ is this?!',
     'Not another one, ##£&!',
     'Who woke me up, you #£&@?!',
@@ -104,6 +122,13 @@ export const FIGHTER_LINES: Record<string, string[]> = {
   ],
   // Jam: wants a lift home, plus dad jokes
   rebel_enforcer: [
+    'Bro drop me off, my neighbour\'s uncle\'s parrot has a driving test.',
+    'Drop me home, I think I left my soul in Karachi.',
+    'Quick drop? My mum thinks I am still seven.',
+    'Bro, can you drop me? The biryani is calling my name.',
+    'Why did the cousin bring a ladder? To reach a higher level of fighting!',
+    'I used to hate facial hair, but then it grew on me.',
+    'What do you call fake spaghetti? An impasta!',
     'Bro drop me off, my uncle from Pakistan has a cousin in Poland who needs to go to a shaadi tomorrow.',
     'Bro, drop me home, my aunt\'s neighbour\'s goat is getting married!',
     'Can you drop me? My mum\'s WhatsApp group needs urgent tech support.',
@@ -120,6 +145,12 @@ export const FIGHTER_LINES: Record<string, string[]> = {
   ],
   // Chet: investments
   rebel_striker: [
+    'Inflation is high, so is my kick.',
+    'Never put all your eggs in one punch.',
+    'Dividends are paid in knockouts.',
+    'This fight is a long-term hold.',
+    'Let me check my stocks. Oh, you are down.',
+    'Tax-free punches. My favourite kind.',
     'Buy the dip, sell the cousin!',
     'Diversify your punches, bro.',
     'My portfolio is up 12%. So is my fist.',
@@ -131,19 +162,22 @@ export const FIGHTER_LINES: Record<string, string[]> = {
     "I'd invest in you, but you're a bad asset.",
     'Bull market for fists, bear market for you!',
   ],
-  // Immy: cheeky and crude (PG-13)
+  // Immy: smooth-talking sleazy charmer (PG-13)
   immy_girls: [
-    'Careful, I bite. Sometimes.',
-    'Is that a lathi or are you just happy to see me?',
-    "Your uncle called. He wants his pride back.",
-    "I've handled bigger men. Before breakfast.",
-    "Size isn't everything, but it's something, bhai.",
-    "Come closer, I won't bite... hard.",
-    'Spicy? I invented spicy!',
-    "You call that a punch? My Nani's slap has more oomph!",
-    'Boys, boys, take a number!',
-    "That's what she said!",
-    'You sweat like a buffalo in a sauna!',
+    "Is it hot in here, or is it just my charm?",
+    'I would say God bless you, but He clearly already did.',
+    "Baby, are you a lathi? Because you're striking!",
+    'Careful, my smile is a registered weapon.',
+    "Hey beautiful, wanna see my moves? Fighting ones. Mostly.",
+    "I'm not saying I'm a catch. Ask my mirror.",
+    'My love language is flying kicks and compliments.',
+    'Mind if I stand next to you? Makes me look taller.',
+    "Come here often? I do. I'm a local legend.",
+    'I introduce myself as Immy. Your mum already knows me.',
+    'Fight later, dinner first? I know a great chaat stall.',
+    'You, me, a moonlit rickshaw ride. Think about it.',
+    'Smooth? I invented smooth. Ghee took notes.',
+    "Don't worry, I only punch men. Ladies get the full charm.",
   ],
 };
 
@@ -160,3 +194,30 @@ export const IMMY_CHATUP: string[] = [
   "Don't run, I only want to talk! And maybe a phone number.",
 ];
 export const CROWD_SCREAMS: string[] = ['EEEEK!', 'AAAH!', 'OMG!!', 'KYAAA!', 'WOOHOO!'];
+
+/** Lines about the tag partner ({p} = partner nickname). Said by the active fighter, keyed by their id. */
+export const PARTNER_LINES: Record<string, string[]> = {
+  qari_jaleel: ['Oye {p}, tusi kidda ho, paaji?', '{p}, chal oye, ajj asin jittna ae!', '{p}, lassi baad vich, pehlan fight!'],
+  rebel_aviator: ['I love you, {p}! No homo, just bro-love!', '{p}, you are my favourite person ever!', 'Hug me after this, {p}!'],
+  rebel_tactician: ['{p}, you #£&@, watch my back!', 'Cover me, {p}, I am too sleepy!', '{p}, you are a good #£&@, you know that?'],
+  rebel_enforcer: ['{p}, bro, can you drop me home after this?', '{p}, I know a joke about you. It is long.', "{p}, my uncle's cousin knows your cousin!"],
+  rebel_striker: ['{p}, I would invest in you any day.', '{p}, our partnership has great returns.', 'Diversify, {p}! Do not stand there!'],
+  immy_girls: ['{p}, relax, I will handle the charming.', "{p}, you're welcome for my presence.", 'Stay close, {p}, I make everyone look good.'],
+};
+
+/** Taunts at the opponent in 1v1 fights ({p} = opponent nickname) */
+export const RIVAL_LINES: string[] = [
+  '{p}, you are going down!',
+  'Say goodbye to your face, {p}!',
+  '{p}, I have seen scarecrows with more talent!',
+  'Is that all you got, {p}?',
+  '{p}, my Nani hits harder!',
+  'Ready to lose, {p}?',
+  '{p}, today is your unlucky day!',
+];
+
+/** "Sher 'Jam' Thakur" -> "Jam" */
+export function nickOf(name: string): string {
+  const m = name.match(/'([^']+)'/);
+  return m ? m[1] : name.split(' ')[0];
+}

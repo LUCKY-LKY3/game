@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FIGHTER_LINES } from '../data/jokes';
+import { FIGHTER_LINES, nickOf, RIVAL_LINES } from '../data/jokes';
 import {
   CombatAction,
   Difficulty,
@@ -1626,7 +1626,10 @@ export class AkharaCombatEngine {
         const f = Math.random() < 0.5 ? this.p1 : this.p2;
         const lines = FIGHTER_LINES[f.profile.id];
         if (lines && !String(f.action).includes('powerup')) {
-          this.setSpeechBubble(f, lines[Math.floor(Math.random() * lines.length)], 3.2);
+          const foe = f === this.p1 ? this.p2 : this.p1;
+          const pool = Math.random() < 0.25 ? RIVAL_LINES : lines;
+          const text = pool[Math.floor(Math.random() * pool.length)].replace('{p}', nickOf(foe.profile.name));
+          this.setSpeechBubble(f, text, 3.2);
         }
       }
     }

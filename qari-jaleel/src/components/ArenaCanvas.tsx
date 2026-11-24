@@ -279,7 +279,10 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.08;
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
+    // Phones: cap resolution at 1.5x (big saving, hard to see the difference); adapt down further if the frame rate drops
+    const isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+    let pixelRatio = isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, isTouchDevice ? 1.5 : 2);
+    renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height);
     renderer.shadowMap.enabled = !isSoftwareGl;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -373,6 +376,9 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
     let frameId = 0;
     let disposed = false;
     let hudAccum = 0;
+    let perfAccum = 0;
+    let perfFrames = 0;
+    let perfWarm = true;
     let matchFinishReported = false;
 
     const afterDraw = (cb: () => void) => {
@@ -407,6 +413,23 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
         stageTick?.(elapsed, dt);
       }
       renderer.render(scene, camera);
+
+      // Adaptive resolution: if the average frame time stays high, step the pixel ratio down (never below 0.75)
+      if (!isSoftwareGl) {
+        perfAccum += dt;
+        perfFrames += 1;
+        if (perfFrames >= 90) {
+          const avgMs = (perfAccum / perfFrames) * 1000;
+          if (perfWarm) perfWarm = false; // first window includes shader compile hitches
+          else if (avgMs > 26 && pixelRatio > 0.8) {
+            pixelRatio = Math.max(0.75, pixelRatio - 0.25);
+            renderer.setPixelRatio(pixelRatio);
+            renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight);
+          }
+          perfAccum = 0;
+          perfFrames = 0;
+        }
+      }
 
       // Push HUD snapshots cleanly at ~20Hz so React never thrashes the WebGL loop
       hudAccum += dt;
