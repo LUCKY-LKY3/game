@@ -23,8 +23,8 @@ import { RosterSelect } from './components/RosterSelect';
 import { MatchOverModal, PauseModal } from './components/MatchOverlays';
 import { LoadingScreen } from './components/LoadingScreen';
 
-const BOOT_MS = 2400;
-const MATCH_MS = 1500;
+const BOOT_MS = 3800;
+const MATCH_MS = 2400;
 
 export default function App() {
   const starterRoster = useMemo(() => createStarterRoster(), []);

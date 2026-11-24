@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 
 const TIPS = [
@@ -60,7 +60,19 @@ interface LoadingScreenProps {
 
 /** Full-screen splash with the Mafia Bhaiyas logo, shown while the game boots and while a match starts */
 export function LoadingScreen({ visible, durationMs }: LoadingScreenProps) {
-  const tip = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pick = (not?: string) => {
+    let t = TIPS[Math.floor(Math.random() * TIPS.length)];
+    while (t === not && TIPS.length > 1) t = TIPS[Math.floor(Math.random() * TIPS.length)];
+    return t;
+  };
+  const [tip, setTip] = useState(() => pick());
+  // New slogan each time the screen appears, and a fresh one every couple of seconds while it stays up
+  useEffect(() => {
+    if (!visible) return;
+    setTip((t) => pick(t));
+    const id = window.setInterval(() => setTip((t) => pick(t)), 2200);
+    return () => clearInterval(id);
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div
       aria-hidden={!visible}
