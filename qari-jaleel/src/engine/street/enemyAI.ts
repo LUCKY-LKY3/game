@@ -463,7 +463,24 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
         const distNowX = Math.abs(targetHero.x - e.x);
         const distNowZ = Math.abs(targetHero.z - e.z);
         if (distNowX <= strikeReachX + 0.55 && distNowZ <= 0.85) {
-          if (e.spec.archetype === 'idiot' && Math.random() < 0.14) {
+          if (e.spec.trait === 'thief') {
+            // Pickpocket: swipes some of the hero's power meter, then scarpers
+            if (targetHero.rage > 5) {
+              targetHero.rage = Math.max(0, targetHero.rage - 35);
+              this.spawnComicPopup(targetHero.x, 2.2, targetHero.z, 'POWER STOLEN!', '#F87171');
+              soundEngine.playWhoosh(0.8);
+              if (this.speechTimer <= 0) {
+                this.speechBubble = { side: 2, speaker: e.spec.name, text: 'Thanks for the power, bro!' };
+                this.speechTimer = 2;
+              }
+            }
+            e.action = 'taunt';
+            e.actionTime = 0;
+            e.actionDuration = 0.5;
+            e.aiCooldown = 3.2;
+            e.aiState = 'retreat';
+            e.stateTimer = 2.2;
+          } else if (e.spec.archetype === 'idiot' && Math.random() < 0.14) {
             e.action = 'taunt';
             e.actionTime = 0;
             e.actionDuration = 0.55;
@@ -589,6 +606,8 @@ export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
       this.slowMoTimer = Math.max(this.slowMoTimer, 0.45);
       soundEngine.playParryClang();
       this.spawnComicPopup(hero.x, 2.05, hero.z, 'PERFECT DODGE!', '#38BDF8');
+      this.spawnComicPopup(hero.x, 2.55, hero.z, 'HIT BACK NOW! x1.5', '#FDE047');
+      this.sayQuip('dodge', 0.45);
       break;
     }
     if (hero.invulnTimer > 0) continue;
@@ -854,7 +873,7 @@ export function updateAutoRickshaw(this: StreetBrawlEngine, dt: number) {
     if ((r.dir === 1 && r.x > this.cameraX + 18) || (r.dir === -1 && r.x < this.cameraX - 18)) {
       r.active = false;
       r.group.visible = false;
-      this.rickshawCooldown = 16 + Math.random() * 6;
+      this.rickshawCooldown = this.endlessMode && this.endlessMod === 'rickshaw' ? 5 + Math.random() * 3 : 16 + Math.random() * 6;
     }
     return;
   }

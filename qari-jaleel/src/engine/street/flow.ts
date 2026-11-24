@@ -8,36 +8,56 @@ import { StreetZoneConfig, HeroRuntime, EnemyRuntime } from './types';
 import { VILLAGE_BOON_POOL, STREET_ZONES } from './data';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
-/** Endless wave plan: who comes, in what order, plus the banner text. Bosses rotate every 5th wave. */
-export function planEndlessWave(waveNum: number): { keys: string[]; sub: string } {
+/** Endless wave plan: who comes, in what order, the twist (if any), plus banner text. Boss every 5th wave. */
+export function planEndlessWave(waveNum: number): { keys: string[]; sub: string; mod: 'lathi' | 'rickshaw' | 'mela' | null } {
+  const seed = Math.floor(Date.now() / 86400000); // same wave order for everyone on a given day
   const bossCycle = ['chappal_chaudhary', 'dhol_daku', 'bade_tau'];
-  const isBossWave = waveNum % 5 === 0;
+  const phase = waveNum % 5;
+  const isBossWave = phase === 0;
+  const mod = isBossWave
+    ? null
+    : phase === 1 && waveNum > 1
+      ? 'lathi'
+      : phase === 2 && waveNum > 2
+        ? 'rickshaw'
+        : phase === 4
+          ? 'mela'
+          : null;
   const tier1 = ['bunty', 'golu', 'tinku', 'chintu'];
   const tier2 = ['pappu', 'lathi_lala', 'chappal_chacha', 'thali_tiwari'];
-  const pool = waveNum < 3 ? tier1 : waveNum < 6 ? [...tier1, ...tier2.slice(0, 2)] : [...tier1, ...tier2, 'kalu_goon'];
-  const total = Math.min(10, 3 + Math.floor(waveNum * 0.7));
+  let pool = waveNum < 3 ? tier1 : waveNum < 6 ? [...tier1, ...tier2.slice(0, 2)] : [...tier1, ...tier2, 'kalu_goon'];
+  if (mod === 'mela') pool = tier1;
+  let total = Math.min(10, 3 + Math.floor(waveNum * 0.7));
+  if (mod === 'mela') total = Math.min(14, Math.round(total * 1.7));
   const keys: string[] = [];
   let sub = 'FRESH COUSIN WAVE INCOMING';
   if (isBossWave) {
-    const boss = bossCycle[(waveNum / 5 - 1) % bossCycle.length];
+    const boss = bossCycle[(waveNum / 5 - 1 + seed) % bossCycle.length];
     keys.push(boss);
     sub = boss === 'bade_tau' ? 'BADE TAU JOINS THE MOHALLA!' : `${VILLAGE_COUSIN_ROSTER[boss].name.toUpperCase()} ARRIVES!`;
   }
   let ranged = 0;
   const minions = isBossWave ? 2 + Math.floor(waveNum / 10) : total;
   for (let i = 0; i < minions; i++) {
-    let k = pool[(waveNum * 3 + i * 2) % pool.length];
+    let k = pool[(waveNum * 3 + i * 2 + seed) % pool.length];
     if (k === 'chappal_chacha' && ++ranged > 1) k = 'bunty';
     keys.push(k);
   }
-  if (!isBossWave && waveNum % 5 === 3) {
+  if (!isBossWave && mod !== 'mela') {
+    if (waveNum >= 4 && waveNum % 3 === 1) keys.splice(1, 1, 'bullhorn_bhai');
+    if (waveNum >= 5 && waveNum % 3 === 2) keys.splice(Math.min(2, keys.length - 1), 1, 'jeb_katra');
+  }
+  if (!isBossWave && phase === 3) {
     keys.splice(Math.ceil(keys.length / 2), 0, 'moti_pehelwan');
     sub = 'MOTI PEHELWAN AMBUSH!';
-  } else if (!isBossWave && waveNum >= 2 && waveNum % 2 === 0) {
+  } else if (!isBossWave && mod !== 'mela' && waveNum >= 2 && waveNum % 2 === 0) {
     keys.splice(Math.ceil(keys.length / 2), 0, 'raju_bike');
     sub = 'RAJU ON THE BIKE!';
   }
-  return { keys, sub };
+  if (mod === 'lathi') sub = "LATHI NIGHT · EVERYONE'S ARMED!";
+  if (mod === 'rickshaw') sub = 'RICKSHAW RUSH · WATCH THE ROAD!';
+  if (mod === 'mela') sub = 'MELA CROWD · SO MANY COUSINS!';
+  return { keys, sub, mod };
 }
 
 /** Spawn the next few of the queued cousins (never more than 3 at once, keeps the lane readable). */
@@ -52,15 +72,19 @@ export function spawnEndlessBatch(this: StreetBrawlEngine) {
     wave2: [],
   };
   const batch = this.endlessQueue.splice(0, 3);
-  if (batch.length) this.spawnWave(batch, endlessZone, Math.min(2.2, 1 + (this.endlessWave - 1) * 0.08));
+  const scale = Math.min(2.2, 1 + (this.endlessWave - 1) * 0.08) * (this.endlessMod === 'mela' ? 0.72 : 1);
+  if (batch.length) this.spawnWave(batch, endlessZone, scale, this.endlessMod === 'lathi');
 }
 
 export function spawnEndlessWave(this: StreetBrawlEngine, waveNum: number) {
-  this.endlessQueue = planEndlessWave(waveNum).keys;
+  const plan = planEndlessWave(waveNum);
+  this.endlessQueue = plan.keys;
+  this.endlessMod = plan.mod;
+  if (plan.mod === 'rickshaw') this.rickshawCooldown = Math.min(this.rickshawCooldown, 4);
   this.spawnEndlessBatch();
 }
 
-export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZoneConfig, waveScale = 1) {
+export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZoneConfig, waveScale = 1, armed = false) {
   keys.forEach((key, idx) => {
     const base = VILLAGE_COUSIN_ROSTER[key] ?? VILLAGE_COUSIN_ROSTER.bunty;
     const uid = this.nextEnemyUid++;
@@ -69,6 +93,7 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       id: `${key}_${uid}`,
       maxHp: Math.round(base.maxHp * this.difficultyScale * waveScale),
       damage: Math.max(4, Math.round(base.damage * this.difficultyScale * Math.min(1.5, waveScale))),
+      hasClub: armed || base.hasClub,
     };
     const rig = createVillageThugRig(spec);
     const fromRight = idx % 2 === 0 || spec.archetype === 'boss' || spec.archetype === 'biker';
@@ -155,6 +180,7 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
 }
 
 export function clearEnemies(this: StreetBrawlEngine) {
+  this.clearPickups();
   for (let i = 0; i < this.enemies.length; i++) {
     const e = this.enemies[i];
     if (!e.removed) {
@@ -178,7 +204,12 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
     }
     // Track whether the squad took any damage during this wave (for the flawless bonus)
     const hpSum = this.heroes[0].hp + this.heroes[1].hp;
-    if (hpSum < this.endlessLastHp - 0.01) this.endlessDamaged = true;
+    if (hpSum < this.endlessLastHp - 0.01) {
+      this.endlessDamaged = true;
+      this.noHitSec = 0;
+      this.streakTier = 0;
+      this.scoreMult = 1;
+    }
     this.endlessLastHp = hpSum;
     if (livingCount === 0 && this.endlessQueue.length === 0 && this.slowMoTimer <= 0.05) {
       const cleared = this.endlessWave;
@@ -189,7 +220,11 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
       this.score += clearBonus + flawlessBonus;
       const lead = this.getActiveHero();
       this.spawnComicPopup(lead.x, 2.6, lead.z, `WAVE ${cleared} CLEAR +${clearBonus}`, '#FACC15');
-      if (flawless) this.spawnComicPopup(lead.x, 3.1, lead.z, `FLAWLESS +${flawlessBonus}`, '#4ADE80');
+      if (flawless) {
+        this.flawlessWaves += 1;
+        this.spawnComicPopup(lead.x, 3.1, lead.z, `FLAWLESS +${flawlessBonus}`, '#4ADE80');
+        this.sayQuip('flawless', 0.7);
+      }
       this.endlessWave += 1;
       this.endlessDamaged = false;
       const heal = bossCleared ? 45 : 16;
@@ -303,6 +338,8 @@ export function computeScorecard(this: StreetBrawlEngine, victory: boolean): Bra
     clearTimeSec,
     highestCombo,
     cousinsRickshawed: this.cousinsRickshawed,
+    flawlessWaves: this.flawlessWaves,
+    pickupsTaken: this.pickupsTaken,
     finishersLanded: this.finishersLanded,
     score: this.score,
     totalDefeated: this.totalDefeated,

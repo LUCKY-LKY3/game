@@ -42,7 +42,7 @@ export interface VillageThugSpec {
   buckTeeth: boolean;
   battleCry: string;
   /** shield: blocks light frontal hits. rusher: dashes in fast. */
-  trait?: 'shield' | 'rusher';
+  trait?: 'shield' | 'rusher' | 'screamer' | 'thief';
   /** Boss special attacks, used in rotation (see street/bossMoves.ts) */
   bossMoves?: ('volley' | 'summon' | 'charge' | 'stomp')[];
   /** Specials only unlock once the boss enrages (below 50% HP) */
@@ -188,6 +188,52 @@ export const VILLAGE_COUSIN_ROSTER: Record<string, Omit<VillageThugSpec, 'id'>> 
     buckTeeth: false,
     battleCry: 'Try hitting a thali, na!',
     trait: 'shield',
+  },
+  bullhorn_bhai: {
+    name: 'Bullhorn Bhai',
+    subtitle: 'Wedding Loudspeaker Guy',
+    archetype: 'idiot',
+    maxHp: 64,
+    damage: 7,
+    speed: 2.1,
+    scoreValue: 260,
+    skinTone: '#A8693F',
+    shirtColor: '#7C3AED',
+    pantsColor: '#1E293B',
+    gamchaColor: '#F97316',
+    hairColor: '#171717',
+    heightScale: 1.0,
+    widthScale: 0.95,
+    bellyBulge: 0.06,
+    hasClub: false,
+    headAccessory: 'cowlick',
+    goofyEyes: true,
+    buckTeeth: true,
+    battleCry: 'TESTING TESTING, ONE TWO!',
+    trait: 'screamer',
+  },
+  jeb_katra: {
+    name: 'Jeb Katra',
+    subtitle: 'Pickpocket of the Bazaar',
+    archetype: 'idiot',
+    maxHp: 48,
+    damage: 6,
+    speed: 3.4,
+    scoreValue: 300,
+    skinTone: '#9A5E36',
+    shirtColor: '#0F766E',
+    pantsColor: '#27272A',
+    gamchaColor: '#FACC15',
+    hairColor: '#0A0A0A',
+    heightScale: 0.94,
+    widthScale: 0.86,
+    bellyBulge: 0,
+    hasClub: false,
+    headAccessory: 'bandana',
+    goofyEyes: false,
+    buckTeeth: false,
+    battleCry: 'Nice power bar you have there...',
+    trait: 'thief',
   },
   chappal_chaudhary: {
     name: 'Chappal Chaudhary',

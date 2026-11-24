@@ -242,6 +242,8 @@ export interface BrawlScorecard {
   clearTimeSec: number;
   highestCombo: number;
   cousinsRickshawed: number;
+  flawlessWaves?: number;
+  pickupsTaken?: number;
   finishersLanded: number;
   score: number;
   totalDefeated: number;
@@ -307,6 +309,7 @@ export interface HudSnapshot {
   stats: MatchStats;
   rageFlashSide: 1 | 2 | null;
   speechBubble: SpeechBubbleState | null;
+  streakMult?: number; // Endless no-hit score multiplier (1 = none)
   comedyTimer?: string | null; // comic countdown clock shown during Qari's "two mins bro" move
   brawl?: StreetBrawlHudState;
 }

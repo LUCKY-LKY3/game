@@ -346,6 +346,7 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
     rageFlashSide: this.rageFlashSide,
     speechBubble: this.speechBubble ? { ...this.speechBubble } : null,
     comedyTimer: this.comedyTimer,
+    streakMult: this.endlessMode ? this.scoreMult : 1,
     brawl: {
       activeHeroIndex: this.activeHeroIndex,
       hero1Weapon: this.heroes[0].heldWeapon ? { ...this.heroes[0].heldWeapon } : null,

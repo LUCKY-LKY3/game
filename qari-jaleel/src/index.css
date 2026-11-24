@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@keyframes bubble-pop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.bubble-pop { animation: bubble-pop 0.18s ease-out; }
+
 @theme {
   --font-display: "Big Shoulders Display", system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;

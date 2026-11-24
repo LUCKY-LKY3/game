@@ -366,6 +366,19 @@ export function MatchOverModal({
                 </div>
               </div>
 
+              {isEndless && (
+                <div>
+                  <div className="text-xs text-[#B6AA9A]">Flawless Waves</div>
+                  <div className="font-mono-num mt-1 text-2xl font-bold text-[#4ADE80]">{scorecard?.flawlessWaves ?? 0}</div>
+                </div>
+              )}
+              {isEndless && (
+                <div>
+                  <div className="text-xs text-[#B6AA9A]">Chai &amp; Snacks</div>
+                  <div className="font-mono-num mt-1 text-2xl font-bold text-[#F59E0B]">{scorecard?.pickupsTaken ?? 0}</div>
+                </div>
+              )}
+
               <div>
                 <div className="text-xs text-[#B6AA9A]">Finishers Landed</div>
                 <div className="font-mono-num mt-1 text-2xl font-bold text-[#FDE047]">

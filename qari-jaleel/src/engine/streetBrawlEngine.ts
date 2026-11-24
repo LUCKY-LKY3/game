@@ -16,6 +16,7 @@ import * as powerups from './street/powerups';
 import * as combat from './street/combat';
 import * as bossMoves from './street/bossMoves';
 import * as flow from './street/flow';
+import * as endlessExtras from './street/endlessExtras';
 import * as view from './street/view';
 
 /**
@@ -67,6 +68,10 @@ export class StreetBrawlEngine {
   fireBossSpecial = bossMoves.fireBossSpecial;
   spawnEndlessWave = flow.spawnEndlessWave;
   spawnEndlessBatch = flow.spawnEndlessBatch;
+  sayQuip = endlessExtras.sayQuip;
+  maybeDropPickup = endlessExtras.maybeDropPickup;
+  clearPickups = endlessExtras.clearPickups;
+  updateEndlessExtras = endlessExtras.updateEndlessExtras;
   spawnWave = flow.spawnWave;
   clearEnemies = flow.clearEnemies;
   updateZoneProgression = flow.updateZoneProgression;
@@ -110,6 +115,16 @@ export class StreetBrawlEngine {
   endlessQueue: string[] = [];
   endlessDamaged = false;
   endlessLastHp = 0;
+  endlessMod: 'lathi' | 'rickshaw' | 'mela' | null = null;
+  pickups: endlessExtras.Pickup[] = [];
+  pickupsTaken = 0;
+  flawlessWaves = 0;
+  noHitSec = 0;
+  streakTier = 0;
+  scoreMult = 1;
+  quipCooldown = 0;
+  tauntTimer = 7;
+  buffedUids = new Set<number>();
   endlessBestWave = 0;
   runElapsedSec = 0;
   cousinsRickshawed = 0;
@@ -566,10 +581,19 @@ export class StreetBrawlEngine {
     this.cameraVelX = 0;
     this.cameraLeadZ = -0.35;
 
-    this.endlessWave = 1;
+    this.endlessWave = Math.max(1, Number(new URLSearchParams(window.location.search).get('wave')) || 1);
     this.endlessQueue = [];
     this.endlessDamaged = false;
     this.endlessLastHp = 0;
+    this.endlessMod = null;
+    this.pickupsTaken = 0;
+    this.flawlessWaves = 0;
+    this.noHitSec = 0;
+    this.streakTier = 0;
+    this.scoreMult = 1;
+    this.quipCooldown = 0;
+    this.tauntTimer = 7;
+    this.buffedUids.clear();
     this.endlessBestWave = loadArcadeRecords().endlessBestWave;
     this.runElapsedSec = 0;
     this.cousinsRickshawed = 0;
@@ -684,7 +708,7 @@ export class StreetBrawlEngine {
     if (this.endlessMode) {
       this.announcement = 'ENDLESS MOHALLA';
       this.subAnnouncement = 'WAVE 1 · SURVIVE THE COUSIN SWARM';
-      this.spawnEndlessWave(1);
+      this.spawnEndlessWave(this.endlessWave);
     } else {
       this.announcement = 'ZONE 1 · CHAI CHOWK';
       this.subAnnouncement = 'CLEAN OUT THE VILLAGE LANE';
@@ -907,6 +931,7 @@ export class StreetBrawlEngine {
 
     // Check zone wave progression, Endless Mohalla waves & Double Dragon GO >> unlock
     this.updateZoneProgression();
+    this.updateEndlessExtras(dt);
 
     // Check squad defeat / auto-switch if active hero falls
     if (active.hp <= 0) {

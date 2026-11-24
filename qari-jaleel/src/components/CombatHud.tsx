@@ -50,6 +50,58 @@ interface CombatHudProps {
   arenaRef: React.RefObject<ArenaCanvasHandle | null>;
 }
 
+const TUTORIAL_KEY = 'mafia-bhaiyas-tutorial-v1';
+
+/** One-time tip card shown over the first fight. Tap to dismiss. */
+function TutorialHint() {
+  const [open, setOpen] = useState(() => {
+    try {
+      return !localStorage.getItem(TUTORIAL_KEY);
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => close(), 14000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+  const close = () => {
+    setOpen(false);
+    try {
+      localStorage.setItem(TUTORIAL_KEY, '1');
+    } catch {
+      // ignore
+    }
+  };
+  if (!open) return null;
+  const tips: [string, string][] = [
+    ['Stick', 'move · flick to dash'],
+    ['Punch / Kick', 'chain taps for combos'],
+    ['Shield', 'tap = dodge, hold = guard'],
+    ['Dodge a swing', 'then hit back for x1.5'],
+    ['Swap', 'tag your partner in mid-combo'],
+    ['Power', 'fires when the ring is full'],
+  ];
+  return (
+    <button
+      type="button"
+      onClick={close}
+      className="pointer-events-auto fixed top-[18%] left-1/2 z-40 w-[min(22rem,88vw)] -translate-x-1/2 rounded-xl bg-[#141210]/92 p-3 text-left shadow-xl ring-1 ring-[#F59E0B]/50"
+    >
+      <div className="mb-1 text-[11px] font-black uppercase tracking-[0.2em] text-[#F59E0B]">Quick tips · tap to close</div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+        {tips.map(([k, v]) => (
+          <div key={k} className="text-[11px] leading-tight text-[#D6CEC2]">
+            <span className="font-black text-[#F8F4EC]">{k}</span> {v}
+          </div>
+        ))}
+      </div>
+    </button>
+  );
+}
+
 function FighterPortraitThumb({
   url,
   name,
@@ -232,26 +284,36 @@ export function CombatHud({
         </div>
       )}
 
+      <TutorialHint />
+
       {/* Live Comic Speech Bubble for Unique Powerups (e.g. Jam's snooker cue line, Jav's story) */}
       {hud.speechBubble && (
         <div
-          className={`pointer-events-none fixed top-[28%] z-30 flex w-full px-4 sm:top-[26%] ${
-            hud.speechBubble.side === 1 ? 'justify-start sm:pl-16' : 'justify-end sm:pr-16'
+          key={`${hud.speechBubble.speaker}-${hud.speechBubble.text}`}
+          className={`pointer-events-none fixed top-[24%] z-30 flex w-full px-5 sm:top-[22%] ${
+            hud.speechBubble.side === 1 ? 'justify-start sm:pl-20' : 'justify-end sm:pr-20'
           }`}
         >
-          <div className="relative max-w-[17rem] rounded-xl bg-[#FFFDF8]/95 px-3.5 py-2 text-[#141210] shadow-[0_6px_18px_rgba(0,0,0,0.45)] ring-1 ring-black/10 sm:max-w-xs">
-            <div className="text-[10px] font-bold tracking-[0.14em] text-[#B45309] uppercase">
+          <div className="bubble-pop relative max-w-[14rem] rounded-2xl bg-[#FFFDF8] px-3 py-1.5 text-[#141210] shadow-[0_4px_14px_rgba(0,0,0,0.4)] sm:max-w-[17rem]">
+            <div className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">
               {hud.speechBubble.speaker}
             </div>
-            <div className="mt-0.5 text-sm font-semibold leading-snug text-[#141210] sm:text-base">
+            <div className="text-[13px] font-semibold leading-tight [text-wrap:balance] sm:text-[15px]">
               {hud.speechBubble.text}
             </div>
             <div
-              className={`absolute -bottom-1.5 h-3 w-3 rotate-45 bg-[#FFFDF8]/95 ring-1 ring-black/10 ${
-                hud.speechBubble.side === 1 ? 'left-8' : 'right-8'
+              className={`absolute -bottom-1 h-2.5 w-2.5 rotate-45 bg-[#FFFDF8] ${
+                hud.speechBubble.side === 1 ? 'left-6' : 'right-6'
               }`}
             />
           </div>
+        </div>
+      )}
+
+      {/* Endless no-hit streak chip */}
+      {hud.streakMult !== undefined && hud.streakMult > 1 && (
+        <div className="pointer-events-none fixed top-[15%] left-1/2 z-20 -translate-x-1/2 rounded-full bg-[#0B1F2A]/90 px-3 py-0.5 text-[11px] font-black tracking-widest text-[#38BDF8] ring-1 ring-[#38BDF8]/50">
+          STREAK x{hud.streakMult.toFixed(2)}
         </div>
       )}
 
@@ -1067,7 +1129,7 @@ export function CombatHud({
       {/* BOTTOM ZONE: Desktop Compact Key Hints OR Ergonomic Arcade Touch Pad */}
       <div className="mx-auto w-full max-w-6xl">
         {showTouchControls ? (
-          <div className="pointer-events-auto flex items-end justify-between gap-2 pb-1">
+          <div className={`pointer-events-auto flex items-end justify-between gap-2 pb-1 ${settings.leftHanded ? 'flex-row-reverse' : ''}`}>
             {/* LEFT THUMB ZONE: Floating Dynamic Virtual Joystick anywhere in bottom-left quadrant */}
             <VirtualThumbstick
               onChange={(dirs) => arenaRef.current?.setTouchDirections(dirs)}
@@ -1077,7 +1139,7 @@ export function CombatHud({
             {/* RIGHT THUMB ZONE: Ergonomic Thumb-Arc Combat Cluster */}
             <div
               className="touch-cluster relative h-[222px] w-[244px] shrink-0 sm:h-[232px] sm:w-[254px]"
-              style={{ transform: `scale(${BUTTON_SCALE[settings.buttonSize]})`, transformOrigin: 'bottom right' }}
+              style={{ transform: `scale(${BUTTON_SCALE[settings.buttonSize]})`, transformOrigin: settings.leftHanded ? 'bottom left' : 'bottom right' }}
               aria-label="Ergonomic thumb-arc combat buttons"
             >
               {/* UPPER-LEFT OF ARC (Street Brawl only): 52px SWAP / HOLD ASSIST button */}

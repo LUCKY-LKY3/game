@@ -49,6 +49,9 @@ export function SettingsPanel() {
       <Row label="Auto-aim strikes">
         <Toggle on={s.autoAim} onLabel="On" offLabel="Off" onClick={() => updateSettings({ autoAim: !s.autoAim })} />
       </Row>
+      <Row label="Left-handed layout">
+        <Toggle on={s.leftHanded} onLabel="On" offLabel="Off" onClick={() => updateSettings({ leftHanded: !s.leftHanded })} />
+      </Row>
     </div>
   );
 }

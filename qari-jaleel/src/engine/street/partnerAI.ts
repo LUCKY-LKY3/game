@@ -273,6 +273,12 @@ export function performHeroSwitch(this: StreetBrawlEngine, autoBecauseKO = false
     }
     this.startHeroMove(nextHero, 'kick');
     this.spawnComicPopup(target.x, 1.85, target.z, 'TAG AMBUSH!', '#38BDF8');
+    // Tag slam: switching mid-combo adds a joint finisher hit
+    if (prevHero.comboCount >= 3) {
+      this.damageEnemy(target, null, 12 + prevHero.comboCount * 3, true, nextHero.facing * 3.4, 3.4, 'TAG SLAM!');
+      this.shakeIntensity = Math.max(this.shakeIntensity, 0.3);
+      this.sayQuip('tag', 0.5);
+    }
     this.switchBanner = `TAG AMBUSH · ${nextHero.profile.name.toUpperCase()}!`;
   } else {
     this.switchBanner = autoBecauseKO

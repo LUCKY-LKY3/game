@@ -214,7 +214,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
           : spec.label;
       hero.calloutSeq++;
       this.hitstopTimer = Math.max(this.hitstopTimer, spec.hitstop);
-      this.shakeIntensity = Math.max(this.shakeIntensity, heavy ? 0.24 : 0.11);
+      this.shakeIntensity = Math.max(this.shakeIntensity, Math.min(0.36, (heavy ? 0.16 : 0.07) + spec.damage * 0.004));
     }
   }
 
@@ -284,7 +284,7 @@ export function damageEnemy(this: StreetBrawlEngine,
       this.stats.p2DamageDealt += damage;
       this.stats.p2MaxCombo = Math.max(this.stats.p2MaxCombo, attacker.comboCount);
     }
-    this.score += damage * 4 + attacker.comboCount * 10;
+    this.score += Math.round((damage * 4 + attacker.comboCount * 10) * this.scoreMult);
   } else {
     this.score += damage * 3;
   }
@@ -344,13 +344,18 @@ export function damageEnemy(this: StreetBrawlEngine,
     e.vy = Math.max(3.6, launchVy);
     e.koFadeTimer = 1.5;
     this.totalDefeated += 1;
-    this.score += e.spec.scoreValue;
+    this.score += Math.round(e.spec.scoreValue * this.scoreMult);
+    this.maybeDropPickup(e);
     soundEngine.playKO();
     this.shakeIntensity = Math.max(this.shakeIntensity, 0.3);
 
     // Trigger crisp 0.5-second Slow-Motion Zoom on the final knockout hit of each zone / boss wave!
     const remainingAlive = this.enemies.filter((o) => o.alive).length;
     const isZoneFinalKO = remainingAlive === 0 && (this.endlessMode || this.wave2Spawned);
+    if (this.endlessMode && isZoneFinalKO && this.endlessQueue.length === 0) {
+      this.spawnComicPopup(e.x, 2.7, e.z, e.spec.archetype === 'boss' ? 'BOSS DOWN!' : 'WAVE BREAKER!', '#F472B6');
+      if (e.spec.archetype === 'boss') this.sayQuip('bossdown');
+    }
     if (isZoneFinalKO || e.spec.archetype === 'boss') {
       this.slowMoTimer = 0.52;
       this.slowMoFocusX = e.x;
