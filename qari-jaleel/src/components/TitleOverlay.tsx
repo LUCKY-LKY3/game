@@ -28,9 +28,7 @@ export function TitleOverlay({
     <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between bg-gradient-to-t from-[#141210] via-[#141210]/35 to-[#141210]/65 p-5 sm:p-10">
       {/* Top quiet header */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
-        <div className="font-display text-2xl font-black tracking-wider text-[#F8F4EC] whitespace-nowrap">
-          MAFIA BHAIYAS
-        </div>
+        <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-11 w-auto select-none drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)]" />
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F59E0B]/90">
           {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
         </div>
@@ -43,7 +41,7 @@ export function TitleOverlay({
             <img
               src={logoUrl}
               alt="Mafia Bhaiyas"
-              className="h-[min(34vh,16rem)] w-auto select-none drop-shadow-[0_8px_26px_rgba(0,0,0,0.8)]"
+              className="h-[min(24vh,11rem)] w-auto select-none drop-shadow-[0_8px_26px_rgba(0,0,0,0.8)]"
               draggable={false}
             />
           </h1>
