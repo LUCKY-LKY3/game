@@ -306,7 +306,7 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
 
   const zone = STREET_ZONES[Math.min(this.currentZoneIdx, STREET_ZONES.length - 1)];
   const remainingInZone = this.endlessMode
-    ? this.enemies.filter((e) => e.alive).length
+    ? this.enemies.filter((e) => e.alive).length + this.endlessQueue.length
     : this.enemies.filter((e) => e.alive).length + (this.wave2Spawned ? 0 : zone.wave2.length);
   const bike = this.stage.splendorBike;
   const nearSplendorBike =

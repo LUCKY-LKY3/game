@@ -66,6 +66,7 @@ export class StreetBrawlEngine {
   updateBossSpecials = bossMoves.updateBossSpecials;
   fireBossSpecial = bossMoves.fireBossSpecial;
   spawnEndlessWave = flow.spawnEndlessWave;
+  spawnEndlessBatch = flow.spawnEndlessBatch;
   spawnWave = flow.spawnWave;
   clearEnemies = flow.clearEnemies;
   updateZoneProgression = flow.updateZoneProgression;
@@ -106,6 +107,7 @@ export class StreetBrawlEngine {
   // Endless Mohalla & Style Rank Scorecard Telemetry
   endlessMode: boolean;
   endlessWave = 1;
+  endlessQueue: string[] = [];
   endlessBestWave = 0;
   runElapsedSec = 0;
   cousinsRickshawed = 0;
@@ -563,6 +565,7 @@ export class StreetBrawlEngine {
     this.cameraLeadZ = -0.35;
 
     this.endlessWave = 1;
+    this.endlessQueue = [];
     this.endlessBestWave = loadArcadeRecords().endlessBestWave;
     this.runElapsedSec = 0;
     this.cousinsRickshawed = 0;

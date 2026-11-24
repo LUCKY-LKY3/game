@@ -8,7 +8,40 @@ import { StreetZoneConfig, HeroRuntime, EnemyRuntime } from './types';
 import { VILLAGE_BOON_POOL, STREET_ZONES } from './data';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
-export function spawnEndlessWave(this: StreetBrawlEngine, waveNum: number) {
+/** Endless wave plan: who comes, in what order, plus the banner text. Bosses rotate every 5th wave. */
+export function planEndlessWave(waveNum: number): { keys: string[]; sub: string } {
+  const bossCycle = ['chappal_chaudhary', 'dhol_daku', 'bade_tau'];
+  const isBossWave = waveNum % 5 === 0;
+  const tier1 = ['bunty', 'golu', 'tinku', 'chintu'];
+  const tier2 = ['pappu', 'lathi_lala', 'chappal_chacha', 'thali_tiwari'];
+  const pool = waveNum < 3 ? tier1 : waveNum < 6 ? [...tier1, ...tier2.slice(0, 2)] : [...tier1, ...tier2, 'kalu_goon'];
+  const total = Math.min(10, 3 + Math.floor(waveNum * 0.7));
+  const keys: string[] = [];
+  let sub = 'FRESH COUSIN WAVE INCOMING';
+  if (isBossWave) {
+    const boss = bossCycle[(waveNum / 5 - 1) % bossCycle.length];
+    keys.push(boss);
+    sub = boss === 'bade_tau' ? 'BADE TAU JOINS THE MOHALLA!' : `${VILLAGE_COUSIN_ROSTER[boss].name.toUpperCase()} ARRIVES!`;
+  }
+  let ranged = 0;
+  const minions = isBossWave ? 2 + Math.floor(waveNum / 10) : total;
+  for (let i = 0; i < minions; i++) {
+    let k = pool[(waveNum * 3 + i * 2) % pool.length];
+    if (k === 'chappal_chacha' && ++ranged > 1) k = 'bunty';
+    keys.push(k);
+  }
+  if (!isBossWave && waveNum % 5 === 3) {
+    keys.splice(Math.ceil(keys.length / 2), 0, 'moti_pehelwan');
+    sub = 'MOTI PEHELWAN AMBUSH!';
+  } else if (!isBossWave && waveNum >= 2 && waveNum % 2 === 0) {
+    keys.splice(Math.ceil(keys.length / 2), 0, 'raju_bike');
+    sub = 'RAJU ON THE BIKE!';
+  }
+  return { keys, sub };
+}
+
+/** Spawn the next few of the queued cousins (never more than 3 at once, keeps the lane readable). */
+export function spawnEndlessBatch(this: StreetBrawlEngine) {
   const endlessZone: StreetZoneConfig = {
     index: 1,
     name: 'Endless Mohalla',
@@ -18,23 +51,13 @@ export function spawnEndlessWave(this: StreetBrawlEngine, waveNum: number) {
     wave1: [],
     wave2: [],
   };
-  const pool = ['bunty', 'golu', 'tinku', 'pappu', 'lathi_lala', 'kalu_goon', 'chappal_chacha', 'chintu', 'thali_tiwari'];
-  const count = Math.min(7, 2 + Math.floor(waveNum * 0.75));
-  const keys: string[] = [];
-  for (let i = 0; i < count; i++) {
-    if (waveNum >= 2 && i === count - 1 && waveNum % 2 === 0) {
-      keys.push('raju_bike');
-    } else {
-      const cap = Math.min(pool.length, 3 + waveNum);
-      keys.push(pool[(waveNum * 3 + i * 2) % cap]);
-    }
-  }
-  if (waveNum % 4 === 0) {
-    keys.push('bade_tau');
-  } else if (waveNum % 3 === 0) {
-    keys.push('moti_pehelwan');
-  }
-  this.spawnWave(keys, endlessZone, 1 + (waveNum - 1) * 0.08);
+  const batch = this.endlessQueue.splice(0, 3);
+  if (batch.length) this.spawnWave(batch, endlessZone, Math.min(2.2, 1 + (this.endlessWave - 1) * 0.08));
+}
+
+export function spawnEndlessWave(this: StreetBrawlEngine, waveNum: number) {
+  this.endlessQueue = planEndlessWave(waveNum).keys;
+  this.spawnEndlessBatch();
 }
 
 export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZoneConfig, waveScale = 1) {
@@ -148,7 +171,12 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
 
   // Endless Mohalla Survival Mode: infinite escalating waves!
   if (this.endlessMode) {
-    if (livingCount === 0 && this.slowMoTimer <= 0.05) {
+    // Reinforcements trickle in once the lane thins out
+    if (this.endlessQueue.length > 0 && livingCount <= 1 && this.phase === 'FIGHTING') {
+      this.spawnEndlessBatch();
+      return;
+    }
+    if (livingCount === 0 && this.endlessQueue.length === 0 && this.slowMoTimer <= 0.05) {
       this.endlessWave += 1;
       this.heroes.forEach((h) => {
         if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + 16);
@@ -159,12 +187,7 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
         this.highFiveChimePlayed = false;
       }
       this.announcement = `WAVE ${this.endlessWave}`;
-      this.subAnnouncement =
-        this.endlessWave % 4 === 0
-          ? 'BADE TAU JOINS THE MOHALLA!'
-          : this.endlessWave % 3 === 0
-            ? 'MOTI PEHELWAN AMBUSH!'
-            : 'FRESH COUSIN WAVE INCOMING';
+      this.subAnnouncement = planEndlessWave(this.endlessWave).sub;
       this.phase = 'ROUND_INTRO';
       this.phaseTimer = 1.05;
       this.spawnEndlessWave(this.endlessWave);

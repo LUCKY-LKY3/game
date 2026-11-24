@@ -541,6 +541,28 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
       e.action = 'idle';
     }
   }
+
+  // Soft separation so cousins never stack on top of each other (keeps the crowd readable)
+  const live = this.enemies.filter((o) => o.alive && !o.removed && o.y <= 0.05 && Math.abs(o.vx) < 2 && o.action !== 'rear_grab');
+  for (let a = 0; a < live.length; a++) {
+    for (let b = a + 1; b < live.length; b++) {
+      const p = live[a];
+      const q = live[b];
+      const dx = q.x - p.x;
+      const dz = (q.z - p.z) * 1.6;
+      const d = Math.hypot(dx, dz);
+      const min = 0.95;
+      if (d < min) {
+        const push = ((min - d) * Math.min(1, dt * 9)) / 2;
+        const nx = d > 0.001 ? dx / d : (p.uid % 2 ? 1 : -1);
+        const nz = d > 0.001 ? dz / d : 0;
+        p.x -= nx * push;
+        q.x += nx * push;
+        p.z = THREE.MathUtils.clamp(p.z - (nz * push) / 1.6, LANE_MIN_Z + 0.3, LANE_MAX_Z - 0.3);
+        q.z = THREE.MathUtils.clamp(q.z + (nz * push) / 1.6, LANE_MIN_Z + 0.3, LANE_MAX_Z - 0.3);
+      }
+    }
+  }
 }
 
 export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
