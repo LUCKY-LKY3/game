@@ -1,7 +1,7 @@
 // Endless Mohalla extras (bound onto StreetBrawlEngine): pickups, taunts, hero quips, no-hit streak, screamers.
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
-import { COUSIN_TAUNTS, FIGHTER_LINES, HERO_QUIPS, pick, SPECIFIC_TAUNTS } from '../../data/jokes';
+import { COUSIN_TAUNTS, CROWD_SCREAMS, FIGHTER_LINES, IMMY_CHATUP, HERO_QUIPS, pick, SPECIFIC_TAUNTS } from '../../data/jokes';
 import type { EnemyRuntime } from './types';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
@@ -92,6 +92,32 @@ export function updateEndlessExtras(this: StreetBrawlEngine, dt: number) {
     if (taken || p.life <= 0) {
       this.scene.remove(p.mesh);
       this.pickups.splice(i, 1);
+    }
+  }
+
+  // Background crowd run: they scream, Immy chats them up
+  if (this.stage.crowdRun.startedSeq !== this.crowdSeqSeen) {
+    this.crowdSeqSeen = this.stage.crowdRun.startedSeq;
+    this.crowdTimer = 2.4;
+  }
+  if (this.crowdTimer > 0) {
+    this.crowdTimer -= dt;
+    if (this.crowdTimer <= 0) {
+      this.spawnComicPopup(this.stage.crowdRun.x, 2.2, -4.2, pick(CROWD_SCREAMS), '#F472B6');
+      this.crowdScreams = 2;
+      this.crowdScreamGap = 1.1;
+      if (this.speechTimer <= 0) {
+        this.speechBubble = { side: 2, speaker: "Ustad 'Immy' Mirza", text: pick(IMMY_CHATUP) };
+        this.speechTimer = 3.4;
+      }
+    }
+  }
+  if (this.crowdScreams > 0 && this.crowdTimer <= 0) {
+    this.crowdScreamGap -= dt;
+    if (this.crowdScreamGap <= 0 && this.stage.crowdRun.active) {
+      this.crowdScreams--;
+      this.crowdScreamGap = 1.3;
+      this.spawnComicPopup(this.stage.crowdRun.x, 2.2, -4.2, pick(CROWD_SCREAMS), '#F472B6');
     }
   }
 

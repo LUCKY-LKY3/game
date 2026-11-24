@@ -172,6 +172,8 @@ export interface StreetStageHandle {
     targetZ: number
   ) => StreetPickupItem | null;
   resetProps: () => void;
+  /** Background crowd run (fan girls, jolly aunties/uncles, Immy chasing). startedSeq bumps each time a run begins; x = lead runner x */
+  crowdRun: { startedSeq: number; active: boolean; x: number };
   update: (time: number, dt: number, cameraX: number, comboCount?: number, lightingZoneOverride?: number) => void;
   dispose: () => void;
 }
@@ -848,6 +850,67 @@ export function buildStreetStage(
     group.add(wg);
     walkers.push({ g: wg, ll, rl, off: w * 6.7, dir: w % 2 === 0 ? 1 : -1, speed: 0.55 + (w % 3) * 0.2, z: -4.95 - (w % 2) * 0.4 });
   }
+
+  // Occasional crowd run: excited fan girls and jolly round aunties/uncles dash across the background,
+  // with Immy trailing behind chatting them up
+  const crowdRun = { startedSeq: 0, active: false, x: 0 };
+  const CROWD_CYCLE = 34;
+  const CROWD_RUN_TIME = 8;
+  const hairMat = trackMat(new THREE.MeshStandardMaterial({ color: '#1B1210', roughness: 0.9 }));
+  const armGeo = trackGeo(new THREE.CapsuleGeometry(0.05, 0.4, 3, 6));
+  const dressGeo = trackGeo(new THREE.ConeGeometry(0.3, 0.7, 10));
+  const roundBodyGeo = trackGeo(new THREE.SphereGeometry(0.34, 12, 10));
+  const hairGeo = trackGeo(new THREE.BoxGeometry(0.26, 0.5, 0.1));
+  type Runner = { g: THREE.Group; ll: THREE.Mesh; rl: THREE.Mesh; la: THREE.Mesh; ra: THREE.Mesh; lag: number; z: number; ph: number };
+  const runners: Runner[] = [];
+  const makeRunner = (kind: 'fan' | 'round' | 'immy', color: string, lag: number, z: number): Runner => {
+    const g = new THREE.Group();
+    const cloth = trackMat(new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
+    const head = new THREE.Mesh(wHeadGeo, wSkinMat);
+    const ll = new THREE.Mesh(wLegGeo, kind === 'fan' ? wSkinMat : wPantsMat);
+    const rl = new THREE.Mesh(wLegGeo, kind === 'fan' ? wSkinMat : wPantsMat);
+    ll.position.set(-0.09, 0.48, 0);
+    rl.position.set(0.09, 0.48, 0);
+    if (kind === 'round') {
+      const body = new THREE.Mesh(roundBodyGeo, cloth);
+      body.position.y = 0.95;
+      head.position.y = 1.5;
+      head.scale.setScalar(1.15);
+      g.add(body);
+    } else if (kind === 'fan') {
+      const dress = new THREE.Mesh(dressGeo, cloth);
+      dress.position.y = 0.95;
+      head.position.y = 1.55;
+      const hair = new THREE.Mesh(hairGeo, hairMat);
+      hair.position.set(0, 1.45, -0.08);
+      g.add(dress, hair);
+    } else {
+      const body = new THREE.Mesh(wBodyGeo, cloth);
+      body.position.y = 1.05;
+      head.position.y = 1.62;
+      const hair = new THREE.Mesh(hairGeo, hairMat);
+      hair.position.set(0, 1.7, 0);
+      hair.scale.set(1, 0.4, 1);
+      g.add(body, hair);
+    }
+    const la = new THREE.Mesh(armGeo, kind === 'fan' ? wSkinMat : cloth);
+    const ra = new THREE.Mesh(armGeo, kind === 'fan' ? wSkinMat : cloth);
+    la.position.set(-0.3, 1.25, 0);
+    ra.position.set(0.3, 1.25, 0);
+    g.add(head, ll, rl, la, ra);
+    g.visible = false;
+    group.add(g);
+    return { g, ll, rl, la, ra, lag, z, ph: lag * 1.7 };
+  };
+  runners.push(
+    makeRunner('fan', '#EC4899', 0, -4.2),
+    makeRunner('round', '#F59E0B', 1.7, -4.55),
+    makeRunner('fan', '#8B5CF6', 3.0, -3.95),
+    makeRunner('round', '#10B981', 4.4, -4.4),
+    makeRunner('fan', '#EF4444', 5.6, -4.1),
+    makeRunner('immy', '#065F46', 7.4, -4.25)
+  );
+  let lastCrowdCycle = -1;
 
   // Dusk fireflies (fade in toward the Mela zone)
   const fireflyCount = 34;
@@ -2094,6 +2157,35 @@ export function buildStreetStage(
       w.ll.rotation.x = step * 0.5;
       w.rl.rotation.x = -step * 0.5;
     }
+    // Crowd run
+    {
+      const t = time + CROWD_CYCLE - 10; // first run about 10s into the match
+      const cycle = Math.floor(t / CROWD_CYCLE);
+      const local = t - cycle * CROWD_CYCLE;
+      if (cycle !== lastCrowdCycle) {
+        lastCrowdCycle = cycle;
+        if (cycle > 0) crowdRun.startedSeq++;
+      }
+      const running = local < CROWD_RUN_TIME && cycle > 0;
+      crowdRun.active = running;
+      const dirC = cycle % 2 === 0 ? 1 : -1;
+      for (let i = 0; i < runners.length; i++) {
+        const r = runners[i];
+        r.g.visible = running;
+        if (!running) continue;
+        const pos = -17 + (local * 4.6 - r.lag);
+        const rx = cameraX + pos * dirC;
+        const step = Math.sin(time * 13 + r.ph);
+        r.g.position.set(rx, Math.abs(step) * 0.09, r.z);
+        r.g.rotation.y = dirC === 1 ? Math.PI / 2 : -Math.PI / 2;
+        r.ll.rotation.x = step * 0.8;
+        r.rl.rotation.x = -step * 0.8;
+        const waving = i === runners.length - 1 ? 0.5 : 2.6; // fans have arms up, Immy just gestures
+        r.la.rotation.z = -waving + Math.sin(time * 14 + r.ph) * 0.35;
+        r.ra.rotation.z = waving - Math.sin(time * 14 + r.ph + 1.3) * 0.35;
+        if (i === 0) crowdRun.x = rx;
+      }
+    }
     const ffAlpha = Math.max(0, Math.min(1, (zoneProgress - 0.7) / 0.9));
     fireflyMat.opacity = ffAlpha * 0.9;
     if (ffAlpha > 0.01) {
@@ -2391,6 +2483,7 @@ export function buildStreetStage(
     setShockwaveRing,
     spawnCrowdDrop,
     resetProps,
+    crowdRun,
     update,
     dispose,
   };

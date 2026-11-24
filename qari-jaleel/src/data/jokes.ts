@@ -146,3 +146,17 @@ export const FIGHTER_LINES: Record<string, string[]> = {
     'You sweat like a buffalo in a sauna!',
   ],
 };
+
+/** Immy chatting up the crowd that runs through the background (cheeky, never nasty) */
+export const IMMY_CHATUP: string[] = [
+  "Hello ladies, I'm Immy. Yes, THE Immy.",
+  'Did it hurt when you fell from heaven? Asking for a friend.',
+  "Slow down, beautiful! Nobody's chasing you. Except me.",
+  "Aunty ji, you look 25 today!",
+  'You dropped something. My jaw.',
+  'Is your WiFi free? Asking for my heart.',
+  'Uncle ji, teach me your dance moves!',
+  'Jalebi-ji, I mean Aunty-ji, your smile is sweeter!',
+  "Don't run, I only want to talk! And maybe a phone number.",
+];
+export const CROWD_SCREAMS: string[] = ['EEEEK!', 'AAAH!', 'OMG!!', 'KYAAA!', 'WOOHOO!'];
