@@ -1,4 +1,5 @@
 // Street brawl engine: combat methods (bound onto StreetBrawlEngine).
+import { getMods } from '../../utils/upgrades';
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
 import { HeroRuntime, EnemyRuntime } from './types';
@@ -43,7 +44,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
   const effectiveRangeZ = spec.rangeZ + (isBollywoodSlap || isKushtiShockwave ? 0.55 : 0);
   const counterMul = hero.counterTimer > 0 ? 1.5 : 1;
   const lazyMul = hero.style === 'lazy_giant' && (hero.action === 'lp' || hero.action === 'lp2' || hero.action === 'rp' || hero.action === 'combo_finisher') ? 1.9 : 1;
-  const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul * lazyMul);
+  const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul * lazyMul * getMods().damageMul);
 
   // 1. Smashable terracotta clay pots
   for (let i = 0; i < this.stage.pots.length; i++) {
@@ -204,7 +205,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
       }
 
       const rageMult = this.hasBoon('double_dhol') ? 1.35 : 1.0;
-      hero.rage = Math.min(100, hero.rage + Math.round(spec.rageGain * rageMult));
+      hero.rage = Math.min(100, hero.rage + Math.round(spec.rageGain * rageMult * getMods().rageMul));
       hero.callout = weapon
         ? weapon.kind === 'chair'
           ? 'CHAIR SMASH!'

@@ -242,6 +242,7 @@ export interface BrawlScorecard {
   clearTimeSec: number;
   highestCombo: number;
   cousinsRickshawed: number;
+  coinsEarned?: number;
   flawlessWaves?: number;
   pickupsTaken?: number;
   finishersLanded: number;

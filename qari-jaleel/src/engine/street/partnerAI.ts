@@ -286,6 +286,7 @@ export function performHeroSwitch(this: StreetBrawlEngine, autoBecauseKO = false
       : `SWITCHED TO ${nextHero.profile.name.toUpperCase()}`;
   }
   this.switchBannerTimer = 1.45;
+  if (!autoBecauseKO) this.triggerSquadCombo(nextHero, prevHero);
 }
 
 export function performPartnerAssist(this: StreetBrawlEngine) {

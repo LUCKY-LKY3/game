@@ -23,7 +23,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.69.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.70.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -68,3 +68,7 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 
 ## PWA (installable app)
 `qari-jaleel/public/` has `manifest.webmanifest`, `sw.js` (offline cache, page network-first, assets cache-first) and `icons/`. `utils/pwa.ts` registers the worker (not inside the Artifact frame), captures Chrome's install prompt and drives the title-screen Install button (iOS gets a how-to dialog). Android APK / Play Store is a possible later step (Capacitor or Bubblewrap via GitHub Actions); not started.
+
+## Road to Chacha Chai's + Squad combos
+- Chai coins + permanent upgrades live in `utils/upgrades.ts` (localStorage `mafia-bhaiyas-chai-v1`, per device). `getMods()` is read by the engine (max HP, damage, rage gain, pickup drops, wave heal, start rage). Coins are awarded in `flow.ts` `computeScorecard` (Endless: wave*6 + score/500; Brawl: defeated*2 + win bonus). UI: `components/ChachaRoad.tsx`, opened from the title button (coffee icon + coin count). 6 menu items, 26 levels total; road progress = levels bought / total.
+- Squad combos: `data/combos.ts` (15 pairs, keyed by sorted fighter ids; Immy is `rebel_shadow`), triggered on a manual tag in `engine/street/squadCombo.ts` (6 s cooldown). Shown on the squad select screen between the two hero cards.

@@ -17,6 +17,8 @@ import * as combat from './street/combat';
 import * as bossMoves from './street/bossMoves';
 import * as flow from './street/flow';
 import * as endlessExtras from './street/endlessExtras';
+import * as squadCombo from './street/squadCombo';
+import { getMods } from '../utils/upgrades';
 import * as view from './street/view';
 
 /**
@@ -68,6 +70,7 @@ export class StreetBrawlEngine {
   fireBossSpecial = bossMoves.fireBossSpecial;
   spawnEndlessWave = flow.spawnEndlessWave;
   spawnEndlessBatch = flow.spawnEndlessBatch;
+  triggerSquadCombo = squadCombo.triggerSquadCombo;
   sayQuip = endlessExtras.sayQuip;
   maybeDropPickup = endlessExtras.maybeDropPickup;
   clearPickups = endlessExtras.clearPickups;
@@ -125,6 +128,7 @@ export class StreetBrawlEngine {
   quipCooldown = 0;
   tauntTimer = 7;
   chatTimer = 6;
+  comboCooldown = 0;
   crowdSeqSeen = 0;
   crowdTimer = 0;
   crowdScreams = 0;
@@ -497,7 +501,7 @@ export class StreetBrawlEngine {
     activeRing.position.y = 0.032;
     rig.root.add(activeRing);
 
-    const maxHp = 135 + profile.stats.defense * 5;
+    const maxHp = 135 + profile.stats.defense * 5 + getMods().maxHpBonus;
     return {
       index,
       profile,
@@ -599,6 +603,7 @@ export class StreetBrawlEngine {
     this.quipCooldown = 0;
     this.tauntTimer = 7;
     this.chatTimer = 6;
+    this.comboCooldown = 0;
     this.crowdSeqSeen = this.stage.crowdRun.startedSeq;
     this.crowdTimer = 0;
     this.crowdScreams = 0;
@@ -680,7 +685,7 @@ export class StreetBrawlEngine {
       h.hp = h.maxHp;
       h.trailHp = h.maxHp;
       h.recoverableHp = 0;
-      h.rage = typeof window !== 'undefined' && window.location.search.includes('fullrage') ? 100 : 45; // ?fullrage: debug
+      h.rage = typeof window !== 'undefined' && window.location.search.includes('fullrage') ? 100 : Math.min(100, 45 + getMods().startRage); // ?fullrage: debug
       h.comboCount = 0;
       h.comboTimer = 0;
       h.action = 'idle';

@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ArrowUp, Clapperboard, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { ArrowUp, Clapperboard, Coffee, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { Credits } from './Credits';
+import { ChachaRoad } from './ChachaRoad';
+import { useChai } from '../utils/upgrades';
 import { usePwaInstall, useUpdateAvailable } from '../utils/pwa';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
@@ -21,6 +23,8 @@ export function TitleOverlay({
   const [showSettings, setShowSettings] = useState(false);
   const [showBoard, setShowBoard] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
+  const [showRoad, setShowRoad] = useState(false);
+  const chai = useChai();
   const pwa = usePwaInstall();
   const update = useUpdateAvailable();
   const [showIosHelp, setShowIosHelp] = useState(false);
@@ -113,6 +117,16 @@ export function TitleOverlay({
               )}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => setShowRoad(true)}
+            aria-label="Road to Chacha Chai's"
+            className="pointer-events-auto ml-3 inline-flex h-9 items-center gap-1.5 border border-[#FCD34D]/60 bg-[#2A1D0A]/90 px-2.5 align-middle text-[10px] font-black uppercase tracking-[0.14em] text-[#FCD34D] hover:border-[#FCD34D] transition-colors"
+          >
+            <Coffee className="h-3.5 w-3.5" />
+            <span className="[@media(max-height:400px)]:hidden">Chacha Chai&apos;s</span>
+            <span className="font-mono-num rounded-full bg-[#FCD34D] px-1.5 text-[#2A1D0A]">{chai.coins}</span>
+          </button>
           <button
             type="button"
             onClick={() => setShowCredits(true)}
@@ -230,6 +244,7 @@ export function TitleOverlay({
           </div>
         </div>
       )}
+      {showRoad && <ChachaRoad onClose={() => setShowRoad(false)} />}
       {showCredits && <Credits onClose={() => setShowCredits(false)} />}
       {showBoard && (
         <div className="safe-inset pointer-events-auto fixed inset-0 z-40 flex overflow-y-auto bg-[#141210]/90 p-4 short:p-2">

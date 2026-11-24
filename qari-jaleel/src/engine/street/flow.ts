@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { BrawlRank, BrawlScorecard, VillageBoonId } from '../../types/game';
 import { saveEndlessRecord, saveStreetBrawlRecord } from '../../utils/storage';
+import { addCoins, getMods } from '../../utils/upgrades';
 import { createVillageThugRig, VILLAGE_COUSIN_ROSTER, VillageThugSpec } from '../villageThugs';
 import { soundEngine } from '../sound';
 import { StreetZoneConfig, HeroRuntime, EnemyRuntime } from './types';
@@ -229,7 +230,7 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
       }
       this.endlessWave += 1;
       this.endlessDamaged = false;
-      const heal = bossCleared ? 35 : 12;
+      const heal = (bossCleared ? 35 : 12) + getMods().waveHealBonus;
       this.heroes.forEach((h) => {
         if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + heal);
       });
@@ -336,7 +337,14 @@ export function computeScorecard(this: StreetBrawlEngine, victory: boolean): Bra
     isNewBestRank = saved.isNewBestRank;
   }
 
+  // Chai coins for Road to Chacha Chai's
+  const coinsEarned = this.endlessMode
+    ? this.endlessWave * 6 + Math.floor(this.score / 500)
+    : this.totalDefeated * 2 + (victory ? 80 + ({ S: 60, A: 40, B: 20, C: 0 } as Record<string, number>)[rank] : 0);
+  addCoins(coinsEarned);
+
   return {
+    coinsEarned,
     clearTimeSec,
     highestCombo,
     cousinsRickshawed: this.cousinsRickshawed,

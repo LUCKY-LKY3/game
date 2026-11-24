@@ -1,4 +1,5 @@
 // Endless Mohalla extras (bound onto StreetBrawlEngine): pickups, taunts, hero quips, no-hit streak, screamers.
+import { getMods } from '../../utils/upgrades';
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
 import { COUSIN_TAUNTS, CROWD_SCREAMS, FIGHTER_LINES, IMMY_CHATUP, nickOf, PARTNER_LINES, HERO_QUIPS, pick, SPECIFIC_TAUNTS } from '../../data/jokes';
@@ -36,8 +37,8 @@ export function maybeDropPickup(this: StreetBrawlEngine, e: EnemyRuntime) {
   const lowHp = hp < (this.heroes[0].maxHp + this.heroes[1].maxHp) * 0.45;
   let kind: PickupKind | null = null;
   if (e.spec.trait === 'thief') kind = 'snack';
-  else if (Math.random() < (lowHp ? 0.3 : 0.12)) kind = 'chai';
-  else if (Math.random() < 0.1) kind = 'snack';
+  else if (Math.random() < (lowHp ? 0.3 : 0.12) + getMods().dropBonus) kind = 'chai';
+  else if (Math.random() < 0.1 + getMods().dropBonus) kind = 'snack';
   if (!kind || this.pickups.length >= 3) return;
   const mesh = new THREE.Group();
   const body = new THREE.Mesh(kind === 'chai' ? chaiGeo : snackGeo, kind === 'chai' ? chaiMat : snackMat);
@@ -138,6 +139,8 @@ export function updateEndlessExtras(this: StreetBrawlEngine, dt: number) {
       }
     }
   }
+
+  this.comboCooldown = Math.max(0, this.comboCooldown - dt);
 
   if (!this.endlessMode || this.phase !== 'FIGHTING') return;
 

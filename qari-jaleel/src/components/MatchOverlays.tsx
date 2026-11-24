@@ -366,6 +366,11 @@ export function MatchOverModal({
                 </div>
               </div>
 
+              <div>
+                <div className="text-xs text-[#B6AA9A]">Chai Coins Earned</div>
+                <div className="font-mono-num mt-1 text-2xl font-bold text-[#F59E0B]">+{scorecard?.coinsEarned ?? 0}</div>
+              </div>
+
               {isEndless && (
                 <div>
                   <div className="text-xs text-[#B6AA9A]">Flawless Waves</div>

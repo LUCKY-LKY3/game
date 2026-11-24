@@ -23,6 +23,7 @@ import {
   STAGE_CONFIGS,
 } from '../data/roster';
 import { parseImportedFighterJson } from '../utils/storage';
+import { getCombo } from '../data/combos';
 
 interface RosterSelectProps {
   mode: GameMode;
@@ -177,7 +178,7 @@ export function RosterSelect({
             </button>
 
             {/* VS / Tag-Team + Swap Control */}
-            <div className="flex flex-row items-center justify-center gap-3 lg:flex-col short:flex-row short:gap-2">
+            <div className="flex flex-row flex-wrap items-center justify-center gap-3 lg:flex-col short:flex-row short:gap-2">
               <div className="font-display text-4xl font-black text-[#F59E0B] short:text-lg">
                 {isBrawl ? 'TAG' : 'VS'}
               </div>
@@ -191,6 +192,15 @@ export function RosterSelect({
                   {isBrawl ? 'Swap Lead' : 'Swap Sides'}
                 </button>
               )}
+              {isBrawl && (() => {
+                const combo = getCombo(p1.id, p2.id);
+                return combo ? (
+                  <div className="basis-full rounded border border-[#F472B6]/40 bg-[#2A1020] px-2 py-1 text-center lg:max-w-[11rem] short:basis-full">
+                    <div className="font-display text-sm leading-none font-black tracking-wide text-[#F472B6] uppercase">★ Combo: {combo.name}</div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-[#E9D5E0]">{combo.blurb}</div>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             {/* Player 2 OR Arcade Ladder Overview */}
