@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { FIGHTER_LINES } from '../data/jokes';
 import {
   CombatAction,
   Difficulty,
@@ -351,6 +352,7 @@ export class AkharaCombatEngine {
   private activePowerup: ActivePowerupSession | null = null;
   private speechBubble: SpeechBubbleState | null = null;
   private speechBubbleTimer = 0;
+  private chatterTimer = 6;
 
   // Pooled 3D particle VFX (dust puffs & impact sparks, zero GC)
   private particleMesh: THREE.InstancedMesh;
@@ -1615,6 +1617,18 @@ export class AkharaCombatEngine {
     if (this.speechBubbleTimer > 0) {
       this.speechBubbleTimer = Math.max(0, this.speechBubbleTimer - clampedDt);
       if (this.speechBubbleTimer === 0) this.speechBubble = null;
+    }
+    // Random fighter banter in 1v1 and versus fights
+    if (this.phase === 'FIGHTING' && this.speechBubbleTimer === 0) {
+      this.chatterTimer -= clampedDt;
+      if (this.chatterTimer <= 0) {
+        this.chatterTimer = 8 + Math.random() * 7;
+        const f = Math.random() < 0.5 ? this.p1 : this.p2;
+        const lines = FIGHTER_LINES[f.profile.id];
+        if (lines && !String(f.action).includes('powerup')) {
+          this.setSpeechBubble(f, lines[Math.floor(Math.random() * lines.length)], 3.2);
+        }
+      }
     }
     if (this.rageZoomTimer > 0) {
       this.rageZoomTimer = Math.max(0, this.rageZoomTimer - clampedDt);
