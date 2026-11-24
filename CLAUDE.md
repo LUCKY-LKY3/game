@@ -51,3 +51,6 @@ Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_
 3. Props and animation in `powerupDirector.ts`; pose in `fighterRig.ts`.
 4. Longer `actionDuration` and matching `invulnTimer` in `startHeroPowerup`.
 5. Ask the user for one in-joke or catchphrase per fighter before writing the gag.
+
+## Later (web release)
+Public leaderboard on a normal website (outside the Artifact): Google Form (nickname, fighter, score, wave) posts scores, published-to-web Google Sheet CSV is read for the top 10. Delete entries by deleting sheet rows. Needs the form link + CSV link from the user. Keep the Artifact `db` boards as they are (the Artifact blocks outside connections). Not started.
