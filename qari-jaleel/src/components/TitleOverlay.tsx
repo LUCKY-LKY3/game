@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { Clapperboard, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
+import { Credits } from './Credits';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
@@ -18,6 +19,7 @@ export function TitleOverlay({
   const records = useMemo(() => loadArcadeRecords(), []);
   const [showSettings, setShowSettings] = useState(false);
   const [showBoard, setShowBoard] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
 
   const brawlMeta = records.brawlBestRank
     ? `Best Rank ${records.brawlBestRank} · ${records.brawlBestScore.toLocaleString()} pts`
@@ -37,7 +39,9 @@ export function TitleOverlay({
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
         <img src={logoUrl} alt="Mafia Bhaiyas" draggable={false} className="h-[min(26vh,10.5rem)] w-auto select-none drop-shadow-[0_6px_18px_rgba(0,0,0,0.8)]" />
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F59E0B]/90">
-          {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
+          <span className="[@media(max-height:400px)]:hidden">
+            {customCount > 0 ? `Blood and Honour · ${customCount} Custom Fighters` : 'Blood and Honour'}
+          </span>
           <button
             type="button"
             onClick={() => setShowBoard(true)}
@@ -45,6 +49,15 @@ export function TitleOverlay({
           >
             <Trophy className="h-3.5 w-3.5" />
             Hall of Fame
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCredits(true)}
+            aria-label="Credits"
+            className="pointer-events-auto ml-3 inline-flex h-9 items-center gap-1.5 border border-[#F8F4EC]/25 bg-[#141210]/90 px-2.5 align-middle text-[10px] font-black uppercase tracking-[0.14em] text-[#F8F4EC] hover:border-[#F59E0B] hover:text-[#F59E0B] transition-colors"
+          >
+            <Clapperboard className="h-3.5 w-3.5" />
+            Credits
           </button>
           <button
             type="button"
@@ -140,6 +153,7 @@ export function TitleOverlay({
           </div>
         </div>
       )}
+      {showCredits && <Credits onClose={() => setShowCredits(false)} />}
       {showBoard && (
         <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-[#141210]/90 p-4">
           <div className="w-full max-w-md">

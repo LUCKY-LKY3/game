@@ -6,6 +6,12 @@
 }
 .bubble-pop { animation: bubble-pop 0.18s ease-out; }
 
+@keyframes credits-roll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
+}
+.credits-roll { animation: credits-roll 85s linear forwards; }
+
 @theme {
   --font-display: "Big Shoulders Display", system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
