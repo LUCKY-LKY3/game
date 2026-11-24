@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { createStarterRoster } from '../data/roster';
 import { renderCousinSnapshots } from '../utils/cousinSnapshots';
 import { renderHeroSnapshots } from '../utils/heroSnapshots';
+import { sketchify } from '../utils/sketchify';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 
 export const INTRO_KEY = 'mafia-bhaiyas-intro-v1';
@@ -17,13 +18,15 @@ const NAMES: Record<Who, string> = {
   rebel_shadow: 'Immy',
 };
 
+const burst = (light: string, mid: string) =>
+  `repeating-conic-gradient(from 0deg at 50% 72%, rgba(20,18,16,0.10) 0deg 5deg, transparent 5deg 12deg), radial-gradient(circle at 50% 72%, ${light}, ${mid} 70%)`;
 const BURSTS: Record<Who, string> = {
-  qari_jaleel: 'radial-gradient(circle at 50% 65%, #FDE68A, #F59E0B 55%, #B45309)',
-  rebel_aviator: 'radial-gradient(circle at 50% 65%, #FBCFE8, #EC4899 55%, #9D174D)',
-  rebel_tactician: 'radial-gradient(circle at 50% 65%, #BBF7D0, #22C55E 55%, #166534)',
-  rebel_enforcer: 'radial-gradient(circle at 50% 65%, #BAE6FD, #0EA5E9 55%, #075985)',
-  rebel_striker: 'radial-gradient(circle at 50% 65%, #DDD6FE, #8B5CF6 55%, #5B21B6)',
-  rebel_shadow: 'radial-gradient(circle at 50% 65%, #FECACA, #EF4444 55%, #991B1B)',
+  qari_jaleel: burst('#FFF3C4', '#FBBF4A'),
+  rebel_aviator: burst('#FFE1F0', '#F59AC8'),
+  rebel_tactician: burst('#E3FADF', '#7DD99A'),
+  rebel_enforcer: burst('#E0F2FE', '#7CC4F0'),
+  rebel_striker: burst('#EDE7FF', '#B6A2F5'),
+  rebel_shadow: burst('#FFE4E0', '#F58A84'),
 };
 
 function Panel({ children, delay = 0, tilt = 0, grow = 1 }: { children: React.ReactNode; delay?: number; tilt?: number; grow?: number }) {
@@ -40,7 +43,7 @@ function Panel({ children, delay = 0, tilt = 0, grow = 1 }: { children: React.Re
 function Bubble({ text, className = '' }: { text: string; className?: string }) {
   return (
     <div
-      className={`absolute z-10 max-w-[88%] rounded-2xl border-2 border-[#141210] bg-white px-2.5 py-1.5 text-center text-[12px] font-extrabold leading-tight text-[#141210] [text-wrap:balance] sm:text-[15px] ${className}`}
+      className={`absolute z-10 max-w-[88%] rounded-[40%/50%] border-[2.5px] border-[#141210] bg-white px-3.5 py-2 text-center font-comic text-[14px] leading-[1.1] tracking-wide text-[#141210] uppercase [text-wrap:balance] sm:text-[18px] ${className}`}
     >
       {text}
     </div>
@@ -49,7 +52,7 @@ function Bubble({ text, className = '' }: { text: string; className?: string }) 
 
 function Caption({ text, className = '' }: { text: string; className?: string }) {
   return (
-    <div className={`absolute z-10 border-2 border-[#141210] bg-[#FACC15] px-2 py-0.5 font-display text-[11px] font-black tracking-wider text-[#141210] uppercase sm:text-sm ${className}`}>
+    <div className={`absolute z-10 border-2 border-[#141210] bg-[#FDE047] px-2 py-0.5 font-comic text-[13px] tracking-wider text-[#141210] uppercase sm:text-base ${className}`}>
       {text}
     </div>
   );
@@ -69,11 +72,21 @@ export function IntroComic({ onDone }: { onDone: () => void }) {
   const [bodies, setBodies] = useState<Record<string, string>>({});
   useEffect(() => {
     // Draw the real in-game 3D fighters and cousins (falls back to portraits while loading or if WebGL fails)
-    const t = window.setTimeout(() => {
-      setBodies(renderHeroSnapshots(roster));
-      setCousins(renderCousinSnapshots(['tinku', 'moti_pehelwan', 'bunty']));
+    let alive = true;
+    const t = window.setTimeout(async () => {
+      const heroRaw = renderHeroSnapshots(roster);
+      const cousinRaw = renderCousinSnapshots(['tinku', 'moti_pehelwan', 'bunty']);
+      // Ink them into comic sketches
+      const heroEntries = await Promise.all(Object.entries(heroRaw).map(async ([k, v]) => [k, await sketchify(v)] as const));
+      const cousinInked = await Promise.all(cousinRaw.map((v) => sketchify(v)));
+      if (!alive) return;
+      setBodies(Object.fromEntries(heroEntries));
+      setCousins(cousinInked);
     }, 50);
-    return () => clearTimeout(t);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
   }, [roster]);
 
   const Hero = ({ who, tall = false }: { who: Who; tall?: boolean }) =>

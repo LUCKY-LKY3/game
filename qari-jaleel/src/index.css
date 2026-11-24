@@ -16,6 +16,7 @@
 .comic-page { animation: comic-page 0.2s ease-out; }
 
 @theme {
+  --font-comic: "Bangers", "Big Shoulders Display", system-ui, sans-serif;
   --font-display: "Big Shoulders Display", system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
