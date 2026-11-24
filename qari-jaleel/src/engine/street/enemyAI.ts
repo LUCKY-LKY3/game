@@ -474,7 +474,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
             e.action = 'windup';
             e.actionTime = 0;
             // Quick step-in lunge so strikes feel sharp (light cousins only)
-            if (!isHeavyEnemy && e.spec.archetype !== 'boss' && e.spec.archetype !== 'ranged') e.vx += Math.sign(targetHero.x - e.x) * 2.6;
+            if (!isHeavyEnemy && e.spec.archetype !== 'boss') e.vx += Math.sign(targetHero.x - e.x) * 2.6;
             // Distinct windup timings per fighting style (fast skirmisher vs slow heavy powerhouse)
             e.actionDuration =
               e.spec.archetype === 'boss'
