@@ -502,7 +502,7 @@ export class StreetBrawlEngine {
     activeRing.position.y = 0.032;
     rig.root.add(activeRing);
 
-    const maxHp = 135 + profile.stats.defense * 5 + getMods().maxHpBonus;
+    const maxHp = 135 + profile.stats.defense * 5 + getMods(this.endlessMode).maxHpBonus;
     return {
       index,
       profile,
@@ -686,7 +686,7 @@ export class StreetBrawlEngine {
       h.hp = h.maxHp;
       h.trailHp = h.maxHp;
       h.recoverableHp = 0;
-      h.rage = typeof window !== 'undefined' && window.location.search.includes('fullrage') ? 100 : Math.min(100, 45 + getMods().startRage); // ?fullrage: debug
+      h.rage = typeof window !== 'undefined' && window.location.search.includes('fullrage') ? 100 : Math.min(100, 45 + getMods(this.endlessMode).startRage); // ?fullrage: debug
       h.comboCount = 0;
       h.comboTimer = 0;
       h.action = 'idle';

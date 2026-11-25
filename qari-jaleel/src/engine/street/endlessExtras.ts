@@ -37,8 +37,8 @@ export function maybeDropPickup(this: StreetBrawlEngine, e: EnemyRuntime) {
   const lowHp = hp < (this.heroes[0].maxHp + this.heroes[1].maxHp) * 0.45;
   let kind: PickupKind | null = null;
   if (e.spec.trait === 'thief') kind = 'snack';
-  else if (Math.random() < (lowHp ? 0.3 : 0.12) + getMods().dropBonus) kind = 'chai';
-  else if (Math.random() < 0.1 + getMods().dropBonus) kind = 'snack';
+  else if (Math.random() < (lowHp ? 0.3 : 0.12) + getMods(this.endlessMode).dropBonus) kind = 'chai';
+  else if (Math.random() < 0.1 + getMods(this.endlessMode).dropBonus) kind = 'snack';
   if (!kind || this.pickups.length >= 3) return;
   const mesh = new THREE.Group();
   const body = new THREE.Mesh(kind === 'chai' ? chaiGeo : snackGeo, kind === 'chai' ? chaiMat : snackMat);

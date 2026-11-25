@@ -230,7 +230,7 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
       }
       this.endlessWave += 1;
       this.endlessDamaged = false;
-      const heal = (bossCleared ? 35 : 12) + getMods().waveHealBonus;
+      const heal = bossCleared ? 35 : 12;
       this.heroes.forEach((h) => {
         if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + heal);
       });
@@ -266,7 +266,7 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
 
     this.zoneCleared = true;
     this.heroes.forEach((h) => {
-      if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + 20);
+      if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + 20 + getMods(this.endlessMode).zoneHealBonus);
     });
     // Celebratory Zone-Clear Tag-Team High-Five before Boon Cards & flashing GO >>!
     this.highFiveTimer = 1.05;

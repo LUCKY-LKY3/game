@@ -97,7 +97,7 @@ export function RosterSelect({
   const isBrawl = isStreetBrawlMode(mode);
   const isEndless = mode === 'endless_mohalla';
   const modeTitle = isEndless
-    ? 'Endless Mohalla · Survival Squad'
+    ? 'Endless Mohalla · Fair Fight'
     : mode === 'street_brawl'
       ? 'Village Street Brawl · Tag Team'
       : mode === 'arcade'
@@ -323,6 +323,9 @@ export function RosterSelect({
                   Choose Fighter ({fighters.length})
                 </h2>
                 <p className="text-xs text-[#B6AA9A] short:hidden">
+                  {isEndless
+                    ? 'Fair fight: chai upgrades are switched off in Endless, so every score counts the same. '
+                    : ''}
                   {isBrawl
                     ? `Pick 2 Squad Heroes (flip between both anytime with Tab/C or SWITCH!) — assigning Hero ${activeSlot}.`
                     : mode === 'arcade'

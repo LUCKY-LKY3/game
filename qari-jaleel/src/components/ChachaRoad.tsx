@@ -112,7 +112,7 @@ export function ChachaRoad({ onClose }: { onClose: () => void }) {
             );
           })}
         </div>
-        <div className="mt-2 text-center text-[11px] text-[#B6AA9A]">Earn chai coins by playing Street Brawl and Endless Mohalla. Upgrades stay on this device.</div>
+        <div className="mt-2 text-center text-[11px] text-[#B6AA9A]">Earn chai coins in Street Brawl and Endless Mohalla. Upgrades work in Street Brawl only, so Endless stays a fair fight for the leaderboard. Saved on this device.</div>
       </div>
     </div>
   );

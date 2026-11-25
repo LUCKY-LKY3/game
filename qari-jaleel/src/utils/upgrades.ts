@@ -17,7 +17,7 @@ export const UPGRADES: UpgradeDef[] = [
   { id: 'kebab_roll', name: 'Kebab Roll', emoji: '🌯', blurb: '+4% damage per roll', costs: [40, 65, 95, 130, 170] },
   { id: 'cold_lassi', name: 'Cold Lassi', emoji: '🥛', blurb: 'Power meter fills 8% faster', costs: [35, 55, 80, 110, 150] },
   { id: 'jalebi', name: 'Jalebi', emoji: '🍯', blurb: '+3% chance of chai and snack drops', costs: [30, 50, 75, 105] },
-  { id: 'paratha', name: 'Paratha', emoji: '🥙', blurb: '+3 health between Endless waves', costs: [35, 60, 90, 125] },
+  { id: 'paratha', name: 'Paratha', emoji: '🥙', blurb: '+4 health after each zone cleared (Street Brawl)', costs: [35, 60, 90, 125] },
   { id: 'falooda', name: 'Falooda', emoji: '🍨', blurb: 'Start fights with +10 power', costs: [45, 80, 120] },
 ];
 
@@ -87,13 +87,15 @@ export function boughtLevels(): number {
 }
 
 /** What the upgrades do in a fight */
-export function getMods() {
+export function getMods(off = false) {
+  // Endless Mohalla is a fair fight for the leaderboard: upgrades never apply there
+  if (off) return { maxHpBonus: 0, damageMul: 1, rageMul: 1, dropBonus: 0, zoneHealBonus: 0, startRage: 0 };
   return {
     maxHpBonus: 8 * levelOf('masala_chai'),
     damageMul: 1 + 0.04 * levelOf('kebab_roll'),
     rageMul: 1 + 0.08 * levelOf('cold_lassi'),
     dropBonus: 0.03 * levelOf('jalebi'),
-    waveHealBonus: 3 * levelOf('paratha'),
+    zoneHealBonus: 4 * levelOf('paratha'),
     startRage: 10 * levelOf('falooda'),
   };
 }
