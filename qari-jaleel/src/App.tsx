@@ -84,8 +84,6 @@ export default function App() {
 
   const [p1Id, setP1Id] = useState<string>(starterRoster[0].id);
   const [p2Id, setP2Id] = useState<string>(starterRoster[1].id);
-  const [editingFighter, setEditingFighter] = useState<FighterProfile | null>(null);
-  const [studioReturnScreen, setStudioReturnScreen] = useState<GameScreen>('TITLE');
 
   // Arcade 4-stage tournament ladder state
   const [arcadeBracket, setArcadeBracket] = useState<string[]>([]);

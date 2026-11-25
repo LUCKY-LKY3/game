@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowUp, Clapperboard, Coffee, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { Clapperboard, Coffee, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { Credits } from './Credits';

@@ -355,7 +355,6 @@ export function buildStylizedHead(o: StylizedHeadOptions): THREE.Group {
   // ───────────── hair ─────────────
   const hs = spec.hairStyle;
   if (!hairless) {
-    const silver = new THREE.Color(spec.hairHighlightColor || '#d8d4ce');
     const hairThick = hs === 'curly_hero' ? 0.014 : hs === 'swept_silver' ? 0.018 : hs === 'swept_dark' ? 0.016 : 0.008;
     const g = makeShell(hairM, hairThick, (i) => {
       const col = hairCol.clone();

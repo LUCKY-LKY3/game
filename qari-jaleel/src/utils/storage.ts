@@ -84,57 +84,7 @@ export async function deleteCustomFighter(id: string): Promise<void> {
   }
 }
 
-export function exportFighterCardJson(fighter: FighterProfile): void {
-  const blob = new Blob([JSON.stringify(fighter, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const safeName = fighter.name.toLowerCase().replace(/[^a-z0-9]+/g, '_') || 'fighter';
-  a.href = url;
-  a.download = `${safeName}_akhara_card.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 
-export function parseImportedFighterJson(text: string): FighterProfile | null {
-  try {
-    const data = JSON.parse(text) as Partial<FighterProfile>;
-    if (!data || typeof data.name !== 'string' || !data.appearance || !data.stats) {
-      return null;
-    }
-    return {
-      id: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      name: data.name.slice(0, 28),
-      nickname: (data.nickname || 'Village Challenger').slice(0, 28),
-      isCustom: true,
-      archetype: data.archetype || 'striker',
-      portraitUrl: data.portraitUrl || '',
-      faceTextureUrl: data.faceTextureUrl,
-      appearance: {
-        skinTone: data.appearance.skinTone || '#C68452',
-        vestColor: data.appearance.vestColor || '#D97706',
-        pantsColor: data.appearance.pantsColor || '#292524',
-        wrapColor: data.appearance.wrapColor || '#F8F4EC',
-        hairColor: data.appearance.hairColor || '#181412',
-        headgear: data.appearance.headgear || 'none',
-        buildScale: Math.min(1.2, Math.max(0.9, data.appearance.buildScale ?? 1.0)),
-      },
-      stats: {
-        power: Math.min(10, Math.max(3, data.stats.power ?? 7)),
-        speed: Math.min(10, Math.max(3, data.stats.speed ?? 7)),
-        reach: Math.min(10, Math.max(3, data.stats.reach ?? 7)),
-        defense: Math.min(10, Math.max(3, data.stats.defense ?? 7)),
-      },
-      specialMoveName: (data.specialMoveName || 'Village Thunder Strike').slice(0, 36),
-      taunt: (data.taunt || 'Ready for the akhara!').slice(0, 110),
-      wins: 0,
-      createdAt: Date.now(),
-    };
-  } catch {
-    return null;
-  }
-}
 
 export interface ArcadeRecords {
   brawlBestScore: number;

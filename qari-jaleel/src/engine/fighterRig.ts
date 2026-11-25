@@ -2,9 +2,7 @@ import * as THREE from 'three';
 import { CombatAction, FighterProfile, FightingStyle, LowerOutfitStyle } from '../types/game';
 import { resolveLowerOutfitStyle } from '../data/roster';
 import {
-  attachSculptedFaceFeatures3D,
   buildSculptedEar,
-  createAnatomicalHeadGeometry,
   createSculptedHeadSkinPbrMaps,
   getCharacterFaceSculptSpec,
 } from './faceSculptor';
@@ -24,7 +22,6 @@ export interface CharacterBodySpec {
 export function getCharacterBodySpec(profile: FighterProfile): CharacterBodySpec {
   const buildScale = profile.appearance.buildScale || 1.0;
   const isPehelwan = profile.archetype === 'pehelwan' || buildScale >= 1.09;
-  const buildDelta = buildScale - 1.0;
 
   switch (profile.id) {
     case 'rebel_striker':
@@ -597,42 +594,6 @@ function createWovenTwillTextures(
   return { map, bumpMap };
 }
 
-/**
- * Flat-hanging Pathani Kurta front/back panel with deep side slits up to the waist!
- * Hangs straight down (never flares outward like a bell/skirt) and pivots cleanly at the waist
- * to follow forward/back leg strides and kicks independently.
- */
-function createKurtaFlapGeometry(
-  width: number,
-  length: number,
-  arcRadius: number,
-  isFront: boolean
-): THREE.BufferGeometry {
-  const segX = 10;
-  const segY = 8;
-  const geo = new THREE.PlaneGeometry(width, length, segX, segY);
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const y = pos.getY(i);
-    // Shift so top edge sits cleanly at y = 0 (waist pivot) and hangs down to y = -length
-    const py = y - length * 0.5;
-    const t = Math.abs(x) / (width * 0.5); // 0 at center, 1 at side slit edge
-    const v = -py / length; // 0 at waist, 1 at bottom hem
-    // Slight natural cylindrical wrap around front/back torso without outward skirt flare
-    const zCurve = (1 - t * t) * arcRadius * (1 - v * 0.12);
-    // Very subtle vertical linen drape fold
-    const fold = Math.sin(t * Math.PI * 4) * 0.009 * Math.min(1, v * 1.6);
-    const pz = isFront ? zCurve + fold : -zCurve - fold;
-    pos.setXYZ(i, x, py, pz);
-  }
-  if (!isFront) {
-    // Flip facing outward on the back panel
-    geo.scale(-1, 1, 1);
-  }
-  geo.computeVertexNormals();
-  return geo;
-}
 
 /**
  * Sculpted V-taper anatomical torso & kurta tunic via LatheGeometry + vertex sculpting:
@@ -1021,53 +982,6 @@ export function applyWarmRimHighlight(material: THREE.MeshStandardMaterial, stre
   };
 }
 
-/**
- * Parametric curved front-face photo shell centered squarely at +Z (front of head)
- * so every face photo curves naturally around the cranium rather than sitting flat or on the side.
- */
-function createCurvedFrontFaceGeometry(rx: number, ry: number, rz: number): THREE.BufferGeometry {
-  const segU = 18;
-  const segV = 18;
-  const yawMax = 0.9; // ~52° left/right
-  const pitchMax = 0.72; // ~41° forehead-to-chin
-  const positions: number[] = [];
-  const uvs: number[] = [];
-  const indices: number[] = [];
-
-  for (let iv = 0; iv <= segV; iv++) {
-    const vNorm = iv / segV; // 0 = bottom (chin), 1 = top (forehead)
-    const pitch = (vNorm * 2 - 1) * pitchMax;
-    const cosP = Math.cos(pitch);
-    const sinP = Math.sin(pitch);
-    for (let iu = 0; iu <= segU; iu++) {
-      const uNorm = iu / segU; // 0 = left (-X), 1 = right (+X)
-      const yaw = (uNorm * 2 - 1) * yawMax;
-      const x = rx * Math.sin(yaw) * cosP;
-      const y = ry * sinP;
-      const z = rz * Math.cos(yaw) * cosP;
-      positions.push(x, y, z);
-      uvs.push(uNorm, vNorm);
-    }
-  }
-
-  for (let iv = 0; iv < segV; iv++) {
-    for (let iu = 0; iu < segU; iu++) {
-      const a = iv * (segU + 1) + iu;
-      const b = a + 1;
-      const c = a + (segU + 1);
-      const d = c + 1;
-      indices.push(a, b, d);
-      indices.push(a, d, c);
-    }
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  return geo;
-}
 
 /**
  * Builds a realistic, anatomically sculpted multi-part 3D Indian village martial artist
@@ -1233,22 +1147,6 @@ export function createFighterRig(
   );
 
   // Double-sided kurta linen material for flat-hanging Pathani side-slit flaps
-  const kurtaFlapMat = trackMat(
-    new THREE.MeshPhysicalMaterial({
-      color: '#FFFFFF',
-      map: kurtaTex.map,
-      bumpMap: kurtaTex.bumpMap,
-      bumpScale: 0.009,
-      roughness: 0.89,
-      metalness: 0.02,
-      sheen: 0.26,
-      sheenRoughness: 0.82,
-      sheenColor: new THREE.Color('#F5E6CF'),
-      side: THREE.DoubleSide,
-    }),
-    true,
-    0.26
-  );
 
   const wrapMat = trackMat(
     new THREE.MeshStandardMaterial({

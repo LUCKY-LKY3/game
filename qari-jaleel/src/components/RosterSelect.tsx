@@ -1,14 +1,10 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowLeft,
   ArrowLeftRight,
   Dices,
-  ImagePlus,
-  Pencil,
-  Plus,
   Swords,
   Trash2,
-  Upload,
 } from 'lucide-react';
 import {
   Difficulty,
@@ -23,7 +19,6 @@ import {
   resolveFighterStyle,
   STAGE_CONFIGS,
 } from '../data/roster';
-import { parseImportedFighterJson } from '../utils/storage';
 import { assistComboFor, getCombo } from '../data/combos';
 
 interface RosterSelectProps {

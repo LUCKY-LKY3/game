@@ -1,8 +1,10 @@
 import { SettingsPanel } from './SettingsPanel';
+import { ShareCardModal } from './ShareCard';
+import { equippedTitle } from '../utils/achievements';
 import { EndlessScoreEntry } from './Leaderboard';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 import { useState } from 'react';
-import { Award, Flame, Play, RotateCcw, Swords, Users } from 'lucide-react';
+import { Award, Flame, Play, RotateCcw, Share2, Swords, Users } from 'lucide-react';
 import {
   BrawlRank,
   FighterProfile,
@@ -248,9 +250,25 @@ export function MatchOverModal({
   const scorecard = hud.brawl?.scorecard ?? null;
   const isEndless = Boolean(hud.brawl?.isEndless || mode === 'endless_mohalla');
   const rankMeta = scorecard ? RANK_STYLE[scorecard.rank] : null;
+  const [showShare, setShowShare] = useState(false);
 
   return (
     <div className="safe-inset fixed inset-0 z-30 flex overflow-y-auto bg-[#141210]/88 p-4 short:p-2">
+      {showShare && scorecard && (
+        <ShareCardModal
+          input={{
+            endless: isEndless,
+            victory: brawlCleared,
+            heroes: [p1Profile, p2Profile].map((h) => ({ name: h.name, portraitUrl: h.portraitUrl })),
+            score: scorecard.score,
+            wave: scorecard.endlessWave,
+            rank: scorecard.rank,
+            title: equippedTitle(),
+            coins: scorecard.coinsEarned ?? 0,
+          }}
+          onClose={() => setShowShare(false)}
+        />
+      )}
       <div className="m-auto w-full max-w-2xl border border-[#F59E0B]/45 bg-[#1D1916] p-6 sm:p-8 short:p-3">
         {isBrawl && hud.brawl ? (
           <>
@@ -536,6 +554,17 @@ export function MatchOverModal({
             >
               <Flame className="h-4 w-4 text-[#EF4444]" />
               {isEndless ? 'Street Brawl' : 'Endless Mohalla'}
+            </button>
+          )}
+
+          {isBrawl && scorecard && (
+            <button
+              type="button"
+              onClick={() => setShowShare(true)}
+              className="flex items-center justify-center gap-2 border border-[#38BDF8]/60 bg-[#0B1F2A] px-4 py-3 text-sm font-bold text-[#38BDF8] hover:border-[#38BDF8] transition-colors whitespace-nowrap"
+            >
+              <Share2 className="h-4 w-4" />
+              Share
             </button>
           )}
 

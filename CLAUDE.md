@@ -23,7 +23,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.74.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.75.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -51,7 +51,7 @@ Artifact pages cannot load anything from the internet except Google Fonts, so ke
 ## Fighters and their power moves
 Note: Immy (profile id `rebel_shadow`) is a MAN (a sleazy smooth-talking charmer), use he/him and never "her".
 Qari (`qari_jaleel`, kind `fady_smoke`) is DONE: "I'll be 2 mins bro". Red plastic chair, chai, smoke, countdown clock that stalls on 0:01 then +10:00, cousin banter bubbles, chair smash. Use it as the template for the others.
-Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_striker`) look + Kung Fu style is DONE (his Ford runover move still needs comic polish). Jam (`rebel_enforcer`) is DONE: very tall/skinny speedy boxer, snooker move with chalk, practice strokes, ball break and PG-13 innuendo jokes. Jav (`rebel_tactician`) is DONE: huge lazy giant (`lazy_giant` style: slouchy idle, slow uninterruptible 1.9x damage punches, awe popups from onlookers) with the dozing "Nap Time Knockout" move. Still to polish: Immy (`immy_girls`), Qari's look, Chet's Ford move.
+Saf (`rebel_aviator`) is DONE (man bun, shirt-off flex, bear hug). Chet (`rebel_striker`) look + Kung Fu style is DONE (his Ford runover move still needs comic polish). Jam (`rebel_enforcer`) is DONE: very tall/skinny speedy boxer, snooker move with chalk, practice strokes, ball break and PG-13 innuendo jokes. Jav (`rebel_tactician`) is DONE: huge lazy giant (`lazy_giant` style: slouchy idle, slow uninterruptible 1.9x damage punches, awe popups from onlookers) with the dozing "Nap Time Knockout" move. Immy (`rebel_shadow`) is DONE: "Born To Run" (see below). Still to polish: Qari's look, Chet's Ford move.
 
 ## Comic move recipe (from Qari)
 1. Speech bubbles via `this.speechBubble` + `this.speechTimer` in the engine.
@@ -77,3 +77,6 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 - Immy's power move is now "Born To Run" (`powerup_immy_run` pose in `fighterRig.ts`, timeline in `powerups.ts`): he strips bare (leg cloth turns skin-coloured via `rig.stripLegs`, kurta flaps hidden) and runs a figure-eight behind a random cover-up (`rig.coverKind`: Harry's pizza box, steel thali, apple, or TV pixel mosaic), cousins flee and faint. The body model has no anatomical detail and is always covered. Settings toggle `immyModest` ("Immy wears boxers") swaps in heart boxers (`rig.modest`). 1v1 (`combatEngine.ts`) still uses the old fan-squad version under `powerup_immy`. Test pose: `?headlab&body&only=5&action=powerup_immy_run&phase=0.5&t=0.3&cover=0`.
 - Dhol beat bonus (`utils/beat.ts`, ring in `CombatHud.tsx`): 100 BPM pulse independent of the music (the track's own beat is too loose to sync to). Hits landing as the ring closes give ON BEAT! (+30 score, +3 power, one per beat). Setting `beatBonus`.
 - Achievements/titles (`utils/achievements.ts`, `components/TitlesPanel.tsx` as a tab in the Hall of Fame): 20 silly achievements, each a title. `recordRun` runs in `flow.ts` `computeScorecard`. The equipped title shows on Hall of Fame rows; on the web Form it rides in the Fighter column as "Fady|Title".
+
+## Share card
+`utils/shareCard.ts` draws a 1200x630 funny result picture on a canvas (logo, hero portraits, wave/rank, score, equipped title, caption in a speech bubble). `components/ShareCard.tsx` shows it with Share (Web Share API with the file) and Save. Opened from the Share button on the Street Brawl / Endless results screen.
