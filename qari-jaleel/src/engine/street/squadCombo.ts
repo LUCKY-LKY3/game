@@ -42,6 +42,7 @@ export function triggerSquadCombo(this: StreetBrawlEngine, next: HeroRuntime, pr
   const combo = getCombo(prev.profile.id, next.profile.id);
   if (!combo) return;
   this.comboCooldown = 6;
+  this.comboTriggers += 1;
 
   runComboEffect.call(this, combo.effect, combo.amount, next);
 

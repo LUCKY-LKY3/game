@@ -83,9 +83,14 @@ export function startHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime) {
       soundEngine.playCarHorn();
       break;
     case 'immy_girls':
-      hero.action = 'powerup_immy';
-      hero.actionDuration = 2.85;
-      hero.callout = 'SQUAD FAN CLUB RUSH!';
+      hero.action = 'powerup_immy_run';
+      hero.actionDuration = 7.0;
+      hero.invulnTimer = 7.2;
+      hero.callout = 'BORN TO RUN!';
+      hero.rig.coverKind = Math.random() < 0.5 ? 0 : 1; // pizza box or steel thali
+      this.scareTimer = 0;
+      this.speechBubble = { side: hero.index === 0 ? 1 : 2, speaker: hero.profile.name, text: 'Excuse me. It is getting hot in here.' };
+      this.speechTimer = 1.6;
       soundEngine.playCheerPop();
       break;
     default:
@@ -337,15 +342,74 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
       }
     }
   } else if (hero.powerupKind === 'immy_girls') {
-    this.powerupDirector.updateImmyGirls(phase, hero.x, hero.z, tx, tz, hero.facing, this.elapsed);
-    if (phase > 0.65 && (hero.powerupHitsMask & 1) === 0) {
-      hero.powerupHitsMask |= 1;
-      this.dealPowerupAoeDamage(hero, tx, tz, 4.5, 32, false, 'OYE!');
+    const side = hero.index === 0 ? 1 : 2;
+    const otherSide = side === 1 ? 2 : 1;
+    const say = (s: 1 | 2, speaker: string, text: string, secs: number) => {
+      this.speechBubble = { side: s, speaker, text };
+      this.speechTimer = secs;
+    };
+    const once = (bit: number, at: number, fn: () => void) => {
+      if (phase > at && (hero.powerupHitsMask & bit) === 0) {
+        hero.powerupHitsMask |= bit;
+        fn();
+      }
+    };
+    const prop = hero.rig.coverKind === 0 ? 'pizza box' : 'thali';
+    once(2, 0.1, () => {
+      soundEngine.playCheerPop();
+      this.spawnParticles(hero.x, 1.2, hero.z, 22, 4);
+      this.spawnComicPopup(hero.x, 2.15, hero.z, 'CLOTHES: GONE!', '#F472B6');
+      say(otherSide, 'Cousin', 'BHAI, WHAT ARE YOU DOING?!', 1.4);
+    });
+    once(4, 0.17, () => {
+      this.spawnComicPopup(hero.x, 2.15, hero.z, 'NOTHING TO SEE HERE!', '#FDE047');
+      say(side, hero.profile.name, `Don't look at the ${prop}!`, 1.5);
+    });
+    once(8, 0.34, () => say(otherSide, 'Cousin', 'MY EYES! MY EYES!', 1.3));
+    once(16, 0.5, () => say(otherSide, 'Cousin', 'PUT SOMETHING ON!!', 1.3));
+    once(32, 0.66, () => say(otherSide, 'Cousin', "I'M TELLING AUNTY!", 1.3));
+    once(64, 0.8, () => say(side, hero.profile.name, 'Is it... is it breezy?', 1.4));
+    // The run: a big figure-eight across the lane, scaring everyone
+    if (phase >= 0.1 && phase < 0.9) {
+      const u = (phase - 0.1) / 0.8;
+      const ang = u * Math.PI * 3;
+      const nx = hero.powerupOriginX + Math.sin(ang) * 4.6;
+      const nz = hero.powerupOriginZ + Math.sin(ang * 2) * 1.4;
+      if (Math.abs(nx - hero.x) > 0.001) hero.facing = nx > hero.x ? 1 : -1;
+      hero.x = nx;
+      hero.z = nz;
+      this.clampHeroPosition(hero);
+      this.scareTimer -= dt;
+      if (this.scareTimer <= 0) {
+        this.scareTimer = 0.32;
+        const shouts = ['EEEEK!', 'MY EYES!', 'AAAAH!', 'NOOOO!', 'RUN!!'];
+        for (const e of this.enemies) {
+          if (!e.alive || Math.abs(e.x - hero.x) > 3.6 || Math.abs(e.z - hero.z) > 2.4) continue;
+          const dir = e.x >= hero.x ? 1 : -1;
+          e.vx = dir * 4.2;
+          e.aiState = 'retreat';
+          e.stateTimer = 1.5;
+          e.aiCooldown = Math.max(e.aiCooldown, 2.2);
+          this.spawnComicPopup(e.x, 2.3, e.z, shouts[Math.floor(Math.random() * shouts.length)], '#F87171');
+        }
+      }
     }
-    if (phase > 0.8 && (hero.powerupHitsMask & 2) === 0) {
-      hero.powerupHitsMask |= 2;
-      this.dealPowerupAoeDamage(hero, tx, tz, 4.8, 38, true, 'DHISHUM!');
-    }
+    once(128, 0.9, () => {
+      soundEngine.playSqueak(1.4);
+      this.shakeIntensity = Math.max(this.shakeIntensity, 0.3);
+      for (const e of this.enemies) {
+        if (!e.alive || Math.abs(e.x - hero.x) > 9) continue;
+        this.damageEnemy(e, hero, 22, false, 0, 0, 'FAINTED!');
+        if (e.alive && e.spec.archetype !== 'boss') {
+          e.action = 'dizzy';
+          e.dizzyTimer = 4.5;
+          e.actionTime = 0;
+          e.vx = 0;
+        }
+      }
+      say(side, hero.profile.name, "Sorry. I'm usually more modest.", 1.6);
+    });
+    once(256, 0.93, () => this.spawnComicPopup(hero.x, 2.15, hero.z, 'CLOTHES: BACK ON', '#4ADE80'));
   } else {
     if (phase > 0.42 && (hero.powerupHitsMask & 1) === 0) {
       hero.powerupHitsMask |= 1;
@@ -394,6 +458,7 @@ export function isPowerupAction(this: StreetBrawlEngine, a: CombatAction): boole
     a === 'powerup_jav' ||
     a === 'powerup_jam' ||
     a === 'powerup_chet' ||
-    a === 'powerup_immy'
+    a === 'powerup_immy' ||
+    a === 'powerup_immy_run'
   );
 }

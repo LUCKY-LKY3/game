@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Crown, Trophy } from 'lucide-react';
 import { webBoardConfigured } from '../config';
+import { equippedTitle } from '../utils/achievements';
 import {
   Boards,
   cleanNickname,
@@ -49,6 +50,7 @@ export function LeaderboardTable({
                 {e ? (
                   <>
                     {e.nick} <span className="font-medium normal-case opacity-70">· {e.fighter}</span>
+                    {e.title && <span className="ml-1 text-[10px] font-bold normal-case text-[#FACC15]">★ {e.title}</span>}
                   </>
                 ) : (
                   <span className="opacity-30">---</span>
@@ -136,7 +138,7 @@ export function EndlessScoreEntry({ score, wave, fighterName }: { score: number;
     setBusy(true);
     const ts = Date.now();
     // On the website the public board can't always be read (offline/blocked), but a score can still be sent to the Form
-    const res = await submitScore({ nick: name, fighter: fighterLabel(fighterName), score, wave, ts }, earnedLocal, earnedGlobal || webBoardConfigured());
+    const res = await submitScore({ nick: name, fighter: fighterLabel(fighterName), score, wave, ts, title: equippedTitle() ?? undefined }, earnedLocal, earnedGlobal || webBoardConfigured());
     setSaved({ ts, global: res.global });
     setBusy(false);
   };

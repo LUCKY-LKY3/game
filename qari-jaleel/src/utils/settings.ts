@@ -10,12 +10,14 @@ export interface GameSettings {
   buttonSize: ButtonSize;
   /** Strikes turn toward the nearest enemy when you are not steering */
   autoAim: boolean;
+  /** Dhol beat ring + on-beat hit bonus */
+  beatBonus: boolean;
   /** Mirror the touch layout: attack buttons on the left, stick on the right */
   leftHanded: boolean;
 }
 
 const KEY = 'mafia-bhaiyas-settings-v1';
-const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, leftHanded: false };
+const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, beatBonus: true, leftHanded: false };
 
 let current: GameSettings = load();
 const listeners = new Set<() => void>();

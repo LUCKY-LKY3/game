@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { BrawlRank, BrawlScorecard, VillageBoonId } from '../../types/game';
 import { saveEndlessRecord, saveStreetBrawlRecord } from '../../utils/storage';
 import { addCoins, getMods } from '../../utils/upgrades';
+import { recordRun } from '../../utils/achievements';
 import { createVillageThugRig, VILLAGE_COUSIN_ROSTER, VillageThugSpec } from '../villageThugs';
 import { soundEngine } from '../sound';
 import { StreetZoneConfig, HeroRuntime, EnemyRuntime } from './types';
@@ -342,13 +343,32 @@ export function computeScorecard(this: StreetBrawlEngine, victory: boolean): Bra
     ? this.endlessWave * 6 + Math.floor(this.score / 500)
     : this.totalDefeated * 2 + (victory ? 80 + ({ S: 60, A: 40, B: 20, C: 0 } as Record<string, number>)[rank] : 0);
   addCoins(coinsEarned);
+  const newTitles = recordRun({
+    endless: this.endlessMode,
+    wave: this.endlessWave,
+    score: this.score,
+    victory,
+    rank,
+    totalDefeated: this.totalDefeated,
+    highestCombo,
+    rickshawed: this.cousinsRickshawed,
+    finishers: this.finishersLanded,
+    flawless: this.flawlessWaves,
+    pickups: this.pickupsTaken,
+    onBeat: this.onBeatHits,
+    bosses: this.bossesDefeated,
+    perfectDodges: this.perfectDodges,
+    comboTriggers: this.comboTriggers,
+  });
 
   return {
     coinsEarned,
+    newTitles,
     clearTimeSec,
     highestCombo,
     cousinsRickshawed: this.cousinsRickshawed,
     flawlessWaves: this.flawlessWaves,
+    onBeatHits: this.onBeatHits,
     pickupsTaken: this.pickupsTaken,
     finishersLanded: this.finishersLanded,
     score: this.score,

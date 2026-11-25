@@ -3,6 +3,7 @@ import { ArrowUp, Clapperboard, Coffee, Download, Flame, Settings, Swords, Troph
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { Credits } from './Credits';
+import { TitlesPanel } from './TitlesPanel';
 import { ChachaRoad } from './ChachaRoad';
 import { useChai } from '../utils/upgrades';
 import { usePwaInstall, useUpdateAvailable } from '../utils/pwa';
@@ -24,6 +25,7 @@ export function TitleOverlay({
   const [showBoard, setShowBoard] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
   const [showRoad, setShowRoad] = useState(false);
+  const [hofTab, setHofTab] = useState<'scores' | 'titles'>('scores');
   const chai = useChai();
   const pwa = usePwaInstall();
   const update = useUpdateAvailable();
@@ -255,7 +257,21 @@ export function TitleOverlay({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <HallOfFame />
+            <div className="mb-2 flex gap-2">
+              {(['scores', 'titles'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setHofTab(t)}
+                  className={`px-3 py-1 text-[11px] font-black uppercase tracking-widest ${
+                    hofTab === t ? 'bg-[#FACC15] text-[#141210]' : 'border border-[#FACC15]/40 text-[#FACC15]'
+                  }`}
+                >
+                  {t === 'scores' ? 'Scores' : 'Titles'}
+                </button>
+              ))}
+            </div>
+            {hofTab === 'scores' ? <HallOfFame /> : <TitlesPanel />}
           </div>
         </div>
       )}

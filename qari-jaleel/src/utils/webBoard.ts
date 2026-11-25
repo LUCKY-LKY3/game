@@ -45,7 +45,9 @@ export function rowsToEntries(rows: string[][]): LBEntry[] {
     const nick = r[1].replace(/[^A-Za-z0-9 _\-.]/g, '').trim().slice(0, 12);
     if (!nick) continue;
     const ts = Date.parse(r[0]);
-    out.push({ nick, fighter: r[2].slice(0, 16), score: Math.round(score), wave: Math.round(wave), ts: Number.isFinite(ts) ? ts : 0 });
+    // The Form has only four questions, so the title rides along in the Fighter column as "Fady|Title"
+    const [fighterName, titleName] = String(r[2]).split('|');
+    out.push({ nick, fighter: fighterName.slice(0, 16), title: titleName ? titleName.slice(0, 24) : undefined, score: Math.round(score), wave: Math.round(wave), ts: Number.isFinite(ts) ? ts : 0 });
   }
   return out;
 }
@@ -65,7 +67,7 @@ export async function postWebScore(e: LBEntry): Promise<boolean> {
   try {
     const body = new URLSearchParams();
     body.set(WEB_BOARD.entryNick, e.nick);
-    body.set(WEB_BOARD.entryFighter, e.fighter);
+    body.set(WEB_BOARD.entryFighter, e.title ? `${e.fighter}|${e.title}` : e.fighter);
     body.set(WEB_BOARD.entryScore, String(e.score));
     body.set(WEB_BOARD.entryWave, String(e.wave));
     await fetch(WEB_BOARD.formUrl, { method: 'POST', mode: 'no-cors', body });

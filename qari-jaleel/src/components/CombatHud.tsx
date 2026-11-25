@@ -19,6 +19,7 @@ import { GameMode, HudSnapshot, isStreetBrawlMode, VillageBoonId } from '../type
 import { ArenaCanvasHandle } from './ArenaCanvas';
 import { VirtualThumbstick } from './VirtualThumbstick';
 import { BUTTON_SCALE, useSettings } from '../utils/settings';
+import { beatPhase } from '../utils/beat';
 
 const BOON_SHORT_LABELS: Record<VillageBoonId, { label: string; color: string }> = {
   extra_mirchi: { label: 'EXTRA MIRCHI', color: '#EF4444' },
@@ -49,6 +50,37 @@ interface CombatHudProps {
   onToggleTouchControls: () => void;
   onOpenPause: () => void;
   arenaRef: React.RefObject<ArenaCanvasHandle | null>;
+}
+
+/** Dhol beat ring: the outer ring closes in on the dot; hit as it lands for the ON BEAT bonus. */
+function BeatRing() {
+  const ringRef = useRef<HTMLDivElement | null>(null);
+  const dotRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const p = beatPhase();
+      const near = Math.min(p, 1 - p) < 0.2;
+      if (ringRef.current) {
+        ringRef.current.style.transform = `scale(${(2.1 - p * 1.1).toFixed(3)})`;
+        ringRef.current.style.opacity = String(0.25 + p * 0.65);
+      }
+      if (dotRef.current) {
+        dotRef.current.style.transform = `scale(${near ? 1.35 : 1})`;
+        dotRef.current.style.background = near ? '#7DD3FC' : '#38BDF8';
+        dotRef.current.style.boxShadow = near ? '0 0 14px #38BDF8' : '0 0 4px #0369A1';
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div className="pointer-events-none fixed top-[13%] left-[calc(50%-5.2rem)] z-20 flex h-9 w-9 items-center justify-center" aria-hidden="true">
+      <div ref={ringRef} className="absolute h-5 w-5 rounded-full border-2 border-[#38BDF8]" />
+      <div ref={dotRef} className="h-3 w-3 rounded-full bg-[#38BDF8]" />
+    </div>
+  );
 }
 
 const TUTORIAL_KEY = 'mafia-bhaiyas-tutorial-v1';
@@ -286,6 +318,7 @@ export function CombatHud({
       )}
 
       <TutorialHint />
+      {brawl && settings.beatBonus && hud.phase === 'FIGHTING' && <BeatRing />}
 
       {/* Live Comic Speech Bubble for Unique Powerups (e.g. Jam's snooker cue line, Jav's story) */}
       {hud.speechBubble && (

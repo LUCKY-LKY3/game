@@ -16,6 +16,8 @@ export interface LBEntry {
   score: number;
   wave: number;
   ts: number;
+  /** Equipped title (from achievements) */
+  title?: string;
 }
 
 export type BoardSource = 'loading' | 'global' | 'local';
@@ -93,6 +95,7 @@ function clean(raw: unknown): LBEntry | null {
     score: Math.min(99999999, Math.round(score)),
     wave: Math.max(0, Math.min(9999, Math.round(Number(r.wave) || 0))),
     ts: Number(r.ts) || 0,
+    title: typeof r.title === 'string' && r.title ? r.title.slice(0, 24) : undefined,
   };
 }
 

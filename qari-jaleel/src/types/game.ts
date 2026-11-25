@@ -123,6 +123,7 @@ export type CombatAction =
   | 'powerup_jam'
   | 'powerup_chet'
   | 'powerup_immy'
+  | 'powerup_immy_run'
   | 'squeezed'
   | 'listening'
   | 'coughing'
@@ -243,6 +244,8 @@ export interface BrawlScorecard {
   highestCombo: number;
   cousinsRickshawed: number;
   coinsEarned?: number;
+  onBeatHits?: number;
+  newTitles?: string[];
   flawlessWaves?: number;
   pickupsTaken?: number;
   finishersLanded: number;

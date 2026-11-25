@@ -366,6 +366,19 @@ export function MatchOverModal({
                 </div>
               </div>
 
+              {scorecard?.newTitles && scorecard.newTitles.length > 0 && (
+                <div className="col-span-2 sm:col-span-3">
+                  <div className="text-xs text-[#B6AA9A]">New {scorecard.newTitles.length > 1 ? 'Titles' : 'Title'} Unlocked</div>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {scorecard.newTitles.map((t) => (
+                      <span key={t} className="rounded-full border border-[#FACC15]/60 bg-[#2A2210] px-2.5 py-0.5 text-xs font-black text-[#FACC15]">
+                        ★ {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="text-xs text-[#B6AA9A]">Chai Coins Earned</div>
                 <div className="font-mono-num mt-1 text-2xl font-bold text-[#F59E0B]">+{scorecard?.coinsEarned ?? 0}</div>

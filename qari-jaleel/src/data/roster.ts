@@ -330,7 +330,7 @@ export function createStarterRoster(): FighterProfile[] {
         plaidLungi: false,
       },
       stats: { power: 9, speed: 6, reach: 8, defense: 9 },
-      specialMoveName: 'Three Girls Fan Squad',
+      specialMoveName: 'Born To Run',
       taunt: 'You stepped into the wrong rebellion tonight.',
       wins: 0,
     },

@@ -602,6 +602,7 @@ export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
     ) {
       e.hasHitThisSwing = true;
       hero.counterTimer = 1.6;
+      this.perfectDodges += 1;
       hero.rage = Math.min(100, hero.rage + 12);
       this.slowMoTimer = Math.max(this.slowMoTimer, 0.45);
       soundEngine.playParryClang();

@@ -130,6 +130,12 @@ export class StreetBrawlEngine {
   tauntTimer = 7;
   chatTimer = 6;
   comboCooldown = 0;
+  scareTimer = 0;
+  onBeatHits = 0;
+  bossesDefeated = 0;
+  perfectDodges = 0;
+  comboTriggers = 0;
+  lastBeatIdx = -1;
   crowdSeqSeen = 0;
   crowdTimer = 0;
   crowdScreams = 0;
@@ -605,6 +611,11 @@ export class StreetBrawlEngine {
     this.tauntTimer = 7;
     this.chatTimer = 6;
     this.comboCooldown = 0;
+    this.onBeatHits = 0;
+    this.bossesDefeated = 0;
+    this.perfectDodges = 0;
+    this.comboTriggers = 0;
+    this.lastBeatIdx = -1;
     this.crowdSeqSeen = this.stage.crowdRun.startedSeq;
     this.crowdTimer = 0;
     this.crowdScreams = 0;

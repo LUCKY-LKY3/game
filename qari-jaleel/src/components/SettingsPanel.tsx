@@ -62,6 +62,9 @@ export function SettingsPanel() {
           <Toggle on={full} onLabel="On" offLabel="Off" onClick={() => void toggleFullscreen()} />
         </Row>
       )}
+      <Row label="Dhol beat bonus">
+        <Toggle on={s.beatBonus} onLabel="On" offLabel="Off" onClick={() => updateSettings({ beatBonus: !s.beatBonus })} />
+      </Row>
       <Row label="Left-handed layout">
         <Toggle on={s.leftHanded} onLabel="On" offLabel="Off" onClick={() => updateSettings({ leftHanded: !s.leftHanded })} />
       </Row>

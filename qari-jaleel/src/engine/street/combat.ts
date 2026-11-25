@@ -1,4 +1,6 @@
 // Street brawl engine: combat methods (bound onto StreetBrawlEngine).
+import { beatHit } from '../../utils/beat';
+import { getSettings } from '../../utils/settings';
 import { getMods } from '../../utils/upgrades';
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
@@ -286,6 +288,17 @@ export function damageEnemy(this: StreetBrawlEngine,
       this.stats.p2MaxCombo = Math.max(this.stats.p2MaxCombo, attacker.comboCount);
     }
     this.score += Math.round((damage * 4 + attacker.comboCount * 10) * this.scoreMult);
+    // Dhol beat bonus: a hit that lands as the HUD ring closes (one per beat)
+    if (getSettings().beatBonus) {
+      const b = beatHit();
+      if (b.on && b.idx !== this.lastBeatIdx) {
+        this.lastBeatIdx = b.idx;
+        this.onBeatHits += 1;
+        this.score += Math.round(30 * this.scoreMult);
+        attacker.rage = Math.min(100, attacker.rage + 3);
+        this.spawnComicPopup(e.x, 2.6, e.z, 'ON BEAT!', '#38BDF8');
+      }
+    }
   } else {
     this.score += damage * 3;
   }
@@ -345,6 +358,7 @@ export function damageEnemy(this: StreetBrawlEngine,
     e.vy = Math.max(3.6, launchVy);
     e.koFadeTimer = 1.5;
     this.totalDefeated += 1;
+    if (e.spec.archetype === 'boss') this.bossesDefeated += 1;
     this.score += Math.round(e.spec.scoreValue * this.scoreMult);
     this.maybeDropPickup(e);
     soundEngine.playKO();

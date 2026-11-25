@@ -162,6 +162,11 @@ export interface ArticulatedFighterRig {
   shirtParts: THREE.Object3D[];
   bareParts: THREE.Object3D[];
   sparkles: THREE.Mesh[];
+  /** Immy's "Born To Run" gag: boxer shorts, the funny cover-up props, and the leg cloth that turns skin coloured */
+  boxerParts: THREE.Object3D[];
+  coverProps: THREE.Object3D[];
+  coverKind: number;
+  stripLegs: { mat: THREE.MeshPhysicalMaterial; color: THREE.Color; map: THREE.Texture | null; bump: THREE.Texture | null; skinMap: THREE.Texture | null; on: boolean };
   dispose: () => void;
 }
 
@@ -2398,6 +2403,79 @@ export function createFighterRig(
     textures.forEach((t) => t.dispose());
   };
 
+  // ── Immy's "Born To Run" gag props (hidden until his power move): heart boxers + a funny cover-up ──
+  const boxerParts: THREE.Object3D[] = [];
+  const coverProps: THREE.Object3D[] = [];
+  {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 128;
+    const g = c.getContext('2d');
+    if (g) {
+      g.fillStyle = '#F9A8D4';
+      g.fillRect(0, 0, 128, 128);
+      g.fillStyle = '#DC2626';
+      g.font = '28px sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      for (let yy = 0; yy < 4; yy++) for (let xx = 0; xx < 4; xx++) g.fillText('♥', 16 + xx * 32 + (yy % 2) * 16, 16 + yy * 32);
+    }
+    const boxerTex = new THREE.CanvasTexture(c);
+    boxerTex.colorSpace = THREE.SRGBColorSpace;
+    boxerTex.wrapS = boxerTex.wrapT = THREE.RepeatWrapping;
+    textures.push(boxerTex);
+    const boxerMat = trackMat(new THREE.MeshStandardMaterial({ map: boxerTex, roughness: 0.85 }));
+    const band = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.205, 0.215, 0.2, 18)), boxerMat);
+    band.scale.set(1, 1, 0.82);
+    band.position.set(0, -0.06, 0);
+    band.visible = false;
+    hips.add(band);
+    boxerParts.push(band);
+    for (const nm of ['leftLegGroup', 'rightLegGroup']) {
+      const leg = hips.getObjectByName(nm);
+      if (!leg) continue;
+      const shortLeg = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.128, 0.138, 0.27, 14)), boxerMat);
+      shortLeg.position.set(0, -0.12, 0);
+      shortLeg.visible = false;
+      leg.add(shortLeg);
+      boxerParts.push(shortLeg);
+    }
+    // 0: Harry's pizza box held up front
+    const boxCanvas = document.createElement('canvas');
+    boxCanvas.width = 256;
+    boxCanvas.height = 256;
+    const bg = boxCanvas.getContext('2d');
+    if (bg) {
+      bg.fillStyle = '#E7D3A6';
+      bg.fillRect(0, 0, 256, 256);
+      bg.fillStyle = '#B91C1C';
+      bg.font = 'bold 44px sans-serif';
+      bg.textAlign = 'center';
+      bg.textBaseline = 'middle';
+      bg.fillText("HARRY'S", 128, 100);
+      bg.font = 'bold 28px sans-serif';
+      bg.fillText('PIZZA', 128, 150);
+      bg.font = '56px sans-serif';
+      bg.fillText('🍕', 128, 205);
+    }
+    const boxTex = new THREE.CanvasTexture(boxCanvas);
+    boxTex.colorSpace = THREE.SRGBColorSpace;
+    textures.push(boxTex);
+    const pizza = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.46, 0.46, 0.05)), trackMat(new THREE.MeshStandardMaterial({ map: boxTex, roughness: 0.8 })));
+    pizza.position.set(0, -0.02, 0.24);
+    pizza.rotation.z = 0.12;
+    pizza.visible = false;
+    hips.add(pizza);
+    coverProps.push(pizza);
+    // 1: a big steel thali
+    const thali = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.27, 0.25, 0.04, 24)), trackMat(new THREE.MeshStandardMaterial({ color: '#D4D8DE', metalness: 0.85, roughness: 0.28 })));
+    thali.rotation.x = Math.PI / 2;
+    thali.position.set(0, -0.02, 0.24);
+    thali.visible = false;
+    hips.add(thali);
+    coverProps.push(thali);
+  }
+
   return {
     root,
     bodyRoot,
@@ -2431,6 +2509,10 @@ export function createFighterRig(
     shirtParts,
     bareParts,
     sparkles,
+    boxerParts,
+    coverProps,
+    coverKind: 0,
+    stripLegs: { mat: pantsMat, color: pantsMat.color.clone(), map: pantsMat.map, bump: pantsMat.bumpMap, skinMap: limbSkinMat.map, on: false },
     dispose,
   };
 }
@@ -2602,7 +2684,8 @@ export function applyFighterPose(
 
   // Saf's flex: shirt rips off at phase 0.2 of his power move, sparkles pop during the poses
   if (rig.shirtParts.length > 0) {
-    const shirtOff = action === 'powerup_saf' && phase >= 0.12;
+    const immyStrip = action === 'powerup_immy_run' && phase >= 0.1 && phase < 0.93;
+    const shirtOff = (action === 'powerup_saf' && phase >= 0.12) || immyStrip;
     if (rig.shirtParts[0].visible === shirtOff) {
       for (let i = 0; i < rig.shirtParts.length; i++) rig.shirtParts[i].visible = !shirtOff;
       for (let i = 0; i < rig.bareParts.length; i++) rig.bareParts[i].visible = shirtOff;
@@ -2616,6 +2699,21 @@ export function applyFighterPose(
         const tw = 0.5 + 0.9 * Math.abs(Math.sin(time * 9 + i * 1.7));
         s.scale.set(0.5 * tw, 1.6 * tw, 0.5 * tw);
       }
+    }
+  }
+
+  // Immy's Born To Run: legs go bare, heart boxers and a cover-up prop appear, then everything goes back
+  {
+    const strip = action === 'powerup_immy_run' && phase >= 0.1 && phase < 0.93;
+    const sl = rig.stripLegs;
+    if (sl.on !== strip) {
+      sl.on = strip;
+      sl.mat.color.copy(sl.color);
+      sl.mat.map = strip ? sl.skinMap : sl.map;
+      sl.mat.bumpMap = strip ? null : sl.bump;
+      sl.mat.needsUpdate = true;
+      for (let i = 0; i < rig.boxerParts.length; i++) rig.boxerParts[i].visible = strip;
+      for (let i = 0; i < rig.coverProps.length; i++) rig.coverProps[i].visible = strip && i === rig.coverKind;
     }
   }
 
@@ -4164,6 +4262,49 @@ export function applyFighterPose(
         lShX = -0.45;
         lShZ = -0.35;
         lElX = -1.2;
+      }
+      break;
+    }
+
+    case 'powerup_immy_run': {
+      // 0-.1 hands grab the clothes and fling them away, .1-.93 runs around hugging the cover-up, then a sheepish shrug
+      if (phase < 0.1) {
+        const k = Math.sin((phase / 0.1) * Math.PI * 0.5);
+        hipsY = 0.92;
+        torsoRotX = -0.1 * k;
+        lShX = THREE.MathUtils.lerp(-0.5, -2.8, k);
+        lShZ = -0.4;
+        lElX = -0.5;
+        rShX = THREE.MathUtils.lerp(-0.5, -2.8, k);
+        rShZ = 0.4;
+        rElX = -0.5;
+      } else if (phase < 0.93) {
+        const s = Math.sin(time * 17);
+        hipsY = 0.9 + Math.abs(s) * 0.06;
+        torsoRotX = 0.2;
+        torsoRotY = Math.sin(time * 8.5) * 0.18;
+        headRotX = -0.1;
+        headRotY = Math.sin(time * 6) * 0.55;
+        lHipX = s * 1.0;
+        rHipX = -s * 1.0;
+        lKneeX = Math.max(0, -s) * 1.2 + 0.15;
+        rKneeX = Math.max(0, s) * 1.2 + 0.15;
+        lShX = -1.0;
+        lShZ = 0.28;
+        lElX = -1.35;
+        rShX = -1.0;
+        rShZ = -0.28;
+        rElX = -1.35;
+      } else {
+        hipsY = 0.94;
+        torsoRotX = 0.12;
+        headRotY = 0.35;
+        lShX = -1.0;
+        lShZ = 0.25;
+        lElX = -1.3;
+        rShX = -1.0;
+        rShZ = -0.25;
+        rElX = -1.3;
       }
       break;
     }
