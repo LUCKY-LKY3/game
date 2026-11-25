@@ -94,6 +94,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
       if (!bounced) {
         for (let ci = 0; ci < this.stage.charpoys.length; ci++) {
           const ch = this.stage.charpoys[ci];
+          if (ch.broken) continue;
           if (Math.abs(e.x - ch.x) <= 1.15 && Math.abs(e.z - ch.z) <= 0.88) {
             this.stage.triggerCharpoyBounce(ch);
             bounced = true;
@@ -107,8 +108,11 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
       if (!bounced) {
         for (let spi = 0; spi < this.stage.stonePillars.length; spi++) {
           const pillar = this.stage.stonePillars[spi];
+          if (pillar.broken) continue;
           if (Math.hypot(e.x - pillar.x, e.z - pillar.z) <= pillar.radius + 0.58) {
             this.stage.triggerPillarBounce(pillar);
+            const sp = this.stage.smashProps.find((p) => p.ref === pillar);
+            if (sp) this.smashPropFx(sp, 1, e.vx >= 0 ? 1 : -1);
             bounced = true;
             bounceVx = -Math.sign(e.vx || 1) * 4.2;
             bounceVz = Math.sign(e.z - pillar.z || 1) * 2.4;
@@ -120,6 +124,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
       // Roadside Cast-Iron Water Hand-Pump (Bursts pressurized water soaking nearby cousins!)
       for (let wpi = 0; wpi < this.stage.waterPumps.length; wpi++) {
         const pump = this.stage.waterPumps[wpi];
+        if (pump.broken) continue;
         if (pump.cooldown <= 0 && Math.hypot(e.x - pump.x, e.z - pump.z) <= 1.45) {
           this.stage.triggerWaterPumpBurst(pump);
           soundEngine.playWaterBurst();
@@ -851,6 +856,11 @@ export function updateAutoRickshaw(this: StreetBrawlEngine, dt: number) {
         this.score += 150;
         this.shakeIntensity = Math.max(this.shakeIntensity, 0.28);
       }
+    }
+
+    // The rickshaw flattens any big prop in its lane too
+    for (const sp of this.stage.smashProps) {
+      if (!sp.broken && Math.abs(sp.x - r.x) < 1.7 && Math.abs(sp.z - r.z) < 1.1) this.smashPropFx(sp, 99, r.dir);
     }
 
     // Light bump to heroes if they stand right in the lane without dodging/blocking

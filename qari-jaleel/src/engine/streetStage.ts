@@ -44,6 +44,7 @@ export interface StreetHaystack {
 }
 
 export interface StreetChaiKadhai {
+  broken?: boolean;
   id: number;
   x: number;
   z: number;
@@ -56,6 +57,7 @@ export interface StreetChaiKadhai {
 }
 
 export interface StreetCharpoy {
+  broken?: boolean;
   id: number;
   x: number;
   z: number;
@@ -121,6 +123,7 @@ export interface StreetCricketBall {
 }
 
 export interface StreetWaterPump {
+  broken?: boolean;
   id: number;
   x: number;
   z: number;
@@ -132,12 +135,25 @@ export interface StreetWaterPump {
 }
 
 export interface StreetStonePillar {
+  broken?: boolean;
   id: number;
   x: number;
   z: number;
   radius: number;
   shakeTimer: number;
   group: THREE.Group;
+}
+
+/** A big fixed prop that can be smashed after a few hits (pillars, charpoys, hand pumps, chai stalls) */
+export interface StreetSmashProp {
+  kind: 'pillar' | 'charpoy' | 'pump' | 'stall';
+  x: number;
+  z: number;
+  hp: number;
+  maxHp: number;
+  group: THREE.Group;
+  ref: { broken?: boolean };
+  broken: boolean;
 }
 
 export interface StreetStageHandle {
@@ -151,6 +167,9 @@ export interface StreetStageHandle {
   cricketBalls: StreetCricketBall[];
   waterPumps: StreetWaterPump[];
   stonePillars: StreetStonePillar[];
+  smashProps: StreetSmashProp[];
+  /** Knocks the prop's chunk of hp off; returns true if it broke. */
+  hitSmashProp: (sp: StreetSmashProp, dmg: number, dirX: number) => boolean;
   splendorBike: StreetSplendorBike;
   rickshaw: StreetAutoRickshaw;
   smashPot: (pot: StreetClayPot) => StreetPickupItem;
@@ -1817,8 +1836,9 @@ export function buildStreetStage(
     cap.position.y = 2.74;
     cap.castShadow = true;
     sg.add(plinth, shaft, band, cap);
+    sg.scale.set(0.6, 0.74, 0.6); // slimmer and shorter so they stay out of the way
     group.add(sg);
-    stonePillars.push({ id: idx + 1, x: sx, z: sz, radius: 0.62, shakeTimer: 0, group: sg });
+    stonePillars.push({ id: idx + 1, x: sx, z: sz, radius: 0.38, shakeTimer: 0, group: sg });
   });
 
   // ── BADE TAU PHASE 2 GROUND-POUND SHOCKWAVE RING (JUMP TO EVADE!) ──────────
@@ -1986,7 +2006,71 @@ export function buildStreetStage(
     return slot;
   };
 
+  // ── Slimmer fixed props that can be smashed ─────────────────────────────────
+  haystacks.forEach((h) => h.group.scale.setScalar(0.78));
+  chaiStalls.forEach((c) => c.group.scale.setScalar(0.82));
+  charpoys.forEach((c) => c.group.scale.setScalar(0.82));
+  waterPumps.forEach((w) => w.group.scale.setScalar(0.8));
+  const smashProps: StreetSmashProp[] = [
+    ...stonePillars.map((p) => ({ kind: 'pillar' as const, x: p.x, z: p.z, hp: 3, maxHp: 3, group: p.group, ref: p, broken: false })),
+    ...charpoys.map((c) => ({ kind: 'charpoy' as const, x: c.x, z: c.z, hp: 2, maxHp: 2, group: c.group, ref: c, broken: false })),
+    ...waterPumps.map((w) => ({ kind: 'pump' as const, x: w.x, z: w.z, hp: 2, maxHp: 2, group: w.group, ref: w, broken: false })),
+    ...chaiStalls.map((c) => ({ kind: 'stall' as const, x: c.x, z: c.z, hp: 2, maxHp: 2, group: c.group, ref: c, broken: false })),
+  ];
+  const debrisColors: Record<StreetSmashProp['kind'], string> = { pillar: '#B49A7E', charpoy: '#8B5E34', pump: '#166534', stall: '#7C2D12' };
+  const debris: { mesh: THREE.Mesh; vx: number; vy: number; vz: number; life: number }[] = [];
+  const debrisGeo = trackGeo(new THREE.BoxGeometry(0.16, 0.12, 0.14));
+  const debrisMats = (Object.keys(debrisColors) as StreetSmashProp['kind'][]).reduce(
+    (acc, k) => {
+      acc[k] = trackMat(new THREE.MeshStandardMaterial({ color: debrisColors[k], roughness: 0.9 }));
+      return acc;
+    },
+    {} as Record<StreetSmashProp['kind'], THREE.MeshStandardMaterial>
+  );
+  for (let i = 0; i < 28; i++) {
+    const m = new THREE.Mesh(debrisGeo, debrisMats.pillar);
+    m.visible = false;
+    group.add(m);
+    debris.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0 });
+  }
+  const spawnDebris = (sp: StreetSmashProp, dirX: number) => {
+    let n = 0;
+    for (const d of debris) {
+      if (d.life > 0) continue;
+      d.mesh.material = debrisMats[sp.kind];
+      d.mesh.position.set(sp.x + (Math.random() - 0.5) * 0.5, 0.3 + Math.random() * 1.2, sp.z + (Math.random() - 0.5) * 0.4);
+      d.mesh.scale.setScalar(0.7 + Math.random() * 0.9);
+      d.vx = dirX * (1 + Math.random() * 2.5) + (Math.random() - 0.5) * 3;
+      d.vy = 2 + Math.random() * 3.5;
+      d.vz = (Math.random() - 0.5) * 3;
+      d.life = 1.6;
+      d.mesh.visible = true;
+      if (++n >= 12) break;
+    }
+  };
+  const hitSmashProp = (sp: StreetSmashProp, dmg: number, dirX: number): boolean => {
+    if (sp.broken) return false;
+    sp.hp -= dmg;
+    if (sp.kind === 'pillar') (sp.ref as StreetStonePillar).shakeTimer = 0.4;
+    if (sp.hp > 0) return false;
+    sp.broken = true;
+    sp.ref.broken = true;
+    sp.group.visible = false;
+    spawnDebris(sp, dirX);
+    return true;
+  };
+
   const resetProps = () => {
+    for (const sp of smashProps) {
+      sp.hp = sp.maxHp;
+      sp.broken = false;
+      sp.ref.broken = false;
+      sp.group.visible = true;
+    }
+    for (const d of debris) {
+      d.life = 0;
+      d.mesh.visible = false;
+    }
     for (let i = 0; i < pots.length; i++) {
       const p = pots[i];
       p.broken = false;
@@ -2397,6 +2481,19 @@ export function buildStreetStage(
       }
     }
 
+    // Smash debris chunks
+    for (const d of debris) {
+      if (d.life <= 0) continue;
+      d.life -= dt;
+      d.vy -= 11 * dt;
+      d.mesh.position.x += d.vx * dt;
+      d.mesh.position.y = Math.max(0.05, d.mesh.position.y + d.vy * dt);
+      d.mesh.position.z += d.vz * dt;
+      d.mesh.rotation.x += d.vx * dt * 2;
+      d.mesh.rotation.z += d.vz * dt * 2;
+      if (d.life <= 0) d.mesh.visible = false;
+    }
+
     // Update idling/ridden Splendor motorbike visuals
     if (splendorBike.state !== 'hidden') {
       splendorBike.group.visible = true;
@@ -2468,6 +2565,8 @@ export function buildStreetStage(
     cricketBalls,
     waterPumps,
     stonePillars,
+    smashProps,
+    hitSmashProp,
     splendorBike,
     rickshaw,
     smashPot,

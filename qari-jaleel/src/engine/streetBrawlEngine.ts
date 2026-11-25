@@ -70,6 +70,7 @@ export class StreetBrawlEngine {
   fireBossSpecial = bossMoves.fireBossSpecial;
   spawnEndlessWave = flow.spawnEndlessWave;
   spawnEndlessBatch = flow.spawnEndlessBatch;
+  smashPropFx = combat.smashPropFx;
   triggerSquadCombo = squadCombo.triggerSquadCombo;
   triggerAssistCombo = squadCombo.triggerAssistCombo;
   sayQuip = endlessExtras.sayQuip;

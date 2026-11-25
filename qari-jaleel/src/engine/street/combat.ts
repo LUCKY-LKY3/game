@@ -83,7 +83,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
   // 1b. Interactive Steaming Chai Stall Kadhai (Strike to splash GARAM CHAI!)
   for (let i = 0; i < this.stage.chaiStalls.length; i++) {
     const stall = this.stage.chaiStalls[i];
-    if (stall.cooldown > 0) continue;
+    if (stall.broken || stall.cooldown > 0) continue;
     const dx = (stall.x - hero.x) * hero.facing;
     const dz = Math.abs(stall.z - hero.z);
     if ((is360Sweep ? Math.abs(dx) <= effectiveRangeX + 0.5 : dx >= -0.45 && dx <= effectiveRangeX + 0.55) && dz <= 1.45) {
@@ -106,6 +106,20 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
           }
         }
       }
+    }
+  }
+
+  // 1c. Big fixed props (pillars, charpoys, hand pumps, chai stalls) break after a few hits
+  for (let i = 0; i < this.stage.smashProps.length; i++) {
+    const sp = this.stage.smashProps[i];
+    if (sp.broken) continue;
+    const key = -1000 - i;
+    if (hero.hitIdsThisSwing.has(key)) continue;
+    const dx = (sp.x - hero.x) * hero.facing;
+    const dz = Math.abs(sp.z - hero.z);
+    if ((is360Sweep ? Math.abs(dx) <= effectiveRangeX + 0.3 : dx >= -0.45 && dx <= effectiveRangeX + 0.4) && dz <= 1.3) {
+      hero.hitIdsThisSwing.add(key);
+      this.smashPropFx(sp, effectiveDmg >= 16 ? 2 : 1, hero.facing);
     }
   }
 
@@ -242,6 +256,23 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
       hero.heldWeapon = null;
       this.syncHeroWeaponVisuals(hero);
     }
+  }
+}
+
+/** Damages a big fixed prop; on the final hit it shatters with debris, a popup and a little score. */
+export function smashPropFx(this: StreetBrawlEngine, sp: import('../streetStage').StreetSmashProp, dmg: number, dirX: number) {
+  if (sp.broken) return;
+  soundEngine.playWoodWhack();
+  this.spawnParticles(sp.x, 1.0, sp.z, 8, 3.2);
+  if (this.stage.hitSmashProp(sp, dmg, dirX)) {
+    soundEngine.playPotSmash();
+    this.spawnParticles(sp.x, 1.1, sp.z, 22, 5);
+    this.shakeIntensity = Math.max(this.shakeIntensity, 0.26);
+    const label = sp.kind === 'pillar' ? 'PILLAR SMASHED!' : sp.kind === 'charpoy' ? 'CHARPOY SMASHED!' : sp.kind === 'pump' ? 'PUMP SMASHED!' : 'STALL SMASHED!';
+    this.spawnComicPopup(sp.x, 2.1, sp.z, label, '#FACC15');
+    this.score += 100;
+  } else {
+    this.shakeIntensity = Math.max(this.shakeIntensity, 0.12);
   }
 }
 
