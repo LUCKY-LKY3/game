@@ -2,6 +2,7 @@
 import { CombatAction } from '../../types/game';
 import { soundEngine } from '../sound';
 import { musicEngine } from '../music';
+import { getSettings } from '../../utils/settings';
 import { HeroRuntime } from './types';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
@@ -87,7 +88,8 @@ export function startHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime) {
       hero.actionDuration = 7.0;
       hero.invulnTimer = 7.2;
       hero.callout = 'BORN TO RUN!';
-      hero.rig.coverKind = Math.random() < 0.5 ? 0 : 1; // pizza box or steel thali
+      hero.rig.coverKind = Math.floor(Math.random() * 4); // pizza box, steel thali, apple or pixel mosaic
+      hero.rig.modest = getSettings().immyModest;
       this.scareTimer = 0;
       this.speechBubble = { side: hero.index === 0 ? 1 : 2, speaker: hero.profile.name, text: 'Excuse me. It is getting hot in here.' };
       this.speechTimer = 1.6;
@@ -354,7 +356,7 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
         fn();
       }
     };
-    const prop = hero.rig.coverKind === 0 ? 'pizza box' : 'thali';
+    const prop = ['pizza box', 'thali', 'apple', 'pixels'][hero.rig.coverKind] ?? 'pizza box';
     once(2, 0.1, () => {
       soundEngine.playCheerPop();
       this.spawnParticles(hero.x, 1.2, hero.z, 22, 4);
@@ -363,7 +365,7 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
     });
     once(4, 0.17, () => {
       this.spawnComicPopup(hero.x, 2.15, hero.z, 'NOTHING TO SEE HERE!', '#FDE047');
-      say(side, hero.profile.name, `Don't look at the ${prop}!`, 1.5);
+      say(side, hero.profile.name, hero.rig.coverKind === 3 ? 'Technical difficulties. Please stand by!' : `Don't look at the ${prop}!`, 1.5);
     });
     once(8, 0.34, () => say(otherSide, 'Cousin', 'MY EYES! MY EYES!', 1.3));
     once(16, 0.5, () => say(otherSide, 'Cousin', 'PUT SOMETHING ON!!', 1.3));

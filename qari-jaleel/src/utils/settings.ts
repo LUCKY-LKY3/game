@@ -12,12 +12,14 @@ export interface GameSettings {
   autoAim: boolean;
   /** Dhol beat ring + on-beat hit bonus */
   beatBonus: boolean;
+  /** Immy keeps heart boxers on during Born To Run instead of going bare behind a censor prop */
+  immyModest: boolean;
   /** Mirror the touch layout: attack buttons on the left, stick on the right */
   leftHanded: boolean;
 }
 
 const KEY = 'mafia-bhaiyas-settings-v1';
-const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, beatBonus: true, leftHanded: false };
+const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, beatBonus: true, immyModest: false, leftHanded: false };
 
 let current: GameSettings = load();
 const listeners = new Set<() => void>();

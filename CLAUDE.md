@@ -23,7 +23,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.72.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.74.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -74,6 +74,6 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 - Squad combos: `data/combos.ts` (15 pairs, keyed by sorted fighter ids; Immy is `rebel_shadow`), triggered on a manual tag in `engine/street/squadCombo.ts` (6 s cooldown). Shown on the squad select screen between the two hero cards.
 
 ## Immy's move, dhol beat, titles
-- Immy's power move is now "Born To Run" (`powerup_immy_run` pose in `fighterRig.ts`, timeline in `powerups.ts`): he strips to heart boxers (leg cloth turns skin-coloured via `rig.stripLegs`), runs a figure-eight hugging a Harry's pizza box or steel thali (`rig.coverKind`), cousins flee and faint. PG-13 by design: boxers + cover prop, no nudity. 1v1 (`combatEngine.ts`) still uses the old fan-squad version under `powerup_immy`. Test pose: `?headlab&body&only=5&action=powerup_immy_run&phase=0.5&t=0.3&cover=0`.
+- Immy's power move is now "Born To Run" (`powerup_immy_run` pose in `fighterRig.ts`, timeline in `powerups.ts`): he strips bare (leg cloth turns skin-coloured via `rig.stripLegs`, kurta flaps hidden) and runs a figure-eight behind a random cover-up (`rig.coverKind`: Harry's pizza box, steel thali, apple, or TV pixel mosaic), cousins flee and faint. The body model has no anatomical detail and is always covered. Settings toggle `immyModest` ("Immy wears boxers") swaps in heart boxers (`rig.modest`). 1v1 (`combatEngine.ts`) still uses the old fan-squad version under `powerup_immy`. Test pose: `?headlab&body&only=5&action=powerup_immy_run&phase=0.5&t=0.3&cover=0`.
 - Dhol beat bonus (`utils/beat.ts`, ring in `CombatHud.tsx`): 100 BPM pulse independent of the music (the track's own beat is too loose to sync to). Hits landing as the ring closes give ON BEAT! (+30 score, +3 power, one per beat). Setting `beatBonus`.
 - Achievements/titles (`utils/achievements.ts`, `components/TitlesPanel.tsx` as a tab in the Hall of Fame): 20 silly achievements, each a title. `recordRun` runs in `flow.ts` `computeScorecard`. The equipped title shows on Hall of Fame rows; on the web Form it rides in the Fighter column as "Fady|Title".

@@ -48,6 +48,7 @@ export function HeadLab() {
         {
           const q = new URLSearchParams(window.location.search);
           rig.coverKind = Number(q.get('cover') ?? 0);
+          rig.modest = q.has('modest');
           applyFighterPose(rig, (q.get('action') as never) ?? 'idle', Number(q.get('phase') ?? 0), Number(q.get('t') ?? 0), 1, 0, 0, false, resolveFighterStyle(p));
         }
         rig.torso.rotation.y = 0; rig.headGroup.rotation.set(0, 0, 0);

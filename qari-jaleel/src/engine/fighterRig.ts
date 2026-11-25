@@ -166,6 +166,8 @@ export interface ArticulatedFighterRig {
   boxerParts: THREE.Object3D[];
   coverProps: THREE.Object3D[];
   coverKind: number;
+  /** Immy's Born To Run: true = keeps heart boxers on, false = bare with a censor prop */
+  modest: boolean;
   stripLegs: { mat: THREE.MeshPhysicalMaterial; color: THREE.Color; map: THREE.Texture | null; bump: THREE.Texture | null; skinMap: THREE.Texture | null; on: boolean };
   dispose: () => void;
 }
@@ -2474,6 +2476,36 @@ export function createFighterRig(
     thali.visible = false;
     hips.add(thali);
     coverProps.push(thali);
+    // 2: a big red apple
+    const apple = new THREE.Group();
+    const fruit = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.22, 18, 14)), trackMat(new THREE.MeshStandardMaterial({ color: '#DC2626', roughness: 0.4 })));
+    fruit.scale.set(1, 0.92, 1);
+    const stem = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.014, 0.014, 0.08, 6)), trackMat(new THREE.MeshStandardMaterial({ color: '#5B3A1E' })));
+    stem.position.set(0, 0.22, 0);
+    const leaf = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.06, 8, 6)), trackMat(new THREE.MeshStandardMaterial({ color: '#16A34A' })));
+    leaf.scale.set(1.5, 0.4, 0.8);
+    leaf.position.set(0.06, 0.24, 0);
+    apple.add(fruit, stem, leaf);
+    apple.position.set(0, -0.02, 0.26);
+    apple.visible = false;
+    hips.add(apple);
+    coverProps.push(apple);
+    // 3: classic TV pixel-mosaic censor block
+    const mosaic = new THREE.Group();
+    const shades = ['#9CA3AF', '#6B7280', '#D1D5DB', '#4B5563', '#E5E7EB', '#7C8594'];
+    const cube = trackGeo(new THREE.BoxGeometry(0.095, 0.095, 0.06));
+    const mats = shades.map((c) => trackMat(new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 })));
+    for (let gy = 0; gy < 4; gy++) {
+      for (let gx = 0; gx < 4; gx++) {
+        const m = new THREE.Mesh(cube, mats[(gx * 3 + gy * 5) % mats.length]);
+        m.position.set((gx - 1.5) * 0.1, (gy - 1.5) * 0.1, 0);
+        mosaic.add(m);
+      }
+    }
+    mosaic.position.set(0, -0.02, 0.25);
+    mosaic.visible = false;
+    hips.add(mosaic);
+    coverProps.push(mosaic);
   }
 
   return {
@@ -2512,6 +2544,7 @@ export function createFighterRig(
     boxerParts,
     coverProps,
     coverKind: 0,
+    modest: false,
     stripLegs: { mat: pantsMat, color: pantsMat.color.clone(), map: pantsMat.map, bump: pantsMat.bumpMap, skinMap: limbSkinMat.map, on: false },
     dispose,
   };
@@ -2712,7 +2745,11 @@ export function applyFighterPose(
       sl.mat.map = strip ? sl.skinMap : sl.map;
       sl.mat.bumpMap = strip ? null : sl.bump;
       sl.mat.needsUpdate = true;
-      for (let i = 0; i < rig.boxerParts.length; i++) rig.boxerParts[i].visible = strip;
+      for (let i = 0; i < rig.boxerParts.length; i++) rig.boxerParts[i].visible = strip && rig.modest;
+      if (rig.kurtaFlaps) {
+        rig.kurtaFlaps.frontFlap.visible = !strip;
+        rig.kurtaFlaps.backFlap.visible = !strip;
+      }
       for (let i = 0; i < rig.coverProps.length; i++) rig.coverProps[i].visible = strip && i === rig.coverKind;
     }
   }

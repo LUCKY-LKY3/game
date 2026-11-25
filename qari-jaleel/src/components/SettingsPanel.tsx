@@ -62,6 +62,9 @@ export function SettingsPanel() {
           <Toggle on={full} onLabel="On" offLabel="Off" onClick={() => void toggleFullscreen()} />
         </Row>
       )}
+      <Row label="Immy wears boxers">
+        <Toggle on={s.immyModest} onLabel="On" offLabel="Off" onClick={() => updateSettings({ immyModest: !s.immyModest })} />
+      </Row>
       <Row label="Dhol beat bonus">
         <Toggle on={s.beatBonus} onLabel="On" offLabel="Off" onClick={() => updateSettings({ beatBonus: !s.beatBonus })} />
       </Row>
