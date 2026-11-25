@@ -4152,25 +4152,47 @@ export function applyFighterPose(
     }
 
     case 'powerup_chet': {
-      if (phase < 0.25) {
-        const wave = Math.sin(time * 14);
+      // 0-.42 pitching with a phone and a hand gesture, .42-.5 stern pointing ("don't smoke in my car"), .5-.9 presenting the car, .9-1 shrug
+      if (phase < 0.42) {
+        const wave = Math.sin(time * 6);
         hipsY = 0.95;
-        torsoRotY = 0.25;
-        rShX = -2.25 + wave * 0.25;
-        rShZ = 0.35;
-        rElX = -0.5;
+        torsoRotY = 0.22;
+        headRotY = 0.15;
+        rShX = -2.1 + wave * 0.1; // phone up by the ear
+        rShZ = 0.3;
+        rElX = -1.4;
+        lShX = -0.9 + wave * 0.25; // talking hand
+        lShZ = -0.25;
+        lElX = -1.0;
+      } else if (phase < 0.5) {
+        hipsY = 0.94;
+        torsoRotY = 0.3;
+        torsoRotX = -0.06;
+        headRotY = -0.1;
+        rShX = -1.55; // stern finger point
+        rShZ = 0.1;
+        rElX = -0.1;
         lShX = -0.5;
-        lElX = -1.1;
-      } else {
+        lElX = -1.3;
+      } else if (phase < 0.9) {
         hipsY = 0.96;
-        torsoRotY = 0.18;
-        torsoRotX = -0.05;
-        lShX = -1.15;
-        lShZ = 0.16;
-        lElX = -1.55;
-        rShX = -1.15;
-        rShZ = -0.16;
-        rElX = -1.55;
+        torsoRotY = -0.2;
+        lShX = -1.2;
+        lShZ = -0.9;
+        lElX = -0.3;
+        rShX = -1.2;
+        rShZ = 0.9;
+        rElX = -0.3;
+      } else {
+        hipsY = 0.98;
+        torsoRotX = 0.06;
+        headRotX = -0.1;
+        lShX = -0.6;
+        lShZ = -1.0;
+        lElX = -1.2;
+        rShX = -0.6;
+        rShZ = 1.0;
+        rElX = -1.2;
       }
       break;
     }

@@ -450,15 +450,16 @@ export class PowerupDirector {
     phase: number,
     startX: number,
     targetZ: number,
-    facing: 1 | -1
+    facing: 1 | -1,
+    window: { from: number; to: number } = { from: 0.18, to: 0.94 }
   ): { carX: number; carActive: boolean } {
-    if (phase < 0.18 || phase > 0.94) {
+    if (phase < window.from || phase > window.to) {
       this.fordCarGroup.visible = false;
       return { carX: startX - facing * 12, carActive: false };
     }
 
     this.fordCarGroup.visible = true;
-    const driveT = (phase - 0.18) / 0.72; // 0..1
+    const driveT = (phase - window.from) / (window.to - window.from); // 0..1
     const carX = THREE.MathUtils.lerp(startX - facing * 9.5, startX + facing * 11.5, driveT);
     const bounce = Math.abs(Math.sin(driveT * Math.PI * 16)) * 0.035;
 
@@ -752,137 +753,223 @@ export class PowerupDirector {
     const group = new THREE.Group();
 
     const redPaint = trackMat(
-      new THREE.MeshPhysicalMaterial({
-        color: '#D91A1A',
-        roughness: 0.2,
-        metalness: 0.48,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.08,
-      })
+      new THREE.MeshPhysicalMaterial({ color: '#D61515', roughness: 0.18, metalness: 0.5, clearcoat: 1.0, clearcoatRoughness: 0.06 })
     );
-    const darkTrim = trackMat(
-      new THREE.MeshStandardMaterial({ color: '#171717', roughness: 0.65, metalness: 0.2 })
-    );
-    const chromeMat = trackMat(
-      new THREE.MeshStandardMaterial({ color: '#E2E8F0', roughness: 0.18, metalness: 0.92 })
-    );
-    const glassMat = trackMat(
-      new THREE.MeshPhysicalMaterial({
-        color: '#0F172A',
-        roughness: 0.08,
-        metalness: 0.25,
-        clearcoat: 1.0,
-      })
-    );
-    const headlightMat = trackMat(new THREE.MeshBasicMaterial({ color: '#FEF9C3' }));
+    const darkTrim = trackMat(new THREE.MeshStandardMaterial({ color: '#141414', roughness: 0.65, metalness: 0.2 }));
+    const chromeMat = trackMat(new THREE.MeshStandardMaterial({ color: '#E8EDF5', roughness: 0.14, metalness: 0.95 }));
+    const glassMat = trackMat(new THREE.MeshPhysicalMaterial({ color: '#16233B', roughness: 0.05, metalness: 0.3, clearcoat: 1.0, transparent: true, opacity: 0.92 }));
+    const headlightMat = trackMat(new THREE.MeshBasicMaterial({ color: '#FFF7C2' }));
     const taillightMat = trackMat(new THREE.MeshBasicMaterial({ color: '#FF2A2A' }));
+    const canvasTex = (w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) => {
+      const cv = document.createElement('canvas');
+      cv.width = w;
+      cv.height = h;
+      const g = cv.getContext('2d')!;
+      draw(g);
+      const tx = trackTex(new THREE.CanvasTexture(cv));
+      tx.colorSpace = THREE.SRGBColorSpace;
+      return tx;
+    };
 
-    // Custom crisp Blue Oval Ford-style emblem texture
-    const badgeCanvas = document.createElement('canvas');
-    badgeCanvas.width = 128;
-    badgeCanvas.height = 64;
-    const bctx = badgeCanvas.getContext('2d')!;
-    bctx.fillStyle = '#E2E8F0';
-    bctx.beginPath();
-    bctx.ellipse(64, 32, 60, 28, 0, 0, Math.PI * 2);
-    bctx.fill();
-    bctx.fillStyle = '#1D4ED8';
-    bctx.beginPath();
-    bctx.ellipse(64, 32, 54, 22, 0, 0, Math.PI * 2);
-    bctx.fill();
-    bctx.fillStyle = '#FFFFFF';
-    bctx.font = 'italic bold 26px Georgia, serif';
-    bctx.textAlign = 'center';
-    bctx.textBaseline = 'middle';
-    bctx.fillText('Ford', 64, 33);
-    const badgeTex = trackTex(new THREE.CanvasTexture(badgeCanvas));
-    badgeTex.colorSpace = THREE.SRGBColorSpace;
-    const badgeMat = trackMat(new THREE.MeshBasicMaterial({ map: badgeTex }));
+    // ── Body: one smooth side profile (nose at +X) extruded across the car with rounded edges ──
+    const prof = new THREE.Shape();
+    prof.moveTo(-1.5, 0.3);
+    prof.lineTo(1.5, 0.3);
+    prof.lineTo(1.52, 0.58);
+    prof.quadraticCurveTo(1.5, 0.74, 1.3, 0.78);
+    prof.lineTo(0.7, 0.9);
+    prof.quadraticCurveTo(0.45, 1.0, 0.22, 1.3);
+    prof.quadraticCurveTo(0.15, 1.38, 0.0, 1.38);
+    prof.lineTo(-0.55, 1.38);
+    prof.quadraticCurveTo(-0.78, 1.36, -0.95, 1.2);
+    prof.quadraticCurveTo(-1.1, 1.0, -1.35, 0.97);
+    prof.quadraticCurveTo(-1.52, 0.95, -1.52, 0.78);
+    prof.lineTo(-1.5, 0.3);
+    const bodyGeo = trackGeo(
+      new THREE.ExtrudeGeometry(prof, { depth: 1.22, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.07, bevelSegments: 4, curveSegments: 14 })
+    );
+    bodyGeo.translate(0, 0, -0.61);
+    const body = new THREE.Mesh(bodyGeo, redPaint);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
 
-    // Main lower red chassis body (nose at +X, trunk at -X)
-    const chassis = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(2.95, 0.52, 1.38)), redPaint);
-    chassis.position.set(0, 0.56, 0);
-    chassis.castShadow = true;
-    chassis.receiveShadow = true;
-    group.add(chassis);
+    // Greenhouse glass (a bit wider than the body so the windows read from the side)
+    const gl = new THREE.Shape();
+    gl.moveTo(-0.92, 1.0);
+    gl.lineTo(0.62, 0.99);
+    gl.quadraticCurveTo(0.4, 1.06, 0.2, 1.3);
+    gl.lineTo(0.0, 1.33);
+    gl.lineTo(-0.55, 1.33);
+    gl.quadraticCurveTo(-0.78, 1.3, -0.92, 1.0);
+    const glassGeo = trackGeo(new THREE.ExtrudeGeometry(gl, { depth: 1.34, bevelEnabled: false }));
+    glassGeo.translate(0, 0, -0.67);
+    const glass = new THREE.Mesh(glassGeo, glassMat);
+    group.add(glass);
+    // B-pillar
+    const pillar = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.07, 0.34, 1.36)), redPaint);
+    pillar.position.set(-0.2, 1.17, 0);
+    group.add(pillar);
 
-    // Sculpted sloped front hood
-    const hood = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.95, 0.16, 1.32)), redPaint);
-    hood.position.set(0.95, 0.84, 0);
-    hood.rotation.z = -0.1;
-    hood.castShadow = true;
-    group.add(hood);
+    // Dark wheel arches on both sides
+    for (const wx of [0.95, -0.95]) {
+      for (const sz of [0.705, -0.705]) {
+        const arch = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.38, 20)), darkTrim);
+        arch.position.set(wx, 0.34, sz);
+        arch.rotation.y = sz > 0 ? 0 : Math.PI;
+        group.add(arch);
+      }
+    }
 
-    // Roof cabin
-    const cabin = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(1.42, 0.48, 1.24)), redPaint);
-    cabin.position.set(-0.14, 1.04, 0);
-    cabin.castShadow = true;
-    group.add(cabin);
+    // Chrome bumpers with rubber strip, front and back
+    const bumperGeo = trackGeo(new THREE.CapsuleGeometry(0.075, 1.2, 6, 10));
+    for (const bx of [1.56, -1.56]) {
+      const bumper = new THREE.Mesh(bumperGeo, chromeMat);
+      bumper.rotation.x = Math.PI / 2;
+      bumper.position.set(bx, 0.36, 0);
+      bumper.castShadow = true;
+      group.add(bumper);
+    }
 
-    // Sloped front windshield & rear window
-    const windshield = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.56, 0.44, 1.18)), glassMat);
-    windshield.position.set(0.54, 1.02, 0);
-    windshield.rotation.z = 0.56;
-    group.add(windshield);
-
-    const rearGlass = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.46, 0.42, 1.18)), glassMat);
-    rearGlass.position.set(-0.84, 1.02, 0);
-    rearGlass.rotation.z = -0.52;
-    group.add(rearGlass);
-
-    // Side window strips
-    const sideWin = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(1.26, 0.34, 1.26)), glassMat);
-    sideWin.position.set(-0.14, 1.04, 0);
-    group.add(sideWin);
-
-    // Front bumper & black honeycomb grille
-    const frontBumper = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.18, 0.24, 1.44)), darkTrim);
-    frontBumper.position.set(1.48, 0.38, 0);
-    group.add(frontBumper);
-
-    const rearBumper = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.16, 0.24, 1.44)), darkTrim);
-    rearBumper.position.set(-1.48, 0.38, 0);
-    group.add(rearBumper);
-
-    const grille = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.08, 0.22, 0.72)), darkTrim);
-    grille.position.set(1.47, 0.62, 0);
+    // Front grille: dark panel with chrome bars and the oval badge
+    const grille = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.06, 0.2, 0.84)), darkTrim);
+    grille.position.set(1.585, 0.6, 0);
     group.add(grille);
-
-    // Blue Oval Ford emblem on nose & side doors so it's unmistakable from the 2.5D camera!
-    const frontBadge = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.28, 0.14)), badgeMat);
-    frontBadge.position.set(1.52, 0.64, 0);
+    for (let k = 0; k < 3; k++) {
+      const bar = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.07, 0.016, 0.8)), chromeMat);
+      bar.position.set(1.6, 0.54 + k * 0.06, 0);
+      group.add(bar);
+    }
+    const ovalTex = canvasTex(128, 64, (g) => {
+      g.fillStyle = '#E2E8F0';
+      g.beginPath();
+      g.ellipse(64, 32, 60, 28, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#1D4ED8';
+      g.beginPath();
+      g.ellipse(64, 32, 54, 22, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#FFFFFF';
+      g.font = 'italic bold 26px Georgia, serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText('Ford', 64, 33);
+    });
+    const badgeMat = trackMat(new THREE.MeshBasicMaterial({ map: ovalTex }));
+    const frontBadge = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.3, 0.15)), badgeMat);
+    frontBadge.position.set(1.64, 0.64, 0);
     frontBadge.rotation.y = Math.PI / 2;
     group.add(frontBadge);
-
-    const sideBadgeL = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.42, 0.21)), badgeMat);
-    sideBadgeL.position.set(0.18, 0.58, 0.702);
-    const sideBadgeR = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.42, 0.21)), badgeMat);
-    sideBadgeR.position.set(0.18, 0.58, -0.702);
+    const sideBadgeL = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.34, 0.17)), badgeMat);
+    sideBadgeL.position.set(0.9, 0.78, 0.69);
+    const sideBadgeR = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.34, 0.17)), badgeMat);
+    sideBadgeR.position.set(0.9, 0.78, -0.69);
     sideBadgeR.rotation.y = Math.PI;
     group.add(sideBadgeL, sideBadgeR);
 
-    // Bright headlights & taillights
-    const lightGeo = trackGeo(new THREE.BoxGeometry(0.08, 0.14, 0.26));
-    for (const sz of [-0.48, 0.48]) {
-      const hl = new THREE.Mesh(lightGeo, headlightMat);
-      hl.position.set(1.46, 0.64, sz);
-      const tl = new THREE.Mesh(lightGeo, taillightMat);
-      tl.position.set(-1.46, 0.64, sz);
-      group.add(hl, tl);
+    // Round headlights with chrome rings, taillights, number plates
+    const lampGeo = trackGeo(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 20));
+    const ringGeo = trackGeo(new THREE.TorusGeometry(0.115, 0.014, 8, 20));
+    for (const sz of [-0.46, 0.46]) {
+      const lamp = new THREE.Mesh(lampGeo, headlightMat);
+      lamp.rotation.z = Math.PI / 2;
+      lamp.position.set(1.54, 0.68, sz);
+      const ring = new THREE.Mesh(ringGeo, chromeMat);
+      ring.rotation.y = Math.PI / 2;
+      ring.position.set(1.57, 0.68, sz);
+      const tail = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.06, 0.12, 0.28)), taillightMat);
+      tail.position.set(-1.58, 0.72, sz);
+      group.add(lamp, ring, tail);
+    }
+    const plateTex = canvasTex(256, 96, (g) => {
+      g.fillStyle = '#FDE68A';
+      g.fillRect(0, 0, 256, 96);
+      g.strokeStyle = '#141414';
+      g.lineWidth = 6;
+      g.strokeRect(4, 4, 248, 88);
+      g.fillStyle = '#141414';
+      g.font = 'bold 54px sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText('CHET 12%', 128, 52);
+    });
+    const plateMat = trackMat(new THREE.MeshBasicMaterial({ map: plateTex }));
+    const plateF = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.42, 0.16)), plateMat);
+    plateF.position.set(1.65, 0.42, 0);
+    plateF.rotation.y = Math.PI / 2;
+    const plateB = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.42, 0.16)), plateMat);
+    plateB.position.set(-1.65, 0.5, 0);
+    plateB.rotation.y = -Math.PI / 2;
+    group.add(plateF, plateB);
+
+    // Door seams, handles, side mirrors
+    for (const sz of [0.705, -0.705]) {
+      for (const dx of [0.35, -0.7]) {
+        const seam = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.014, 0.5, 0.01)), darkTrim);
+        seam.position.set(dx, 0.78, sz);
+        group.add(seam);
+      }
+      for (const hx of [0.1, -0.95]) {
+        const handle = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.15, 0.03, 0.03)), chromeMat);
+        handle.position.set(hx, 0.9, sz);
+        group.add(handle);
+      }
+      const mirror = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.14, 0.1, 0.07)), redPaint);
+      mirror.position.set(0.5, 1.08, sz * 1.14);
+      group.add(mirror);
     }
 
-    // 4 spinning tires with silver alloy rims
-    const tireGeo = trackGeo(new THREE.CylinderGeometry(0.31, 0.31, 0.24, 18));
-    const rimGeo = trackGeo(new THREE.CylinderGeometry(0.18, 0.18, 0.255, 10));
-    const spokeGeo = trackGeo(new THREE.BoxGeometry(0.3, 0.04, 0.265));
+    // Roof rack carrying Chet's investment pitch
+    for (const rx of [-0.45, 0.2]) {
+      const post = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 6)), chromeMat);
+      post.position.set(rx, 1.5, 0);
+      group.add(post);
+    }
+    const signTex = canvasTex(512, 128, (g) => {
+      g.fillStyle = '#FACC15';
+      g.fillRect(0, 0, 512, 128);
+      g.fillStyle = '#141414';
+      for (let k = -2; k < 10; k++) {
+        g.beginPath();
+        g.moveTo(k * 60, 0);
+        g.lineTo(k * 60 + 30, 0);
+        g.lineTo(k * 60 + 10, 14);
+        g.lineTo(k * 60 - 20, 14);
+        g.fill();
+      }
+      g.font = 'bold 46px sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText('INVEST NOW', 256, 52);
+      g.fillStyle = '#B91C1C';
+      g.font = 'bold 36px sans-serif';
+      g.fillText('12% RETURNS*', 256, 98);
+    });
+    const signMat = trackMat(new THREE.MeshBasicMaterial({ map: signTex, side: THREE.DoubleSide }));
+    const sign = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.95, 0.24, 0.03)), [darkTrim, darkTrim, darkTrim, darkTrim, signMat, signMat]);
+    sign.position.set(-0.12, 1.66, 0);
+    sign.rotation.y = Math.PI / 2;
+    sign.scale.set(1.2, 1, 1);
+    group.add(sign);
+
+    // Exhaust pipe
+    const pipe = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.04, 0.045, 0.2, 10)), chromeMat);
+    pipe.rotation.z = Math.PI / 2;
+    pipe.position.set(-1.62, 0.28, 0.36);
+    group.add(pipe);
+
+    // 4 spinning wheels: tyre with sidewall, chrome rim, hub and spokes
+    const tireGeo = trackGeo(new THREE.CylinderGeometry(0.33, 0.33, 0.24, 24));
+    const rimGeo = trackGeo(new THREE.CylinderGeometry(0.2, 0.2, 0.255, 16));
+    const hubGeo = trackGeo(new THREE.CylinderGeometry(0.06, 0.06, 0.27, 10));
+    const spokeGeo = trackGeo(new THREE.BoxGeometry(0.34, 0.035, 0.265));
     const wheels: THREE.Group[] = [];
-    const wheelCoords = [
-      [0.92, 0.31, 0.66],
-      [0.92, 0.31, -0.66],
-      [-0.92, 0.31, 0.66],
-      [-0.92, 0.31, -0.66],
-    ];
-    for (const [wx, wy, wz] of wheelCoords) {
+    for (const [wx, wy, wz] of [
+      [0.95, 0.33, 0.62],
+      [0.95, 0.33, -0.62],
+      [-0.95, 0.33, 0.62],
+      [-0.95, 0.33, -0.62],
+    ]) {
       const wg = new THREE.Group();
       wg.position.set(wx, wy, wz);
       const tire = new THREE.Mesh(tireGeo, darkTrim);
@@ -890,8 +977,14 @@ export class PowerupDirector {
       tire.castShadow = true;
       const rim = new THREE.Mesh(rimGeo, chromeMat);
       rim.rotation.x = Math.PI / 2;
-      const spoke = new THREE.Mesh(spokeGeo, darkTrim);
-      wg.add(tire, rim, spoke);
+      const hub = new THREE.Mesh(hubGeo, darkTrim);
+      hub.rotation.x = Math.PI / 2;
+      wg.add(tire, rim, hub);
+      for (let k = 0; k < 3; k++) {
+        const sp = new THREE.Mesh(spokeGeo, darkTrim);
+        sp.rotation.z = (k * Math.PI) / 3;
+        wg.add(sp);
+      }
       wheels.push(wg);
       group.add(wg);
     }

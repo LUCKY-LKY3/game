@@ -79,9 +79,11 @@ export function startHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime) {
       break;
     case 'chet_ford':
       hero.action = 'powerup_chet';
-      hero.actionDuration = 2.45;
+      hero.actionDuration = 5.8;
+      hero.invulnTimer = 6.0;
       hero.callout = 'RED FORD RUNOVER!';
-      soundEngine.playCarHorn();
+      this.speechBubble = { side: hero.index === 0 ? 1 : 2, speaker: hero.profile.name, text: 'Gentlemen, a once-in-a-lifetime opportunity.' };
+      this.speechTimer = 1.8;
       break;
     case 'immy_girls':
       hero.action = 'powerup_immy_run';
@@ -330,7 +332,32 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
     once(512, 0.9, () => say(otherSide, 'Cousin', "Bhai, that's enough innuendo for one match.", 1.7));
     once(1024, 0.96, () => say(side, name, 'you know what bro just drop me off home', 1.4));
   } else if (hero.powerupKind === 'chet_ford') {
-    const car = this.powerupDirector.updateChetFord(phase, hero.powerupOriginX, tz, hero.facing);
+    const side = hero.index === 0 ? 1 : 2;
+    const otherSide = side === 1 ? 2 : 1;
+    const say = (s: 1 | 2, speaker: string, text: string, secs: number) => {
+      this.speechBubble = { side: s, speaker, text };
+      this.speechTimer = secs;
+    };
+    const once = (bit: number, at: number, fn: () => void) => {
+      if (phase > at && (hero.powerupHitsMask & bit) === 0) {
+        hero.powerupHitsMask |= bit;
+        fn();
+      }
+    };
+    // Bits 1..2^23 are used per cousin hit below; the script uses higher bits
+    once(1 << 24, 0.2, () => say(otherSide, 'Cousin', 'What is it?', 1.3));
+    once(1 << 25, 0.3, () => {
+      say(side, hero.profile.name, 'Zero risk. Twelve percent returns.', 1.5);
+      this.spawnComicPopup(hero.x, 2.3, hero.z, '+12%!', '#4ADE80');
+    });
+    once(1 << 26, 0.4, () => say(otherSide, 'Cousin', 'Mind if I light up?', 1.2));
+    once(1 << 27, 0.47, () => {
+      soundEngine.playCarHorn();
+      this.spawnComicPopup(hero.x, 2.3, hero.z, "DON'T SMOKE IN MY CAR!", '#F87171');
+      say(side, hero.profile.name, "Don't smoke in my car.", 1.6);
+    });
+    once(1 << 28, 0.62, () => soundEngine.playCarHorn());
+    const car = this.powerupDirector.updateChetFord(phase, hero.powerupOriginX, tz, hero.facing, { from: 0.5, to: 0.96 });
     if (car.carActive) {
       for (let i = 0; i < this.enemies.length; i++) {
         const e = this.enemies[i];
@@ -340,9 +367,12 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
           hero.powerupHitsMask |= bit;
           soundEngine.playCarCrash();
           this.damageEnemy(e, hero, 66, true, hero.facing * 3.5, 5.2, 'HONK HONK!');
+          this.spawnComicPopup(e.x, 2.7, e.z, 'COUSIN PLC ▼ -100%', '#F87171');
+          this.spawnComicPopup(e.x, 3.1, e.z, '+DIVIDEND!', '#FDE047');
         }
       }
     }
+    once(1 << 29, 0.97, () => say(side, hero.profile.name, 'Past performance is not a guarantee.', 1.7));
   } else if (hero.powerupKind === 'immy_girls') {
     const side = hero.index === 0 ? 1 : 2;
     const otherSide = side === 1 ? 2 : 1;
