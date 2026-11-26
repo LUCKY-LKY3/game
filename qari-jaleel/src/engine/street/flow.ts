@@ -243,7 +243,7 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
       this.endlessLastHp = this.heroes[0].hp + this.heroes[1].hp;
       if (this.endlessWave % 3 === 1) {
         // Offer Village Boon + celebratory High-Five every 3 waves!
-        this.highFiveTimer = 1.05;
+        this.highFiveTimer = CELEBRATE_SECS;
         this.highFiveChimePlayed = false;
       }
       this.announcement = `WAVE ${this.endlessWave}`;
@@ -275,7 +275,7 @@ export function updateZoneProgression(this: StreetBrawlEngine) {
       if (h.hp > 0) h.hp = Math.min(h.maxHp, h.hp + 20 + getMods(this.endlessMode).zoneHealBonus);
     });
     // Celebratory Zone-Clear Tag-Team High-Five before Boon Cards & flashing GO >>!
-    this.highFiveTimer = 1.05;
+    this.highFiveTimer = CELEBRATE_SECS;
     this.highFiveChimePlayed = false;
   }
 
@@ -411,6 +411,35 @@ export function finishRun(this: StreetBrawlEngine, victory: boolean) {
   this.onMatchFinish?.(victory ? 1 : 2);
 }
 
+const CELEBRATE_SECS = 1.6;
+const CELEBRATE_CALLS: Record<number, string> = {
+  2: 'BALLE BALLE!', 3: 'FLEX!', 4: 'DAB!', 5: 'THUMKA!', 6: 'NAMASTE!', 7: 'WOOO!',
+  8: 'TOO EASY.', 9: 'NEXT!', 10: 'RESPECT!', 11: 'MWAH!', 12: 'YAAAWN...',
+};
+/** Each fighter's own celebration routines (rig.celebrateKind, poses in fighterRig 'high_five') */
+const CELEBRATIONS: Record<string, number[]> = {
+  qari_jaleel: [6, 2, 7], // namaste bow, bhangra, spin
+  rebel_aviator: [3, 1, 2], // flex, chest bump, bhangra
+  rebel_tactician: [12, 8, 3], // yawn, arms folded, flex
+  rebel_enforcer: [9, 7, 2], // shadow boxing, spin, bhangra
+  rebel_striker: [10, 4, 7], // kung fu salute, dab, spin
+  rebel_shadow: [11, 5, 4], // blow a kiss, thumka, dab
+};
+function pickCelebrations(active: HeroRuntime, partner: HeroRuntime) {
+  if (partner.hp > 0 && Math.random() < 0.3) {
+    const k = Math.random() < 0.5 ? 0 : 1; // together: high five or chest bump
+    active.rig.celebrateKind = k;
+    partner.rig.celebrateKind = k;
+    return;
+  }
+  for (const h of [active, partner]) {
+    const list = CELEBRATIONS[h.profile.id] ?? [2, 3, 7];
+    let k = list[Math.floor(Math.random() * list.length)];
+    if (h === partner && k === active.rig.celebrateKind) k = list[(list.indexOf(k) + 1) % list.length];
+    h.rig.celebrateKind = k;
+  }
+}
+
 export function stepTagHighFive(this: StreetBrawlEngine, dt: number) {
   this.highFiveTimer = Math.max(0, this.highFiveTimer - dt);
   const active = this.getActiveHero();
@@ -418,30 +447,37 @@ export function stepTagHighFive(this: StreetBrawlEngine, dt: number) {
   const midX = THREE.MathUtils.clamp((active.x + partner.x) * 0.5, this.lockedMinX + 2.0, this.lockedMaxX - 2.0);
   const midZ = THREE.MathUtils.clamp((active.z + partner.z) * 0.5, -1.6, 1.4);
 
-  active.x = THREE.MathUtils.lerp(active.x, midX - 0.62, Math.min(1, dt * 8));
+  const gap = this.celebrationPicked && active.rig.celebrateKind > 1 ? 1.1 : 0.62; // solo routines need room
+  active.x = THREE.MathUtils.lerp(active.x, midX - gap, Math.min(1, dt * 8));
   active.z = THREE.MathUtils.lerp(active.z, midZ, Math.min(1, dt * 8));
   active.facing = 1;
+  if (!this.celebrationPicked) {
+    this.celebrationPicked = true;
+    pickCelebrations(active, partner);
+  }
+  const paired = active.rig.celebrateKind <= 1;
   active.action = 'high_five';
-  active.actionDuration = 1.05;
-  active.actionTime = 1.05 - this.highFiveTimer;
+  active.actionDuration = CELEBRATE_SECS;
+  active.actionTime = CELEBRATE_SECS - this.highFiveTimer;
 
   if (partner.hp > 0) {
-    partner.x = THREE.MathUtils.lerp(partner.x, midX + 0.62, Math.min(1, dt * 8));
+    partner.x = THREE.MathUtils.lerp(partner.x, midX + gap, Math.min(1, dt * 8));
     partner.z = THREE.MathUtils.lerp(partner.z, midZ, Math.min(1, dt * 8));
     partner.facing = -1;
     partner.action = 'high_five';
-    partner.actionDuration = 1.05;
-    partner.actionTime = 1.05 - this.highFiveTimer;
+    partner.actionDuration = CELEBRATE_SECS;
+    partner.actionTime = CELEBRATE_SECS - this.highFiveTimer;
   }
 
-  if (!this.highFiveChimePlayed && this.highFiveTimer <= 0.55) {
+  if (!this.highFiveChimePlayed && this.highFiveTimer <= CELEBRATE_SECS * 0.5) {
     this.highFiveChimePlayed = true;
     soundEngine.playHighFive();
     this.spawnParticles(midX, 1.65, midZ, 18, 4.2);
-    this.spawnComicPopup(midX, 2.25, midZ, 'TAG TEAM!', '#FACC15');
+    this.spawnComicPopup(midX, 2.25, midZ, paired ? (active.rig.celebrateKind === 1 ? 'CHEST BUMP!' : 'TAG TEAM!') : CELEBRATE_CALLS[active.rig.celebrateKind] ?? 'TAG TEAM!', '#FACC15');
   }
 
   if (this.highFiveTimer <= 0) {
+    this.celebrationPicked = false;
     active.action = 'idle';
     active.actionTime = 0;
     active.actionDuration = 0;

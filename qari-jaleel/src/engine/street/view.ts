@@ -41,7 +41,9 @@ export function renderAllRigs(this: StreetBrawlEngine, _dt: number) {
   for (let i = 0; i < 2; i++) {
     const h = this.heroes[i];
     const isActive = i === this.activeHeroIndex;
-    const targetYaw = h.facing === 1 ? Math.PI * 0.3 : -Math.PI * 0.3; // more toward camera so faces read
+    // more toward camera so faces read; solo celebrations face the camera almost fully
+    const solo = h.action === 'high_five' && h.rig.celebrateKind > 1;
+    const targetYaw = (h.facing === 1 ? 1 : -1) * Math.PI * (solo ? 0.08 : 0.3);
     h.visualYaw = THREE.MathUtils.damp(h.visualYaw, targetYaw, 14, _dt);
     if (h.landingSquashTimer > 0) {
       h.landingSquashTimer = Math.max(0, h.landingSquashTimer - _dt);

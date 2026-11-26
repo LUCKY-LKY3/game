@@ -163,6 +163,8 @@ export interface ArticulatedFighterRig {
   boxerParts: THREE.Object3D[];
   coverProps: THREE.Object3D[];
   coverKind: number;
+  /** zone-clear celebration routine for the 'high_five' action */
+  celebrateKind: number;
   /** Immy's Born To Run: true = keeps heart boxers on, false = bare with a censor prop */
   modest: boolean;
   stripLegs: { mat: THREE.MeshPhysicalMaterial; color: THREE.Color; map: THREE.Texture | null; bump: THREE.Texture | null; skinMap: THREE.Texture | null; on: boolean };
@@ -2442,6 +2444,7 @@ export function createFighterRig(
     boxerParts,
     coverProps,
     coverKind: 0,
+    celebrateKind: 0,
     modest: false,
     stripLegs: { mat: pantsMat, color: pantsMat.color.clone(), map: pantsMat.map, bump: pantsMat.bumpMap, skinMap: limbSkinMat.map, on: false },
     dispose,
@@ -4537,22 +4540,193 @@ export function applyFighterPose(
     }
 
     case 'high_five': {
-      // Celebratory zone-clear tag-team high-five & jump chest-bump!
+      // Zone-clear celebration. rig.celebrateKind picks the routine (see CELEBRATIONS in street/flow.ts)
       const p = Math.min(1, phase);
-      const jumpArc = Math.sin(p * Math.PI);
-      hipsY = 0.94 + jumpArc * 0.38;
-      torsoRotY = 0.36 * jumpArc;
-      torsoRotX = -0.1 * jumpArc;
-      rShX = -2.55 * Math.min(1, p * 2.2);
-      rShZ = 0.22;
-      rElX = -0.24;
-      lShX = -0.95;
-      lShZ = -0.35;
-      lElX = -1.15;
-      lHipX = -0.28 * jumpArc;
-      rHipX = 0.24 * jumpArc;
-      lKneeX = 0.55 * jumpArc;
-      rKneeX = 0.55 * jumpArc;
+      const arc = Math.sin(p * Math.PI);
+      const k = rig.celebrateKind;
+      if (k === 0) {
+        // Jump high five
+        hipsY = 0.94 + arc * 0.38;
+        torsoRotY = 0.36 * arc;
+        torsoRotX = -0.1 * arc;
+        rShX = -2.55 * Math.min(1, p * 2.2);
+        rShZ = 0.22;
+        rElX = -0.24;
+        lShX = -0.95;
+        lShZ = -0.35;
+        lElX = -1.15;
+        lHipX = -0.28 * arc;
+        rHipX = 0.24 * arc;
+        lKneeX = 0.55 * arc;
+        rKneeX = 0.55 * arc;
+      } else if (k === 1) {
+        // Chest bump: jump, chest out, arms flung back
+        hipsY = 0.94 + arc * 0.34;
+        torsoRotX = -0.4 * arc;
+        headRotX = -0.25 * arc;
+        lShX = 0.7 * arc;
+        lShZ = -0.7;
+        lElX = -0.3;
+        rShX = 0.7 * arc;
+        rShZ = 0.7;
+        rElX = -0.3;
+        lKneeX = 0.5 * arc;
+        rKneeX = 0.5 * arc;
+      } else if (k === 2) {
+        // Bhangra: hands to the sky, shoulders bouncing, knees kicking up in turn
+        const beat = Math.sin(time * 9);
+        const step = Math.sin(time * 4.5);
+        hipsY = 0.92 + Math.abs(beat) * 0.08;
+        lShX = -2.6;
+        lShZ = -0.55 - beat * 0.12;
+        lElX = -0.4;
+        rShX = -2.6;
+        rShZ = 0.55 + beat * 0.12;
+        rElX = -0.4;
+        lHipX = -1.0 * Math.max(0, step);
+        lKneeX = 0.3 + 1.3 * Math.max(0, step);
+        rHipX = -1.0 * Math.max(0, -step);
+        rKneeX = 0.3 + 1.3 * Math.max(0, -step);
+        headRotZ = beat * 0.2;
+        torsoRotY = step * 0.25;
+      } else if (k === 3) {
+        // Double bicep flex, turning side to side
+        hipsY = 0.94 + Math.abs(Math.sin(time * 6)) * 0.03;
+        lShX = -1.55;
+        lShZ = -1.25;
+        lElX = -1.95;
+        rShX = -1.55;
+        rShZ = 1.25;
+        rElX = -1.95;
+        torsoRotX = -0.12;
+        torsoRotY = Math.sin(time * 3) * 0.35;
+        headRotX = -0.15;
+      } else if (k === 4) {
+        // Dab
+        const d = Math.min(1, p * 4);
+        headRotX = 0.38 * d;
+        headRotY = 0.55 * d;
+        lShX = -2.2 * d;
+        lShZ = -0.95 * d;
+        lElX = -0.15;
+        rShX = -1.95 * d;
+        rShZ = -0.22;
+        rElX = -1.95;
+        torsoRotY = 0.3 * d;
+        hipsRotZ = -0.08 * d;
+      } else if (k === 5) {
+        // Thumka: hand on hip, other hand twirling up high, hips swaying
+        const sway = Math.sin(time * 6);
+        hipsX = sway * 0.1;
+        hipsRotZ = sway * 0.18;
+        lShX = -0.3;
+        lShZ = -0.75;
+        lElX = -1.6;
+        rShX = -2.6;
+        rShZ = 0.3 + Math.sin(time * 12) * 0.2;
+        rElX = -0.5;
+        headRotZ = -sway * 0.18;
+        lKneeX = 0.3 + Math.max(0, sway) * 0.4;
+        rKneeX = 0.3 + Math.max(0, -sway) * 0.4;
+      } else if (k === 6) {
+        // Namaste and a gracious bow
+        lShX = -1.35;
+        lShZ = 0.22;
+        lElX = -1.95;
+        rShX = -1.35;
+        rShZ = -0.22;
+        rElX = -1.95;
+        torsoRotX = 0.5 * arc;
+        headRotX = 0.3 * arc;
+        hipsRotX = 0.15 * arc;
+      } else if (k === 7) {
+        // Spin and fist pump
+        const spin = Math.min(1, p / 0.6);
+        hipsRotY = (spin * spin * (3 - 2 * spin)) * Math.PI * 2;
+        hipsY = 0.94 + arc * 0.25;
+        rShX = -2.7;
+        rShZ = 0.2;
+        rElX = -0.3 - Math.abs(Math.sin(time * 10)) * 0.8;
+        lShX = -0.9;
+        lShZ = -0.4;
+        lElX = -1.5;
+      } else if (k === 8) {
+        // Too easy: arms folded, leaning back, slow nod
+        lShX = -1.0;
+        lShZ = 0.12;
+        lElX = -1.95;
+        rShX = -1.0;
+        rShZ = -0.12;
+        rElX = -1.95;
+        torsoRotX = -0.12;
+        headRotX = Math.sin(time * 4) * 0.15;
+        headRotY = 0.3;
+        lHipX = -0.1;
+        rHipX = 0.1;
+      } else if (k === 9) {
+        // Shadow boxing: fast alternating jabs, bouncing on the toes
+        const s2 = Math.sin(time * 14);
+        hipsY = 0.9 + Math.abs(Math.sin(time * 7)) * 0.05;
+        lShX = s2 > 0 ? -1.65 : -1.0;
+        lElX = s2 > 0 ? -0.25 : -1.65;
+        lShZ = -0.2;
+        rShX = s2 < 0 ? -1.65 : -1.0;
+        rElX = s2 < 0 ? -0.25 : -1.65;
+        rShZ = 0.2;
+        torsoRotY = s2 * 0.28;
+        lKneeX = 0.5;
+        rKneeX = 0.5;
+      } else if (k === 10) {
+        // Kung fu salute, then crane stance
+        if (p < 0.45) {
+          lShX = -1.35;
+          lShZ = 0.22;
+          lElX = -1.9;
+          rShX = -1.35;
+          rShZ = -0.22;
+          rElX = -1.9;
+          torsoRotX = 0.3 * Math.sin((p / 0.45) * Math.PI);
+        } else {
+          lShX = -1.5;
+          lShZ = -1.15;
+          lElX = -0.2;
+          rShX = -2.5;
+          rShZ = 0.5;
+          rElX = -0.2;
+          lHipX = -1.15;
+          lKneeX = 1.7;
+          hipsY = 0.98;
+        }
+      } else if (k === 11) {
+        // Blow a kiss and wink
+        hipsRotZ = 0.12;
+        headRotZ = 0.2;
+        lShX = -0.35;
+        lShZ = -0.75;
+        lElX = -1.6;
+        if (p < 0.4) {
+          rShX = -1.6;
+          rShZ = -0.22;
+          rElX = -2.0;
+        } else {
+          rShX = -1.85;
+          rShZ = 0.6;
+          rElX = -0.2;
+        }
+        rKneeX = 0.6;
+      } else {
+        // Big lazy yawn and stretch, then slump
+        const up = p < 0.6 ? Math.sin((p / 0.6) * Math.PI * 0.5) : 1 - (p - 0.6) / 0.4;
+        hipsY = 0.94 + up * 0.05;
+        torsoRotX = -0.38 * up + 0.2 * (1 - up);
+        headRotX = -0.42 * up;
+        lShX = -0.5 - 2.2 * up;
+        lShZ = -0.6;
+        lElX = -0.3;
+        rShX = -0.5 - 2.2 * up;
+        rShZ = 0.6;
+        rElX = -0.3;
+      }
       break;
     }
   }
