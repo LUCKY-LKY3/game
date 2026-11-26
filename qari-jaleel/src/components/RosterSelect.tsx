@@ -127,6 +127,23 @@ export function RosterSelect({
           {isEndless ? 'Start Endless Mohalla' : isBrawl ? 'Start Street Brawl' : 'Start Match'}
         </button>
       </header>
+      {isBrawl && !isEndless && (
+        <div className="flex items-center justify-center gap-2 border-b border-[#F8F4EC]/12 py-1.5">
+          <span className="text-xs text-[#B6AA9A]">Difficulty:</span>
+          {(['novice', 'pehelwan', 'grandmaster'] as Difficulty[]).map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => onSelectDifficulty(d)}
+              className={`px-2.5 py-0.5 text-xs font-semibold transition-colors ${
+                difficulty === d ? 'bg-[#DC2626] text-white' : 'text-[#B6AA9A] hover:text-[#F8F4EC]'
+              }`}
+            >
+              {d === 'novice' ? 'Easy' : d === 'pehelwan' ? 'Normal' : 'Hard'}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="akhara-scroll min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 short:overflow-hidden short:p-2">
         <div className="mx-auto max-w-6xl space-y-6 short:flex short:h-full short:max-w-none short:gap-2 short:space-y-0">
@@ -243,7 +260,7 @@ export function RosterSelect({
                             : 'text-[#B6AA9A] hover:text-[#F8F4EC]'
                         }`}
                       >
-                        {d}
+                        {d === 'novice' ? 'Easy' : d === 'pehelwan' ? 'Normal' : 'Hard'}
                       </button>
                     ))}
                   </div>
@@ -442,7 +459,7 @@ export function RosterSelect({
                             : 'text-[#B6AA9A] hover:text-[#F8F4EC]'
                         }`}
                       >
-                        {d}
+                        {d === 'novice' ? 'Easy' : d === 'pehelwan' ? 'Normal' : 'Hard'}
                       </button>
                     ))}
                   </div>

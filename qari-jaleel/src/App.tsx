@@ -15,6 +15,7 @@ import {
   saveCustomFighter,
 } from './utils/storage';
 import { soundEngine } from './engine/sound';
+import { updateSettings, useSettings } from './utils/settings';
 import { ArenaCanvas, ArenaCanvasHandle } from './components/ArenaCanvas';
 import { CombatHud } from './components/CombatHud';
 import { TitleOverlay } from './components/TitleOverlay';
@@ -79,7 +80,8 @@ export default function App() {
 
   const [screen, setScreen] = useState<GameScreen>('TITLE');
   const [mode, setMode] = useState<GameMode>('street_brawl');
-  const [difficulty, setDifficulty] = useState<Difficulty>('pehelwan');
+  const difficulty = useSettings().difficulty;
+  const setDifficulty = useCallback((d: Difficulty) => updateSettings({ difficulty: d }), []);
   const [stageId, setStageId] = useState<StageId>('banyan_akhara');
 
   const [p1Id, setP1Id] = useState<string>(starterRoster[0].id);

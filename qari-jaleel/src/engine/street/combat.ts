@@ -260,6 +260,49 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
 }
 
 /** Damages a big fixed prop; on the final hit it shatters with debris, a popup and a little score. */
+/** Light frontal hits on a guarding cousin are blocked; anything heavy, a kick, a launcher or a hit from behind breaks the guard. */
+export function tryEnemyGuard(this: StreetBrawlEngine,
+  e: EnemyRuntime,
+  attacker: HeroRuntime | null,
+  damage: number,
+  heavy: boolean,
+  launchVy: number
+): 'none' | 'blocked' | 'broken' {
+  if (!attacker || !e.alive || e.action !== 'block') return 'none';
+  const front = (attacker.x - e.x) * e.facing > 0;
+  const a = String(attacker.action);
+  const breaker = heavy || launchVy >= 2.5 || a.includes('kick') || a === 'sweep' || a === 'throw_execute' || a === 'combo_finisher' || Boolean(attacker.heldWeapon);
+  if (!front || breaker) {
+    e.action = 'hitstun';
+    e.guardCooldown = 2.5;
+    soundEngine.playParryClang();
+    this.shakeIntensity = Math.max(this.shakeIntensity, 0.18);
+    return 'broken';
+  }
+  e.hp = Math.max(1, e.hp - Math.max(1, Math.round(damage * 0.1)));
+  e.hitFlash = 0.3;
+  e.blockedHits += 1;
+  attacker.comboCount = 0;
+  soundEngine.playBlock();
+  this.spawnParticles(e.x + e.facing * 0.45, 1.35, e.z, 5, 2.2);
+  this.spawnComicPopup(e.x, 1.95, e.z, 'BLOCKED!', '#9CA3AF');
+  this.hitstopTimer = Math.max(this.hitstopTimer, 0.03);
+  if (attacker.index === this.activeHeroIndex) this.addStyle('blocked');
+  if (e.blockedHits >= 2 && e.spec.archetype !== 'ranged') {
+    // Counter-attack straight out of the guard
+    e.blockedHits = 0;
+    e.guardCooldown = 3;
+    e.action = 'windup';
+    e.actionTime = 0;
+    e.actionDuration = [0.32, 0.24, 0.18][this.difficultyLevel];
+    e.hasHitThisSwing = false;
+    e.aiState = 'circle';
+    e.facing = attacker.x >= e.x ? 1 : -1;
+    this.spawnComicPopup(e.x, 2.35, e.z, 'COUNTER!', '#F87171');
+  }
+  return 'blocked';
+}
+
 export function smashPropFx(this: StreetBrawlEngine, sp: import('../streetStage').StreetSmashProp, dmg: number, dirX: number) {
   if (sp.broken) return;
   soundEngine.playWoodWhack();
@@ -300,6 +343,13 @@ export function damageEnemy(this: StreetBrawlEngine,
     }
     if (facingAttacker && !popupText) popupText = 'GUARD BREAK!';
   }
+  // Guarding cousins: light frontal hits get blocked (2 blocked hits = counter-attack); heavies, kicks, launchers and grabs break the guard
+  const guard = this.tryEnemyGuard(e, attacker, damage, heavy, launchVy);
+  if (guard === 'blocked') return;
+  if (guard === 'broken') {
+    damage = Math.round(damage * 1.35);
+    if (!popupText) popupText = 'GUARD BREAK!';
+  }
   e.hp = Math.max(0, e.hp - damage);
   e.hitFlash = 1.0;
   this.lastHitEnemyUid = e.uid;
@@ -318,7 +368,8 @@ export function damageEnemy(this: StreetBrawlEngine,
       this.stats.p2DamageDealt += damage;
       this.stats.p2MaxCombo = Math.max(this.stats.p2MaxCombo, attacker.comboCount);
     }
-    this.score += Math.round((damage * 4 + attacker.comboCount * 10) * this.scoreMult);
+    this.score += Math.round((damage * 4 + attacker.comboCount * 10) * this.scoreMult * this.styleMult());
+    if (attacker.index === this.activeHeroIndex) this.addStyle(guard === 'broken' ? 'guardbreak' : 'hit', String(attacker.action));
     // Dhol beat bonus: a hit that lands as the HUD ring closes (one per beat)
     if (getSettings().beatBonus) {
       const b = beatHit();
@@ -327,7 +378,8 @@ export function damageEnemy(this: StreetBrawlEngine,
         this.onBeatHits += 1;
         this.score += Math.round(30 * this.scoreMult);
         attacker.rage = Math.min(100, attacker.rage + 3);
-        this.spawnComicPopup(e.x, 2.6, e.z, 'ON BEAT!', '#38BDF8');
+        this.beatFlash = 0.45; // the HUD beat ring flashes instead of another popup
+        this.addStyle('beat');
       }
     }
   } else {
@@ -390,7 +442,7 @@ export function damageEnemy(this: StreetBrawlEngine,
     e.koFadeTimer = 1.5;
     this.totalDefeated += 1;
     if (e.spec.archetype === 'boss') this.bossesDefeated += 1;
-    this.score += Math.round(e.spec.scoreValue * this.scoreMult);
+    this.score += Math.round(e.spec.scoreValue * this.scoreMult * this.styleMult());
     this.maybeDropPickup(e);
     soundEngine.playKO();
     this.shakeIntensity = Math.max(this.shakeIntensity, 0.3);
@@ -466,12 +518,52 @@ export function damageEnemy(this: StreetBrawlEngine,
       return;
     }
 
+    // Wind-up armour: once a tougher cousin commits to a swing, light jabs won't cancel it (heavies, kicks and launchers still do)
+    const a = attacker ? String(attacker.action) : '';
+    const armourChance =
+      e.spec.archetype === 'thug' || e.spec.archetype === 'boss' || e.spec.speed <= 1.95
+        ? [0.35, 0.85, 1][this.difficultyLevel]
+        : [0, 0.55, 0.8][this.difficultyLevel];
+    if (
+      attacker &&
+      (e.action === 'windup' || e.action === 'attack') &&
+      !heavy &&
+      launchVy <= 2.5 &&
+      !a.includes('kick') &&
+      guard !== 'broken' &&
+      Math.random() < armourChance
+    ) {
+      e.vx = knockbackVx * 0.15;
+      this.spawnComicPopup(e.x, 2.15, e.z, 'NO FLINCH!', '#F87171');
+      return;
+    }
     e.action = launchVy > 2.5 ? 'knockdown' : 'hitstun';
     e.actionTime = 0;
-    e.actionDuration = launchVy > 2.5 ? 0.72 : 0.34;
+    e.actionDuration = launchVy > 2.5 ? 0.72 : guard === 'broken' ? 0.7 : [0.36, 0.28, 0.24][this.difficultyLevel];
     e.vx = knockbackVx;
     e.vy = launchVy;
     if (launchVy > 2.5) e.wallBounced = false;
+
+    // Mashing the same light hits? Tougher cousins shrug out of hitstun and raise their guard
+    if (attacker && launchVy <= 2.5 && !heavy && guard !== 'broken') {
+      e.lightStreak += 1;
+      e.lightStreakTimer = 1.4;
+      const arch = e.spec.archetype;
+      const need = arch === 'boss' ? 2 : arch === 'thug' ? 3 : arch === 'idiot' ? 5 : 99;
+      const chance = [0.25, 0.6, 0.85][this.difficultyLevel] * (arch === 'idiot' ? 0.5 : 1);
+      if (e.lightStreak >= need && e.guardCooldown <= 0 && !e.onBike && Math.random() < chance) {
+        e.lightStreak = 0;
+        e.action = 'block';
+        e.actionTime = 0;
+        e.actionDuration = 1.1;
+        e.blockedHits = 0;
+        e.vx = knockbackVx * 0.4;
+        e.facing = attacker.x >= e.x ? 1 : -1;
+        this.spawnComicPopup(e.x, 2.05, e.z, 'GUARD UP!', '#93C5FD');
+      }
+    } else {
+      e.lightStreak = 0;
+    }
   }
 }
 
@@ -484,7 +576,7 @@ export function checkHeroPickups(this: StreetBrawlEngine, hero: HeroRuntime) {
         const healTarget =
           hero.hp < hero.maxHp ? hero : this.getPartnerHero().hp > 0 ? this.getPartnerHero() : hero;
         const kadakMult = this.hasBoon('kadak_chai') ? 1.5 : 1.0;
-        const healAmt = Math.round(healTarget.maxHp * 0.35 * kadakMult);
+        const healAmt = Math.round(healTarget.maxHp * [0.35, 0.25, 0.18][this.difficultyLevel] * kadakMult);
         healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + healAmt);
         healTarget.recoverableHp = 0;
         if (this.hasBoon('kadak_chai')) {
@@ -567,6 +659,7 @@ export function executeSignatureFinisher(this: StreetBrawlEngine, hero: HeroRunt
 
   soundEngine.playFinisherImpact();
   this.finishersLanded += 1;
+  if (hero.index === this.activeHeroIndex) this.addStyle('finisher');
   hero.rage = Math.min(100, hero.rage + 26);
   this.noKnockdownCombo += 3;
   this.checkCrowdHypeDrops(hero);

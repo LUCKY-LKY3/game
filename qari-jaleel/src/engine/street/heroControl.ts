@@ -17,6 +17,7 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
   hero.trailHp = THREE.MathUtils.damp(hero.trailHp, hero.hp, 4.5, dt);
   hero.hitFlash = Math.max(0, hero.hitFlash - dt * 5);
   hero.invulnTimer = Math.max(0, hero.invulnTimer - dt);
+  hero.dodgeFatigue = Math.max(0, hero.dodgeFatigue - dt);
   hero.superArmorTimer = Math.max(0, hero.superArmorTimer - dt);
   hero.counterTimer = Math.max(0, hero.counterTimer - dt);
   if (hero.lpChainWindow > 0) {
@@ -411,6 +412,7 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
     this.clampHeroPosition(hero);
 
     if (hero.actionTime >= hero.actionDuration) {
+      if (HERO_MOVES[hero.action] && hero.hitIdsThisSwing.size === 0) this.onHeroWhiff(hero);
       hero.action = 'idle';
       hero.actionTime = 0;
       hero.actionDuration = 0;
@@ -771,10 +773,14 @@ export function performDodgeSidestep(this: StreetBrawlEngine, hero: HeroRuntime,
   this.releaseClinch(hero);
   hero.isSprinting = false;
   const dodgeDirZ = inp.up ? -1 : inp.down ? 1 : hero.z > 0 ? -1 : 1;
-  hero.z = THREE.MathUtils.clamp(hero.z + dodgeDirZ * 1.25, LANE_MIN_Z, LANE_MAX_Z);
+  // Dodge spam gets tired: the 2nd quick dodge is shorter, after that it barely protects you
+  const tired = hero.dodgeFatigue > [1.6, 1.0, 0.7][this.difficultyLevel];
+  hero.dodgeFatigue += 0.75;
+  hero.z = THREE.MathUtils.clamp(hero.z + dodgeDirZ * (tired ? 0.6 : 1.25), LANE_MIN_Z, LANE_MAX_Z);
   hero.vx = hero.facing * 2.2;
   hero.vz = 0;
-  hero.invulnTimer = 0.36;
+  hero.invulnTimer = tired ? 0.06 : hero.dodgeFatigue > 1 ? 0.22 : 0.36;
+  if (tired && hero.index === this.activeHeroIndex) this.spawnComicPopup(hero.x, 2.2, hero.z, 'OUT OF BREATH!', '#9CA3AF');
   hero.action = dodgeDirZ < 0 ? 'sidestep_in' : 'sidestep_out';
   hero.actionTime = 0;
   hero.actionDuration = 0.24;
@@ -816,6 +822,7 @@ export function hurlClinchedEnemy(this: StreetBrawlEngine, hero: HeroRuntime, ta
   hero.hitIdsThisSwing.clear();
   hero.hitIdsThisSwing.add(target.uid);
   hero.callout = 'BOWLING THROW!';
+  if (hero.index === this.activeHeroIndex) this.addStyle('throw');
   hero.calloutSeq++;
 
   // Launch enemy horizontally across the lane like a bowling ball!

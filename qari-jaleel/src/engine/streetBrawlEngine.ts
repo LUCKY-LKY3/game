@@ -20,6 +20,7 @@ import * as endlessExtras from './street/endlessExtras';
 import * as squadCombo from './street/squadCombo';
 import { getMods } from '../utils/upgrades';
 import * as view from './street/view';
+import * as style from './street/style';
 
 /**
  * True Double Dragon Tag-Team Village Street Brawl Engine:
@@ -74,6 +75,11 @@ export class StreetBrawlEngine {
   triggerSquadCombo = squadCombo.triggerSquadCombo;
   triggerAssistCombo = squadCombo.triggerAssistCombo;
   sayQuip = endlessExtras.sayQuip;
+  addStyle = style.addStyle;
+  stepStyle = style.stepStyle;
+  styleMult = style.styleMult;
+  tryEnemyGuard = combat.tryEnemyGuard;
+  onHeroWhiff = enemyAI.onHeroWhiff;
   maybeDropPickup = endlessExtras.maybeDropPickup;
   clearPickups = endlessExtras.clearPickups;
   updateEndlessExtras = endlessExtras.updateEndlessExtras;
@@ -133,6 +139,15 @@ export class StreetBrawlEngine {
   comboCooldown = 0;
   scareTimer = 0;
   onBeatHits = 0;
+  styleMeter = 0;
+  styleIdle = 0;
+  styleRecent: string[] = [];
+  bestStyle = 0;
+  styleLastHp = 0;
+  beatFlash = 0;
+  /** 0 easy, 1 normal, 2 hard (Endless is always normal) */
+  difficultyLevel: 0 | 1 | 2 = 1;
+  enemyDmgScale = 1.2;
   bossesDefeated = 0;
   perfectDodges = 0;
   comboTriggers = 0;
@@ -277,7 +292,9 @@ export class StreetBrawlEngine {
     this.isMobile = isMobile;
     this.endlessMode = endlessMode;
     this.endlessBestWave = loadArcadeRecords().endlessBestWave;
-    this.difficultyScale = difficulty === 'novice' ? 0.82 : difficulty === 'grandmaster' ? 1.25 : 1.0;
+    this.difficultyLevel = endlessMode ? 1 : difficulty === 'novice' ? 0 : difficulty === 'grandmaster' ? 2 : 1;
+    this.difficultyScale = [0.85, 1.1, 1.35][this.difficultyLevel];
+    this.enemyDmgScale = [0.8, 1.2, 1.5][this.difficultyLevel];
     this.powerupDirector = new PowerupDirector(scene);
 
     // Pre-allocated particle pool (zero GC in render loop)
@@ -568,6 +585,7 @@ export class StreetBrawlEngine {
       activeRingMat: ringMat,
       aiThinkTimer: 0.25,
       counterTimer: 0,
+      dodgeFatigue: 0,
       powerupKind: getPowerupKindForFighter(profile.id),
       powerupOriginX: x,
       powerupOriginZ: z,
@@ -613,6 +631,12 @@ export class StreetBrawlEngine {
     this.chatTimer = 6;
     this.comboCooldown = 0;
     this.onBeatHits = 0;
+    this.styleMeter = 0;
+    this.styleIdle = 0;
+    this.styleRecent = [];
+    this.bestStyle = 0;
+    this.styleLastHp = -1;
+    this.beatFlash = 0;
     this.bossesDefeated = 0;
     this.perfectDodges = 0;
     this.comboTriggers = 0;
@@ -959,6 +983,7 @@ export class StreetBrawlEngine {
     // Check zone wave progression, Endless Mohalla waves & Double Dragon GO >> unlock
     this.updateZoneProgression();
     this.updateEndlessExtras(dt);
+    this.stepStyle(dt);
 
     // Check squad defeat / auto-switch if active hero falls
     if (active.hp <= 0) {

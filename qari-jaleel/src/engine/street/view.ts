@@ -6,6 +6,7 @@ import { applyFighterPose } from '../fighterRig';
 import { applyThugPose } from '../villageThugs';
 import { HeroRuntime, EnemyRuntime } from './types';
 import { COMIC_POPUP_DURATION, COMIC_POPUP_MAX, STREET_ZONES, PARTICLE_POOL_SIZE } from './data';
+import { STYLE_GRADES, styleIndex } from './style';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 export function renderAllRigs(this: StreetBrawlEngine, _dt: number) {
@@ -406,6 +407,9 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
       bossIntroBanner: this.bossIntroBanner ? { ...this.bossIntroBanner } : null,
       dizzyPrompt,
       grabEscapePrompt,
+      styleGrade: STYLE_GRADES[styleIndex(this.styleMeter)],
+      styleFill: Math.round(this.styleMeter) / 100,
+      beatFlash: this.beatFlash > 0,
       bossPhase2Active: this.bossPhase2Triggered && Boolean(boss),
       scorecard: this.scorecard ? { ...this.scorecard } : null,
     },
@@ -461,7 +465,17 @@ export function spawnParticles(this: StreetBrawlEngine, x: number, y: number, z:
   }
 }
 
+const LOW_PRIORITY_POPUPS = new Set([
+  'DHISHUM!', 'BONK!', 'THAPPAD!', 'WATAAAH!', 'KHALLAS!', 'CLANG!', 'Zzz...',
+  'EEEEK!', 'MY EYES!', 'AAAAH!', 'NOOOO!', 'RUN!!', 'BAAP RE!', 'SO BIG!', 'WOW...', 'HE IS HUGE!', 'MAMA MIA!', 'ARMS?!',
+  'EEEEK!', 'AAAH!', 'OMG!!', 'KYAAA!', 'WOOHOO!',
+]);
+
 export function spawnComicPopup(this: StreetBrawlEngine, wx: number, wy: number, wz: number, text: string, color: string) {
+  // Tidy screen: small hit noises and crowd shouts give way when something more important is already showing
+  const fresh = this.popups.filter((o) => o.life > COMIC_POPUP_DURATION * 0.45);
+  if (LOW_PRIORITY_POPUPS.has(text) && fresh.length >= 1) return;
+  if (fresh.length >= 3) return;
   this._projVec.set(wx, wy, wz).project(this.camera);
   // Keep the whole word on screen and below the health bars / portraits at the top
   const halfW = Math.min(30, text.length * 0.7 + 2);

@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
 import { HeroRuntime, EnemyRuntime } from './types';
-import { LANE_MIN_Z, LANE_MAX_Z, triggerHaptic } from './data';
+import { HERO_MOVES, LANE_MIN_Z, LANE_MAX_Z, triggerHaptic } from './data';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 export function updateEnemies(this: StreetBrawlEngine, dt: number) {
@@ -217,6 +217,11 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
 
     e.x = THREE.MathUtils.clamp(e.x, this.lockedMinX - 1.5, this.lockedMaxX + 2.5);
     e.z = THREE.MathUtils.clamp(e.z, LANE_MIN_Z, LANE_MAX_Z);
+    if (e.guardCooldown > 0) e.guardCooldown -= dt;
+    if (e.lightStreakTimer > 0) {
+      e.lightStreakTimer -= dt;
+      if (e.lightStreakTimer <= 0) e.lightStreak = 0;
+    }
 
     // Clinched or Rear-Grabbing cousin is locked with hero
     if (e.action === 'clinched' || e.action === 'rear_grab') {
@@ -294,13 +299,13 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
           e.aiState = 'retreat';
           e.stateTimer = e.spec.archetype === 'boss' ? 0.45 : 0.65 + Math.random() * 0.35;
           e.aiCooldown =
-            e.spec.archetype === 'boss'
+            (e.spec.archetype === 'boss'
               ? 0.78
               : e.spec.archetype === 'ranged'
                 ? 1.9
                 : e.spec.speed >= 3.0
                   ? 0.85 + Math.random() * 0.45
-                  : 1.25 + Math.random() * 0.6;
+                  : 1.25 + Math.random() * 0.6) * [1.15, 0.75, 0.55][this.difficultyLevel];
         }
       } else if (e.actionTime >= e.actionDuration) {
         e.action = 'idle';
@@ -315,7 +320,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     if (
       partner.hp > 0 &&
       (active.hp <= 0 ||
-        Math.hypot(partner.x - e.x, partner.z - e.z) + 0.9 <
+        Math.hypot(partner.x - e.x, partner.z - e.z) + 2.2 <
           Math.hypot(active.x - e.x, active.z - e.z))
     ) {
       targetHero = partner;
@@ -381,7 +386,31 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     }
 
     // Strict Max-2-Attackers Slot Manager: only 2 enemies may engage/attack at once; the rest circle & wait!
-    const MAX_ATTACKERS = this.endlessMode && this.endlessWave >= 6 ? 3 : 2;
+    // Easy: 2 at once. Normal: 3 from Zone 2 / Endless wave 4. Hard: 3 always, 4 from Zone 3 / Endless wave 10.
+    const late = this.endlessMode ? this.endlessWave >= 4 : this.currentZoneIdx >= 1;
+    const later = this.endlessMode ? this.endlessWave >= 10 : this.currentZoneIdx >= 2;
+    const MAX_ATTACKERS = this.difficultyLevel === 0 ? 2 : this.difficultyLevel === 1 ? (late ? 3 : 2) : later ? 4 : 3;
+
+    // Readers: tougher cousins raise their guard when they see a swing coming
+    const heroSwing = HERO_MOVES[targetHero.action];
+    if (
+      heroSwing &&
+      !heroSwing.heavy &&
+      e.guardCooldown <= 0 &&
+      (e.spec.archetype === 'thug' || e.spec.archetype === 'boss') &&
+      e.aiState !== 'telegraph_pause' &&
+      Math.abs(targetHero.x - e.x) < 2.4 &&
+      Math.abs(targetHero.z - e.z) < 0.9 &&
+      (e.x - targetHero.x) * targetHero.facing > 0 &&
+      Math.random() < dt * [0.6, 1.6, 2.6][this.difficultyLevel]
+    ) {
+      e.action = 'block';
+      e.actionTime = 0;
+      e.actionDuration = 0.85;
+      e.blockedHits = 0;
+      e.guardCooldown = 1.6;
+      continue;
+    }
     let activeAttackers = 0;
     for (let k = 0; k < this.enemies.length; k++) {
       const o = this.enemies[k];
@@ -434,7 +463,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     e.stateTimer -= dt;
     const isFastEnemy = e.spec.speed >= 3.0;
     const isHeavyEnemy = e.spec.speed <= 1.95 || e.spec.archetype === 'boss';
-    const strikeReachX = e.spec.hasClub ? 1.82 : isHeavyEnemy ? 1.52 : 1.38;
+    const strikeReachX = (e.spec.hasClub ? 1.82 : isHeavyEnemy ? 1.52 : 1.38) + (this.difficultyLevel >= 1 ? 0.3 : 0);
 
     if (e.aiState === 'retreat') {
       const backX = targetHero.x - e.facing * (isFastEnemy ? 3.5 : 2.8);
@@ -496,16 +525,16 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
             e.action = 'windup';
             e.actionTime = 0;
             // Quick step-in lunge so strikes feel sharp (light cousins only)
-            if (!isHeavyEnemy && e.spec.archetype !== 'boss') e.vx += Math.sign(targetHero.x - e.x) * 2.6;
+            e.vx += Math.sign(targetHero.x - e.x) * (isHeavyEnemy || e.spec.archetype === 'boss' ? 1.6 : 2.6) * (1 + this.difficultyLevel * 0.2);
             // Distinct windup timings per fighting style (fast skirmisher vs slow heavy powerhouse)
             e.actionDuration =
-              e.spec.archetype === 'boss'
+              (e.spec.archetype === 'boss'
                 ? 0.52
                 : isHeavyEnemy
                   ? 0.48
                   : isFastEnemy
                     ? 0.34
-                    : 0.4;
+                    : 0.4) * [1.1, 0.85, 0.72][this.difficultyLevel];
             e.aiState = 'circle';
           }
         } else {
@@ -592,15 +621,16 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
 }
 
 export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
-  const reachX = e.spec.hasClub ? 2.15 : 1.68;
+  const reachX = (e.spec.hasClub ? 2.15 : 1.68) + [0, 0.2, 0.3][this.difficultyLevel];
   const reachZ = 0.9;
 
   for (let h = 0; h < 2; h++) {
     const hero = this.heroes[h];
     if (hero.hp <= 0) continue;
-    // PERFECT DODGE: sidestepping out of a swing that would have landed -> slow-mo + counter boost
+    // PERFECT DODGE: sidestepping out of a swing that would have landed -> slow-mo + counter boost (only early in the step, no mashing)
     if (
       (hero.action === 'sidestep_in' || hero.action === 'sidestep_out') &&
+      hero.actionTime <= 0.3 &&
       !e.hasHitThisSwing &&
       Math.abs(hero.x - e.x) <= (e.spec.hasClub ? 2.4 : 1.9) &&
       Math.abs(hero.z - e.z) <= 1.5
@@ -613,6 +643,7 @@ export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
       soundEngine.playParryClang();
       this.spawnComicPopup(hero.x, 2.05, hero.z, 'PERFECT DODGE!', '#38BDF8');
       this.spawnComicPopup(hero.x, 2.55, hero.z, 'HIT BACK NOW! x1.5', '#FDE047');
+      if (hero.index === this.activeHeroIndex) this.addStyle('dodge');
       this.sayQuip('dodge', 0.45);
       break;
     }
@@ -633,6 +664,7 @@ export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
         hero.actionTime = 0;
         hero.actionDuration = 0.24;
         hero.callout = 'PARRY!';
+        if (hero.index === this.activeHeroIndex) this.addStyle('parry');
         hero.calloutSeq++;
         e.action = 'hitstun';
         e.actionTime = 0;
@@ -911,4 +943,30 @@ export function updateAutoRickshaw(this: StreetBrawlEngine, dt: number) {
       soundEngine.playRickshawHorn();
     }
   }
+}
+
+/** A swing that hit nothing leaves you open: a nearby cousin may punish it */
+export function onHeroWhiff(this: StreetBrawlEngine, hero: HeroRuntime) {
+  if (hero.index !== this.activeHeroIndex || hero.invulnTimer > 0) return;
+  const chance = [0.15, 0.4, 0.7][this.difficultyLevel];
+  if (Math.random() > chance) return;
+  let best: EnemyRuntime | null = null;
+  let bestD = 2.9;
+  for (const e of this.enemies) {
+    if (!e.alive || e.onBike || e.spec.archetype === 'ranged' || e.actionDuration > 0 || e.action === 'dizzy') continue;
+    const d = Math.abs(e.x - hero.x);
+    if (d < bestD && Math.abs(e.z - hero.z) < 0.95) {
+      best = e;
+      bestD = d;
+    }
+  }
+  if (!best) return;
+  best.facing = hero.x >= best.x ? 1 : -1;
+  best.vx += best.facing * 2.4;
+  best.action = 'windup';
+  best.actionTime = 0;
+  best.actionDuration = [0.34, 0.26, 0.2][this.difficultyLevel];
+  best.hasHitThisSwing = false;
+  best.aiState = 'circle';
+  this.spawnComicPopup(best.x, 2.2, best.z, 'WHIFF! PUNISH!', '#F87171');
 }

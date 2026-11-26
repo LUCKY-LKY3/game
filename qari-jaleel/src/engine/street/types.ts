@@ -98,6 +98,8 @@ export interface HeroRuntime {
   activeRing: THREE.Mesh;
   activeRingMat: THREE.MeshBasicMaterial;
   counterTimer: number;
+  /** rises with each dodge, drains over time; a tired dodge gives almost no invulnerability */
+  dodgeFatigue: number;
   aiThinkTimer: number;
   powerupKind: PowerupKind;
   powerupOriginX: number;
@@ -142,6 +144,12 @@ export interface EnemyRuntime {
   burnOwnerIdx: 0 | 1;
   dizzyTimer: number;
   rearGrabCooldown: number;
+  /** light hits taken in a row (cousins raise their guard against button mashing) */
+  lightStreak: number;
+  lightStreakTimer: number;
+  /** hits soaked while guarding; at 2 they counter-attack */
+  blockedHits: number;
+  guardCooldown: number;
   specialCooldown: number;
   specialIdx: number;
   special: 'volley' | 'summon' | 'charge' | 'stomp' | null;

@@ -21,10 +21,11 @@ Two games live in this repo:
 - `?wave=N` starts Endless Mohalla at wave N (to test modifiers, bosses, new cousins).
 - `?foes=thali_tiwari,chintu` spawns those cousins in zone 1 wave 1 (any key from `VILLAGE_COUSIN_ROSTER`).
 - `?cousinlab` shows every cousin side by side (front + three-quarter) with Fady for comparison. Add `&only=bunty,golu` to pick, `&face` for head close-ups.
+- `?botdebug` exposes the Street/Endless engine as `window.__brawl` for Playwright bot playtests (read hero hp, style, enemies).
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.81.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.82.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -78,6 +79,13 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 - Immy's power move is now "Born To Run" (`powerup_immy_run` pose in `fighterRig.ts`, timeline in `powerups.ts`): he strips bare (leg cloth turns skin-coloured via `rig.stripLegs`, kurta flaps hidden) and runs a figure-eight behind a random cover-up (`rig.coverKind`: Harry's pizza box, steel thali, apple, or TV pixel mosaic), cousins flee and faint. The body model has no anatomical detail and is always covered. Settings toggle `immyModest` ("Immy wears boxers") swaps in heart boxers (`rig.modest`). 1v1 Arcade (`combatEngine.ts`) uses the same Born To Run and Ford scene (shorter Arcade versions of the street timelines). Test pose: `?headlab&body&only=5&action=powerup_immy_run&phase=0.5&t=0.3&cover=0`.
 - Dhol beat bonus (`utils/beat.ts`, ring in `CombatHud.tsx`): 100 BPM pulse independent of the music (the track's own beat is too loose to sync to). Hits landing as the ring closes give ON BEAT! (+30 score, +3 power, one per beat). Setting `beatBonus`.
 - Achievements/titles (`utils/achievements.ts`, `components/TitlesPanel.tsx` as a tab in the Hall of Fame): 20 silly achievements, each a title. `recordRun` runs in `flow.ts` `computeScorecard`. The equipped title shows on Hall of Fame rows; on the web Form it rides in the Fighter column as "Fady|Title".
+
+## Tougher combat (v1.0.82)
+- Difficulty is a persisted setting (`settings.difficulty`: novice/pehelwan/grandmaster shown as Easy/Normal/Hard) in Settings, on the Street Brawl roster bar and the Arcade picker. The engine maps it to `difficultyLevel` 0/1/2 (`streetBrawlEngine.ts`); Endless is always Normal. It scales cousin HP (`difficultyScale`), damage (`enemyDmgScale`), wind-up speed, cooldowns, reach, attackers at once (2 / 3 from Zone 2 / up to 4 on Hard), guard and punish chances, and chai healing.
+- Cousins fight back: mashing light hits makes thugs/bosses (and sometimes idiots) raise their guard (`block` ThugAction, pose in `villageThugs.ts`); blocked hits do 10% and two blocked hits trigger a COUNTER. Heavies, kicks, sweeps, throws, finishers, weapons or hits from behind cause GUARD BREAK (x1.35 dmg, long stun). Thugs also read your jabs and guard pre-emptively. Wind-up armour: light jabs often don't cancel a committed swing (NO FLINCH!). Whiffed swings can be punished (`onHeroWhiff` in `enemyAI.ts`). Logic in `combat.ts` (`tryEnemyGuard`, `damageEnemy`).
+- Dodge fatigue (`hero.dodgeFatigue`): spamming dodge quickly loses its invulnerability (OUT OF BREATH!). Perfect dodge only counts early in the sidestep.
+- Style grade D..S (`engine/street/style.ts`): mixing moves, dodges, parries, guard breaks, throws, finishers and on-beat hits fill it; repeats earn little, getting hit costs 30, it drains when idle. Multiplies score (x1..x2). Shown under the combo on the HUD; best grade on the results.
+- Pop-up tidy-up (`view.ts` `spawnComicPopup`): max 3 fresh pop-ups, low-priority hit noises and shouts drop when something else is showing; ON BEAT flashes the beat ring instead of text.
 
 ## Share card
 `utils/shareCard.ts` draws a 1200x630 funny result picture on a canvas (logo, hero portraits, wave/rank, score, equipped title, caption in a speech bubble). `components/ShareCard.tsx` shows it with Share (Web Share API with the file) and Save. Opened from the Share button on the Street Brawl / Endless results screen.

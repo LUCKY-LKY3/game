@@ -53,7 +53,7 @@ interface CombatHudProps {
 }
 
 /** Dhol beat ring: the outer ring closes in on the dot; hit as it lands for the ON BEAT bonus. */
-function BeatRing() {
+function BeatRing({ flash }: { flash: boolean }) {
   const ringRef = useRef<HTMLDivElement | null>(null);
   const dotRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -77,6 +77,7 @@ function BeatRing() {
   }, []);
   return (
     <div className="pointer-events-none fixed top-[13%] left-[calc(50%-5.2rem)] z-20 flex h-9 w-9 items-center justify-center" aria-hidden="true">
+      {flash && <div className="absolute h-9 w-9 animate-ping rounded-full bg-[#7DD3FC]/70" />}
       <div ref={ringRef} className="absolute h-5 w-5 rounded-full border-2 border-[#38BDF8]" />
       <div ref={dotRef} className="h-3 w-3 rounded-full bg-[#38BDF8]" />
     </div>
@@ -318,7 +319,7 @@ export function CombatHud({
       )}
 
       <TutorialHint />
-      {brawl && settings.beatBonus && hud.phase === 'FIGHTING' && <BeatRing />}
+      {brawl && settings.beatBonus && hud.phase === 'FIGHTING' && <BeatRing flash={brawl.beatFlash} />}
 
       {/* Live Comic Speech Bubble for Unique Powerups (e.g. Jam's snooker cue line, Jav's story) */}
       {hud.speechBubble && (
@@ -920,6 +921,21 @@ export function CombatHud({
               {activeHero.combo >= 2 && (
                 <div className="mt-2 font-display text-2xl font-black text-[#F59E0B] drop-shadow">
                   {activeHero.combo} HIT COMBO!
+                </div>
+              )}
+              {brawl.styleFill > 0 && (
+                <div className="mt-1 flex items-center justify-end gap-1.5" title="Style grade: mix moves, dodge, parry and break guards">
+                  <div className="h-1.5 w-14 overflow-hidden bg-[#141210]/80">
+                    <div className="h-full bg-gradient-to-r from-[#F59E0B] to-[#F472B6]" style={{ width: `${Math.round(brawl.styleFill * 100)}%` }} />
+                  </div>
+                  <span
+                    className={`font-display text-2xl leading-none font-black drop-shadow ${
+                      brawl.styleGrade === 'S' ? 'text-[#F472B6]' : brawl.styleGrade === 'A' ? 'text-[#FDE047]' : brawl.styleGrade === 'D' ? 'text-[#B6AA9A]' : 'text-[#F8F4EC]'
+                    }`}
+                    style={{ textShadow: '2px 2px 0 #141210' }}
+                  >
+                    {brawl.styleGrade}
+                  </span>
                 </div>
               )}
             </div>

@@ -8,6 +8,7 @@ import { createVillageThugRig, VILLAGE_COUSIN_ROSTER, VillageThugSpec } from '..
 import { soundEngine } from '../sound';
 import { StreetZoneConfig, HeroRuntime, EnemyRuntime } from './types';
 import { VILLAGE_BOON_POOL, STREET_ZONES } from './data';
+import { STYLE_GRADES } from './style';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 /** Endless wave plan: who comes, in what order, the twist (if any), plus banner text. Boss every 5th wave. */
@@ -96,7 +97,7 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       ...base,
       id: `${key}_${uid}`,
       maxHp: Math.round(base.maxHp * this.difficultyScale * waveScale),
-      damage: Math.max(4, Math.round(base.damage * this.difficultyScale * (dmgScale ?? Math.min(1.5, waveScale)))),
+      damage: Math.max(4, Math.round(base.damage * this.enemyDmgScale * (dmgScale ?? Math.min(1.5, waveScale)))),
       hasClub: armed || base.hasClub,
     };
     const rig = createVillageThugRig(spec);
@@ -145,6 +146,10 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       burnOwnerIdx: 0,
       dizzyTimer: 0,
       rearGrabCooldown: 5.5 + idx * 1.4,
+      lightStreak: 0,
+      lightStreakTimer: 0,
+      blockedHits: 0,
+      guardCooldown: 1 + Math.random(),
       specialCooldown: 3.2,
       specialIdx: 0,
       special: null,
@@ -369,6 +374,7 @@ export function computeScorecard(this: StreetBrawlEngine, victory: boolean): Bra
     cousinsRickshawed: this.cousinsRickshawed,
     flawlessWaves: this.flawlessWaves,
     onBeatHits: this.onBeatHits,
+    bestStyle: STYLE_GRADES[this.bestStyle],
     pickupsTaken: this.pickupsTaken,
     finishersLanded: this.finishersLanded,
     score: this.score,

@@ -18,7 +18,8 @@ export type ThugAction =
   | 'dizzy'
   | 'rear_grab'
   | 'boss_roar'
-  | 'boss_shockwave';
+  | 'boss_shockwave'
+  | 'block';
 
 export interface VillageThugSpec {
   id: string;
@@ -1488,6 +1489,18 @@ export function applyThugPose(
     rig.leftShoulder.rotation.set(0.35 * strike, 0, -0.35);
     rig.rightHip.rotation.x = -0.3 * strike;
     rig.leftHip.rotation.x = 0.25 * strike;
+  } else if (action === 'block') {
+    // Forearms crossed in front of the face, chin tucked, braced stance
+    rig.hips.position.y = 0.88;
+    rig.hips.position.z = -0.04;
+    rig.torso.rotation.x = 0.18;
+    rig.headGroup.rotation.x = 0.22;
+    rig.leftShoulder.rotation.set(-1.75, 0, 0.55);
+    rig.rightShoulder.rotation.set(-1.75, 0, -0.55);
+    rig.leftElbow.rotation.x = -1.55;
+    rig.rightElbow.rotation.x = -1.55;
+    rig.leftHip.rotation.x = 0.28;
+    rig.rightHip.rotation.x = -0.18;
   } else if (action === 'taunt') {
     const wiggle = Math.sin(time * 14);
     rig.hips.position.y = 0.92 + Math.abs(wiggle) * 0.07;

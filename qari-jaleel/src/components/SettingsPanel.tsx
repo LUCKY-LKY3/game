@@ -54,6 +54,25 @@ export function SettingsPanel() {
         </div>
       </Row>
 
+      <Row label="Difficulty (Brawl & Arcade)">
+        <div className="flex gap-1.5">
+          {(['novice', 'pehelwan', 'grandmaster'] as const).map((d, i) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => updateSettings({ difficulty: d })}
+              className={`h-9 border px-2.5 text-xs font-black transition-colors ${
+                s.difficulty === d
+                  ? 'border-[#F59E0B] bg-[#F59E0B] text-[#141210]'
+                  : 'border-[#F8F4EC]/20 bg-[#26211D] text-[#F8F4EC] hover:border-[#F59E0B]'
+              }`}
+            >
+              {['Easy', 'Normal', 'Hard'][i]}
+            </button>
+          ))}
+        </div>
+      </Row>
+
       <Row label="Auto-aim strikes">
         <Toggle on={s.autoAim} onLabel="On" offLabel="Off" onClick={() => updateSettings({ autoAim: !s.autoAim })} />
       </Row>
