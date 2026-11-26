@@ -42,8 +42,9 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
     (weapon ? (weapon.kind === 'chair' ? 18 : 12) + (isWeaponMaster ? 7 : 0) : 0) +
     (hero.style === 'kushti_pehelwan' && hero.action === 'rp' ? 6 : 0);
 
-  const effectiveRangeX = spec.rangeX + bonusRange;
-  const effectiveRangeZ = spec.rangeZ + (isBollywoodSlap || isKushtiShockwave ? 0.55 : 0);
+  // Hit boxes match what you see: ~0.82x the old reach, and a tighter lane depth
+  const effectiveRangeX = spec.rangeX * 0.82 + bonusRange * 0.8;
+  const effectiveRangeZ = spec.rangeZ * 0.72 + (isBollywoodSlap || isKushtiShockwave ? 0.4 : 0);
   const counterMul = (hero.counterTimer > 0 ? 1.5 : 1) * (hero.index === this.activeHeroIndex && this.gussaOn ? 1.3 : 1);
   const lazyMul = hero.style === 'lazy_giant' && (hero.action === 'lp' || hero.action === 'lp2' || hero.action === 'rp' || hero.action === 'combo_finisher') ? 1.9 : 1;
   const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul * lazyMul * getMods(this.endlessMode).damageMul);
@@ -135,7 +136,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
       ? Math.abs(signedDx) <= effectiveRangeX
       : isBackElbow
         ? signedDx <= 0.45 && signedDx >= -effectiveRangeX
-        : signedDx >= -0.45 && signedDx <= effectiveRangeX;
+        : signedDx >= -0.25 && signedDx <= effectiveRangeX;
 
     if (inRangeX && dz <= effectiveRangeZ) {
       hero.hitIdsThisSwing.add(e.uid);

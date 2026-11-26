@@ -597,6 +597,7 @@ export class StreetBrawlEngine {
       aiThinkTimer: 0.25,
       counterTimer: 0,
       dodgeFatigue: 0,
+      stepInLeft: 0,
       powerupKind: getPowerupKindForFighter(profile.id),
       powerupOriginX: x,
       powerupOriginZ: z,

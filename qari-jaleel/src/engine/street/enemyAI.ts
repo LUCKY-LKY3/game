@@ -643,7 +643,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
 
 export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
   const reachX = (e.spec.hasClub ? 2.15 : 1.68) + [0, 0.2, 0.3][this.difficultyLevel];
-  const reachZ = 0.9;
+  const reachZ = 0.78;
 
   for (let h = 0; h < 2; h++) {
     const hero = this.heroes[h];

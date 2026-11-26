@@ -389,6 +389,11 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
     }
 
     hero.actionTime += dt;
+    if (hero.stepInLeft > 0) {
+      const step = Math.min(hero.stepInLeft, 7 * dt);
+      hero.x += hero.facing * step;
+      hero.stepInLeft -= step;
+    }
     if (HERO_MOVES[hero.action]) {
       this.evaluateHeroAttackHits(hero);
     }
@@ -1034,6 +1039,20 @@ export function startHeroMove(this: StreetBrawlEngine, hero: HeroRuntime, move: 
   if (!isAerialOrDash) {
     hero.vx = 0;
     hero.vz = 0;
+  }
+  // Step-in: if a cousin is just out of reach in front, take a short step so the hit visibly connects
+  hero.stepInLeft = 0;
+  const reachSpec = HERO_MOVES[move];
+  if (reachSpec && !isAerialOrDash && !hero.heldWeapon) {
+    const reach = reachSpec.rangeX * 0.82;
+    let best = Infinity;
+    for (const o of this.enemies) {
+      if (!o.alive) continue;
+      const fx = (o.x - hero.x) * hero.facing;
+      if (fx > 0 && Math.abs(o.z - hero.z) < 0.8 && fx < best) best = fx;
+    }
+    const ideal = reach * 0.72;
+    if (best > ideal && best < reach + 0.75) hero.stepInLeft = Math.min(0.7, best - ideal);
   }
   if (
     move === 'kick' ||
