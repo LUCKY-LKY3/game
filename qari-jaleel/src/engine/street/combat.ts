@@ -329,6 +329,7 @@ export function damageEnemy(this: StreetBrawlEngine,
   launchVy: number,
   popupText?: string
 ) {
+  this.gagOnHit(e, Boolean(attacker));
   // Thali Tiwari's steel plate soaks up light frontal hits; heavy hits, launchers or flanking break through
   if (e.spec.trait === 'shield' && e.alive) {
     const facingAttacker = attacker ? (attacker.x - e.x) * e.facing > 0 : false;
@@ -554,6 +555,8 @@ export function damageEnemy(this: StreetBrawlEngine,
       this.spawnComicPopup(e.x, 2.15, e.z, 'NO FLINCH!', '#F87171');
       return;
     }
+    this.maybeSurrender(e);
+    if (launchVy > 2.5) this.maybeFlyChappal(e, Math.sign(knockbackVx || 1));
     e.action = launchVy > 2.5 ? 'knockdown' : 'hitstun';
     e.actionTime = 0;
     e.actionDuration = launchVy > 2.5 ? 0.72 : guard === 'broken' ? 0.7 : [0.36, 0.28, 0.24][this.difficultyLevel];

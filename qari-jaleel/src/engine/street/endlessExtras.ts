@@ -41,7 +41,13 @@ export function maybeDropPickup(this: StreetBrawlEngine, e: EnemyRuntime) {
   if (e.spec.trait === 'thief') kind = 'snack';
   else if (Math.random() < (lowHp ? 0.3 : 0.12) + getMods(this.endlessMode).dropBonus) kind = 'chai';
   else if (Math.random() < 0.1 + getMods(this.endlessMode).dropBonus) kind = 'snack';
-  if (!kind || this.pickups.length >= 3) return;
+  if (!kind) return;
+  this.spawnPickupAt(kind, e.x, e.z);
+}
+
+/** Drop a chai or samosa pickup on the street */
+export function spawnPickupAt(this: StreetBrawlEngine, kind: PickupKind, x: number, z: number) {
+  if (this.pickups.length >= 3) return;
   const mesh = new THREE.Group();
   const body = new THREE.Mesh(kind === 'chai' ? chaiGeo : snackGeo, kind === 'chai' ? chaiMat : snackMat);
   body.position.y = 0.55;
@@ -55,9 +61,9 @@ export function maybeDropPickup(this: StreetBrawlEngine, e: EnemyRuntime) {
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.03;
   mesh.add(ring);
-  mesh.position.set(e.x, 0, e.z);
+  mesh.position.set(x, 0, z);
   this.scene.add(mesh);
-  this.pickups.push({ kind, x: e.x, z: e.z, life: 11, mesh });
+  this.pickups.push({ kind, x, z, life: 11, mesh });
 }
 
 export function clearPickups(this: StreetBrawlEngine) {

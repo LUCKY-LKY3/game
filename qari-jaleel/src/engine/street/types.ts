@@ -155,6 +155,14 @@ export interface EnemyRuntime {
   banter: number;
   /** ground roll after a big knockdown landing (seconds left) */
   rollTimer: number;
+  /** comedy gag in progress (see street/gags.ts) */
+  gag: 'none' | 'chappal' | 'surrender' | 'argue' | 'samosa' | 'chai';
+  gagTimer: number;
+  gagX: number;
+  gagZ: number;
+  gagOther: number;
+  gagLeader: boolean;
+  gagUsed: number;
   guardCooldown: number;
   specialCooldown: number;
   specialIdx: number;

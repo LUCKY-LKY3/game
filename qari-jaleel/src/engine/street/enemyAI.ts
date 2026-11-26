@@ -340,6 +340,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     e.facing = targetHero.x >= e.x ? 1 : -1;
     e.aiCooldown -= dt;
     if (e.rearGrabCooldown > 0) e.rearGrabCooldown -= dt;
+    if (this.stepEnemyGag(e, dt)) continue;
 
     // Bade Tau Phase 2 Ground-Pound Shockwave AI cadence!
     if (e.spec.archetype === 'boss' && e.phase2Rage) {

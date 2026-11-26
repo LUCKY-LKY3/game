@@ -24,6 +24,7 @@ import * as style from './street/style';
 import * as challenges from './street/challenges';
 import * as bossDrama from './street/bossDrama';
 import * as practice from './street/practice';
+import * as gags from './street/gags';
 
 /**
  * True Double Dragon Tag-Team Village Street Brawl Engine:
@@ -88,6 +89,13 @@ export class StreetBrawlEngine {
   reviveCousin = enemyAI.reviveCousin;
   spawnDust = enemyAI.spawnDust;
   startPractice = practice.startPractice;
+  spawnPickupAt = endlessExtras.spawnPickupAt;
+  maybeFlyChappal = gags.maybeFlyChappal;
+  maybeSurrender = gags.maybeSurrender;
+  gagOnHit = gags.gagOnHit;
+  stepEnemyGag = gags.stepEnemyGag;
+  stepGags = gags.stepGags;
+  resetGags = gags.resetGags;
   practiceProgress = practice.practiceProgress;
   stepPractice = practice.stepPractice;
   practiceHud = practice.practiceHud;
@@ -173,6 +181,7 @@ export class StreetBrawlEngine {
   practiceNextAt = 0;
   sheepChargeTimer = 15;
   sheepVictimUid = -1;
+  gags = gags.makeGagState();
   speechQueue: { at: number; bubble: SpeechBubbleState; secs: number }[] = [];
   bossWarn: string | null = null;
   bossWarnTimer = 0;
@@ -642,6 +651,7 @@ export class StreetBrawlEngine {
 
   public restartMatch() {
     this.clearEnemies();
+    this.resetGags();
     this.stage.resetProps();
     this.powerupDirector.hideAll();
     this.stage.rickshaw.active = false;
@@ -1077,6 +1087,7 @@ export class StreetBrawlEngine {
     this.stepStyle(dt);
     this.stepChallenge(dt);
     this.stepPractice();
+    this.stepGags(dt);
 
     // Check squad defeat / auto-switch if active hero falls
     if (active.hp <= 0) {
