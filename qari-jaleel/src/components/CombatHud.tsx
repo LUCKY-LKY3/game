@@ -1049,14 +1049,17 @@ export function CombatHud({
 
       {/* CENTER ROUND / FIGHT / KO ANNOUNCER */}
       {hud.announcement && hud.phase !== 'MATCH_OVER' && (
-        <div className="pointer-events-none flex flex-col items-center justify-center text-center">
-          <div className="border-y border-[#F59E0B]/60 bg-[#141210]/90 px-10 py-3">
-            <div className="font-display text-5xl font-black tracking-wider text-[#F59E0B] sm:text-7xl">
-              {hud.announcement}
+        <div className="pointer-events-none fixed inset-x-0 top-[24%] z-30 flex justify-center">
+          <div key={hud.announcement + (hud.subAnnouncement ?? '')} className="zone-pop relative -skew-x-12">
+            <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 bg-[#141210]/80" />
+            <div className="relative border-l-4 border-[#FDE047] bg-gradient-to-r from-[#DC2626] via-[#EA580C] to-[#F59E0B] px-6 py-1.5 text-center shadow-[0_0_24px_rgba(245,158,11,0.35)]">
+              <div className="skew-x-12 font-display text-3xl leading-none font-black tracking-wider text-[#FFFBEB] sm:text-4xl" style={{ textShadow: '2px 2px 0 #7C2D12' }}>
+                {hud.announcement}
+              </div>
+              {hud.subAnnouncement && (
+                <div className="mt-0.5 skew-x-12 text-[10px] font-black tracking-[0.18em] text-[#FEF3C7] uppercase">{hud.subAnnouncement}</div>
+              )}
             </div>
-            {hud.subAnnouncement && (
-              <div className="mt-1 text-sm font-medium text-[#F8F4EC]">{hud.subAnnouncement}</div>
-            )}
           </div>
         </div>
       )}

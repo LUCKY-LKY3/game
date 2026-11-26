@@ -160,3 +160,11 @@
     text-align: center;
   }
 }
+
+/* Zone / wave / round banner: punches in, settles */
+@keyframes zone-pop-in {
+  0% { opacity: 0; transform: translateX(-40px) skewX(-12deg) scale(1.25); }
+  55% { opacity: 1; transform: translateX(4px) skewX(-12deg) scale(0.97); }
+  100% { opacity: 1; transform: translateX(0) skewX(-12deg) scale(1); }
+}
+.zone-pop { animation: zone-pop-in 0.38s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
