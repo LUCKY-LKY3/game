@@ -716,7 +716,8 @@ export function CombatHud({
               )}
             </div>
 
-            {/* CENTER: one-line wave/zone + score, utility buttons beside it */}
+            {/* CENTER: one-line wave/zone + score, utility buttons beside it, challenge chip under */}
+            <div className="flex flex-col items-center gap-0.5">
             <div className="flex items-start gap-1">
               <div className="bg-[#141210]/85 px-2 py-0.5 text-center">
                 <div className="font-mono-num text-[8px] font-bold tracking-[0.12em] text-[#F59E0B] uppercase whitespace-nowrap">
@@ -757,6 +758,19 @@ export function CombatHud({
                   <Gamepad2 className="h-3.5 w-3.5" />
                 </button>
               </div>
+            </div>
+
+            {brawl.challenge && (
+              <div
+                className={`max-w-[13rem] truncate px-1.5 py-0.5 text-[9px] font-black tracking-wide uppercase ${
+                  brawl.challenge.done ? 'bg-[#14532D]/90 text-[#86EFAC]' : 'bg-[#141210]/80 text-[#FDE68A]'
+                }`}
+              >
+                {brawl.challenge.done ? '✓ ' : '◎ '}
+                {brawl.challenge.label}
+                {!brawl.challenge.done && brawl.challenge.need > 1 ? ` ${brawl.challenge.have}/${brawl.challenge.need}` : ''}
+              </div>
+            )}
             </div>
 
             {/* RIGHT: CURRENT VILLAGE COUSIN / BOSS TARGET BAR (Clean Arcade — hidden when idle) */}

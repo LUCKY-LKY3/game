@@ -393,6 +393,27 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
 
     // Readers: tougher cousins raise their guard when they see a swing coming
     const heroSwing = HERO_MOVES[targetHero.action];
+    // ...and sidestep big, slow heavies they can see coming (so heavy-spam isn't a free guard break)
+    if (
+      heroSwing &&
+      heroSwing.heavy &&
+      targetHero.actionTime < 0.06 &&
+      e.guardCooldown <= 0 &&
+      e.spec.archetype !== 'boss' &&
+      !e.onBike &&
+      Math.abs(targetHero.x - e.x) < 2.4 &&
+      Math.abs(targetHero.z - e.z) < 0.9 &&
+      (e.x - targetHero.x) * targetHero.facing > 0 &&
+      Math.random() < [0, 0.18, 0.3][this.difficultyLevel] * (e.spec.speed >= 3 ? 1.5 : 1)
+    ) {
+      const dirZ = e.z > targetHero.z ? 1 : e.z < targetHero.z ? -1 : Math.random() < 0.5 ? 1 : -1;
+      e.z = THREE.MathUtils.clamp(e.z + dirZ * 1.0, LANE_MIN_Z, LANE_MAX_Z);
+      e.guardCooldown = 1.8;
+      e.action = 'idle';
+      e.aiState = 'circle';
+      this.spawnComicPopup(e.x, 2.1, e.z, 'DODGED!', '#93C5FD');
+      continue;
+    }
     if (
       heroSwing &&
       !heroSwing.heavy &&

@@ -415,6 +415,12 @@ export function MatchOverModal({
                 </div>
               )}
 
+              {(scorecard?.challengesDone ?? 0) > 0 && (
+                <div>
+                  <div className="text-xs text-[#B6AA9A]">Challenges</div>
+                  <div className="font-mono-num mt-1 text-2xl font-bold text-[#4ADE80]">{scorecard?.challengesDone}</div>
+                </div>
+              )}
               {scorecard?.bestStyle && (
                 <div>
                   <div className="text-xs text-[#B6AA9A]">Best Style</div>

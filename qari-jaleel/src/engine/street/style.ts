@@ -34,11 +34,13 @@ export function addStyle(this: StreetBrawlEngine, kind: 'hit' | 'dodge' | 'parry
   else if (kind === 'finisher') gain = 10;
   else if (kind === 'throw') gain = 7;
   else if (kind === 'blocked') gain = -6;
+  if (kind !== 'hit' && kind !== 'blocked') this.progressChallenge(kind);
   const before = styleIndex(this.styleMeter);
   this.styleMeter = Math.max(0, Math.min(100, this.styleMeter + gain));
   if (gain > 0) this.styleIdle = 0;
   const after = styleIndex(this.styleMeter);
   this.bestStyle = Math.max(this.bestStyle, after);
+  if (after >= 3) this.progressChallenge('style');
   if (after > before && after >= 2) {
     const h = this.getActiveHero();
     this.spawnComicPopup(h.x, 2.9, h.z, `STYLE ${STYLE_GRADES[after]}!`, after === 4 ? '#F472B6' : '#FDE047');
@@ -51,6 +53,15 @@ export function stepStyle(this: StreetBrawlEngine, dt: number) {
   const key = this.activeHeroIndex * 100000 + h.hp;
   if (this.styleLastHp >= 0 && Math.floor(this.styleLastHp / 100000) === this.activeHeroIndex && h.hp < (this.styleLastHp % 100000) - 4) {
     this.styleMeter = Math.max(0, this.styleMeter - 30);
+    this.progressChallenge('hurt');
+  }
+  // Desi Gussa: below 25% HP the active hero hits 30% harder (comeback)
+  const low = h.hp > 0 && h.hp < h.maxHp * 0.25;
+  if (low && !this.gussaOn) {
+    this.gussaOn = true;
+    this.spawnComicPopup(h.x, 2.6, h.z, 'DESI GUSSA! +30% DMG', '#EF4444');
+  } else if (!low && h.hp > h.maxHp * 0.35) {
+    this.gussaOn = false;
   }
   this.styleLastHp = key;
   this.styleIdle += dt;

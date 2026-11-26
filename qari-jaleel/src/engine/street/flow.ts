@@ -375,6 +375,7 @@ export function computeScorecard(this: StreetBrawlEngine, victory: boolean): Bra
     flawlessWaves: this.flawlessWaves,
     onBeatHits: this.onBeatHits,
     bestStyle: STYLE_GRADES[this.bestStyle],
+    challengesDone: this.challengesDone,
     pickupsTaken: this.pickupsTaken,
     finishersLanded: this.finishersLanded,
     score: this.score,

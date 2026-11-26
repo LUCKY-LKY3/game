@@ -246,6 +246,7 @@ export interface BrawlScorecard {
   coinsEarned?: number;
   onBeatHits?: number;
   bestStyle?: string;
+  challengesDone?: number;
   newTitles?: string[];
   flawlessWaves?: number;
   pickupsTaken?: number;
@@ -303,6 +304,7 @@ export interface StreetBrawlHudState {
   styleGrade: string;
   styleFill: number;
   beatFlash: boolean;
+  challenge: { label: string; have: number; need: number; done: boolean } | null;
   bossPhase2Active: boolean;
   scorecard: BrawlScorecard | null;
 }

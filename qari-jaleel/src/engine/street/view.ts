@@ -410,6 +410,7 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
       styleGrade: STYLE_GRADES[styleIndex(this.styleMeter)],
       styleFill: Math.round(this.styleMeter) / 100,
       beatFlash: this.beatFlash > 0,
+      challenge: this.challenge ? { label: this.challenge.label, have: this.challenge.have, need: this.challenge.need, done: this.challenge.done } : null,
       bossPhase2Active: this.bossPhase2Triggered && Boolean(boss),
       scorecard: this.scorecard ? { ...this.scorecard } : null,
     },
@@ -475,7 +476,7 @@ export function spawnComicPopup(this: StreetBrawlEngine, wx: number, wy: number,
   // Tidy screen: small hit noises and crowd shouts give way when something more important is already showing
   const fresh = this.popups.filter((o) => o.life > COMIC_POPUP_DURATION * 0.45);
   if (LOW_PRIORITY_POPUPS.has(text) && fresh.length >= 1) return;
-  if (fresh.length >= 3) return;
+  if (fresh.length >= 3 && text !== '!') return; // the attack warning always shows
   this._projVec.set(wx, wy, wz).project(this.camera);
   // Keep the whole word on screen and below the health bars / portraits at the top
   const halfW = Math.min(30, text.length * 0.7 + 2);

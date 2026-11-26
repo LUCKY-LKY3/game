@@ -21,6 +21,7 @@ import * as squadCombo from './street/squadCombo';
 import { getMods } from '../utils/upgrades';
 import * as view from './street/view';
 import * as style from './street/style';
+import * as challenges from './street/challenges';
 
 /**
  * True Double Dragon Tag-Team Village Street Brawl Engine:
@@ -78,6 +79,8 @@ export class StreetBrawlEngine {
   addStyle = style.addStyle;
   stepStyle = style.stepStyle;
   styleMult = style.styleMult;
+  stepChallenge = challenges.stepChallenge;
+  progressChallenge = challenges.progressChallenge;
   tryEnemyGuard = combat.tryEnemyGuard;
   onHeroWhiff = enemyAI.onHeroWhiff;
   maybeDropPickup = endlessExtras.maybeDropPickup;
@@ -145,6 +148,11 @@ export class StreetBrawlEngine {
   bestStyle = 0;
   styleLastHp = 0;
   beatFlash = 0;
+  challenge: challenges.ChallengeState | null = null;
+  challengeKey = '';
+  challengeNoHit = 0;
+  challengesDone = 0;
+  gussaOn = false;
   /** 0 easy, 1 normal, 2 hard (Endless is always normal) */
   difficultyLevel: 0 | 1 | 2 = 1;
   enemyDmgScale = 1.2;
@@ -637,6 +645,11 @@ export class StreetBrawlEngine {
     this.bestStyle = 0;
     this.styleLastHp = -1;
     this.beatFlash = 0;
+    this.challenge = null;
+    this.challengeKey = '';
+    this.challengeNoHit = 0;
+    this.challengesDone = 0;
+    this.gussaOn = false;
     this.bossesDefeated = 0;
     this.perfectDodges = 0;
     this.comboTriggers = 0;
@@ -984,6 +997,7 @@ export class StreetBrawlEngine {
     this.updateZoneProgression();
     this.updateEndlessExtras(dt);
     this.stepStyle(dt);
+    this.stepChallenge(dt);
 
     // Check squad defeat / auto-switch if active hero falls
     if (active.hp <= 0) {

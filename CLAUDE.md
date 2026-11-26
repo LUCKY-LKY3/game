@@ -25,7 +25,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.85.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.86.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -86,6 +86,11 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 - Dodge fatigue (`hero.dodgeFatigue`): spamming dodge quickly loses its invulnerability (OUT OF BREATH!). Perfect dodge only counts early in the sidestep.
 - Style grade D..S (`engine/street/style.ts`): mixing moves, dodges, parries, guard breaks, throws, finishers and on-beat hits fill it; repeats earn little, getting hit costs 30, it drains when idle. Multiplies score (x1..x2). Shown under the combo on the HUD; best grade on the results.
 - Pop-up tidy-up (`view.ts` `spawnComicPopup`): max 3 fresh pop-ups, low-priority hit noises and shouts drop when something else is showing; ON BEAT flashes the beat ring instead of text.
+
+## Challenges, comeback, sidesteps (v1.0.86)
+- `engine/street/challenges.ts`: one mini challenge per Street Brawl zone / Endless wave (throws, guard breaks, perfect dodges, parry, on-beat hits, finishers, reach style A, 20s no-hit). Progress comes from `addStyle` kinds and hits taken (`stepStyle`). Done = +750 score (x style) and +40 power. Chip under the score box; count on the results.
+- Desi Gussa: active hero below 25% HP deals +30% damage (`gussaOn`, set in `stepStyle`, used in `combat.ts` counterMul).
+- Cousins (not bosses) sometimes sidestep a heavy as it starts (DODGED!, Normal 18% / Hard 30%) so heavy spam isn't free. The red "!" attack warning bypasses the pop-up cap.
 
 ## Auto-rickshaw
 The passing hazard model is in `streetStage.ts` (search `CNG auto`): extruded green tub + cowl, curved yellow canvas roof, open sides with seats and a driver, chrome pillars, glass windscreen, spoked wheels (groups spun on Z in `enemyAI.ts` `updateAutoRickshaw`), DL plate, RAJA AUTO side decals and HORN OK PLEASE on the back.
