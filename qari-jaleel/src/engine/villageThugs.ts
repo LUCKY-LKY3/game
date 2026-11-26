@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { chappalFoot, fabricTexture, fistGroup, hashString, limbGeometry, makeFistGeos, makeFootGeos, ribbonGeometry, torsoGeometry } from './thugParts';
 import { applyWarmRimHighlight } from './fighterRig';
 
 export type ThugArchetype = 'idiot' | 'thug' | 'ranged' | 'biker' | 'boss';
@@ -491,15 +492,20 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
   );
   applyWarmRimHighlight(faceSkinMat, 0.22);
   faceSkinMat.userData.baseColor = new THREE.Color(spec.skinTone);
-  const shirtMat = trackFlashMat(
-    new THREE.MeshStandardMaterial({ color: spec.shirtColor, roughness: 0.84, metalness: 0.02 })
-  );
-  const pantsMat = trackFlashMat(
-    new THREE.MeshStandardMaterial({ color: spec.pantsColor, roughness: 0.86, metalness: 0.02 })
-  );
-  const gamchaMat = trackFlashMat(
-    new THREE.MeshStandardMaterial({ color: spec.gamchaColor, roughness: 0.82, metalness: 0.02 })
-  );
+  // Woven cotton clothes: each cousin gets a stable pattern from his name
+  const h = hashString(spec.name);
+  const shirtPattern = spec.archetype === 'idiot' ? (['plain', 'check', 'stripe'] as const)[h % 3] : spec.archetype === 'boss' ? 'plain' : (['plain', 'stripe'] as const)[h % 2];
+  const shirtTex = fabricTexture(spec.shirtColor, shirtPattern, spec.gamchaColor);
+  const pantsTex = fabricTexture(spec.pantsColor, spec.archetype === 'idiot' && h % 4 === 1 ? 'madras' : 'plain', '#F8F4EC');
+  const gamchaTex = fabricTexture(spec.gamchaColor, 'check', '#FFFFFF', 64);
+  textures.push(shirtTex, pantsTex, gamchaTex);
+  const shirtMat = trackFlashMat(new THREE.MeshStandardMaterial({ map: shirtTex, roughness: 0.86, metalness: 0.0 }));
+  const pantsMat = trackFlashMat(new THREE.MeshStandardMaterial({ map: pantsTex, roughness: 0.88, metalness: 0.0 }));
+  const gamchaMat = trackFlashMat(new THREE.MeshStandardMaterial({ map: gamchaTex, roughness: 0.84, metalness: 0.0, side: THREE.DoubleSide }));
+  const shirtTrimMat = trackFlashMat(new THREE.MeshStandardMaterial({ color: new THREE.Color(spec.shirtColor).multiplyScalar(0.72), roughness: 0.85 }));
+  const buttonMat = trackMat(new THREE.MeshStandardMaterial({ color: '#F5F0E6', roughness: 0.4 }));
+  const beltMat = trackMat(new THREE.MeshStandardMaterial({ color: '#2A1A10', roughness: 0.55, metalness: 0.1 }));
+  const strapMat = trackMat(new THREE.MeshStandardMaterial({ color: '#8B5A2B', roughness: 0.7 }));
   const hairMat = trackMat(
     new THREE.MeshStandardMaterial({ color: spec.hairColor, roughness: 0.88, metalness: 0.04 })
   );
@@ -552,61 +558,99 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
   bodyScale.add(hips);
 
   // Pelvis / Lungi wrap
-  const pelvis = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.22, 0.24, 0.26, 12)), pantsMat);
+  const pelvis = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.235, 0.215, 0.3, 18)), pantsMat);
+  pelvis.scale.set(1.1 + spec.bellyBulge * 0.5, 1, 0.82 + spec.bellyBulge * 0.6);
+  pelvis.position.y = 0.01;
   pelvis.castShadow = true;
   hips.add(pelvis);
+  if (spec.archetype !== 'idiot') {
+    const belt = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.245, 0.245, 0.055, 18, 1, true)), beltMat);
+    belt.scale.copy(pelvis.scale);
+    belt.position.y = 0.13;
+    const buckle = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.07, 0.05, 0.02)), goldMat);
+    buckle.position.set(0, 0.13, 0.205 * pelvis.scale.z + 0.01);
+    hips.add(belt, buckle);
+  }
 
   // Torso
   const torso = new THREE.Group();
   torso.position.y = 0.12;
   hips.add(torso);
 
-  const chest = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.24, 0.21, 0.56, 12)), shirtMat);
-  chest.position.y = 0.28;
-  chest.scale.set(1.08, 1, 0.82);
+  // One smooth torso with the belly built in (no more beach balls)
+  const chest = new THREE.Mesh(trackGeo(torsoGeometry(spec.bellyBulge)), shirtMat);
   chest.castShadow = true;
   chest.receiveShadow = true;
   torso.add(chest);
+  const frontZ = (y: number) => {
+    const g = Math.exp(-(((y - (0.17 - spec.bellyBulge * 0.12)) / (0.15 + spec.bellyBulge * 0.35)) ** 2));
+    return 0.229 * 0.78 + spec.bellyBulge * 1.3 * g;
+  };
 
-  // Loud colorful stripe / collar accent across chest
-  const stripe = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.245, 0.23, 0.1, 12)), gamchaMat);
-  stripe.position.y = 0.32;
-  stripe.scale.set(1.08, 1, 0.83);
-  torso.add(stripe);
-
-  // Comical protruding village pot-belly if bellyBulge > 0.04
-  if (spec.bellyBulge > 0.04) {
-    const belly = new THREE.Mesh(
-      trackGeo(new THREE.SphereGeometry(0.21 + spec.bellyBulge * 0.48, 14, 12)),
-      shirtMat
-    );
-    belly.position.set(0, 0.12, 0.1 + spec.bellyBulge * 0.35);
-    belly.scale.set(1.05, 0.94, 0.92);
-    belly.castShadow = true;
-    torso.add(belly);
+  // Shirt hem, collar, button placket
+  const hem = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.205, 0.018, 6, 22)), shirtTrimMat);
+  hem.rotation.x = Math.PI / 2;
+  hem.scale.set(1.12 + spec.bellyBulge * 0.4, 0.78 + spec.bellyBulge * 0.9, 1);
+  hem.position.y = -0.03;
+  torso.add(hem);
+  const collar = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.1, 0.026, 6, 16)), shirtTrimMat);
+  collar.rotation.x = Math.PI / 2;
+  collar.scale.set(1.1, 0.95, 1);
+  collar.position.y = 0.6;
+  torso.add(collar);
+  const placket = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.035, 0.2, 0.012)), shirtTrimMat);
+  placket.position.set(0, 0.47, frontZ(0.47) + 0.012);
+  placket.rotation.x = -0.25;
+  torso.add(placket);
+  const buttonGeo = trackGeo(new THREE.SphereGeometry(0.012, 6, 5));
+  for (const by of [0.52, 0.42, 0.3, 0.18, 0.06]) {
+    const btn = new THREE.Mesh(buttonGeo, buttonMat);
+    btn.position.set(0, by, frontZ(by) + 0.008);
+    torso.add(btn);
   }
 
-  // Draped village gamcha towel over shoulder for idiots & boss
-  const shoulderTowel = new THREE.Mesh(
-    trackGeo(new THREE.BoxGeometry(0.11, 0.44, 0.26)),
+  // Shoulder caps so arms join the body smoothly
+  const capGeo = trackGeo(new THREE.SphereGeometry(spec.archetype === 'idiot' ? 0.085 : 0.1, 12, 10));
+  for (const side of [-1, 1]) {
+    const capMesh = new THREE.Mesh(capGeo, spec.archetype === 'idiot' ? shirtMat : skinMat);
+    capMesh.position.set(side * 0.29, 0.5, 0);
+    capMesh.scale.set(1, 0.9, 0.95);
+    capMesh.castShadow = true;
+    torso.add(capMesh);
+  }
+
+  // Draped checked gamcha over the left shoulder, hanging down front and back
+  const zF = frontZ(0.36) + 0.02;
+  const gamcha = new THREE.Mesh(
+    trackGeo(
+      ribbonGeometry(
+        [
+          new THREE.Vector3(-0.15, 0.2, zF - 0.02),
+          new THREE.Vector3(-0.17, 0.42, zF),
+          new THREE.Vector3(-0.21, 0.6, 0.1),
+          new THREE.Vector3(-0.23, 0.63, -0.04),
+          new THREE.Vector3(-0.21, 0.5, -0.2),
+          new THREE.Vector3(-0.18, 0.22, -0.21),
+        ],
+        0.13
+      )
+    ),
     gamchaMat
   );
-  shoulderTowel.position.set(-0.19, 0.34, 0.03);
-  shoulderTowel.rotation.z = 0.14;
-  shoulderTowel.castShadow = true;
-  torso.add(shoulderTowel);
+  gamcha.castShadow = true;
+  torso.add(gamcha);
 
   // Heavy gold chain for thugs & Boss Bade Tau
   if (spec.archetype !== 'idiot') {
-    const chain = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.16, 0.022, 8, 16)), goldMat);
-    chain.position.set(0, 0.48, 0.12);
-    chain.rotation.x = Math.PI * 0.42;
+    const chain = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.15, 0.02, 8, 20)), goldMat);
+    chain.position.set(0, 0.5, 0.07);
+    chain.rotation.x = Math.PI * 0.36;
     torso.add(chain);
   }
 
   // Neck
-  const neck = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.085, 0.1, 0.15, 10)), skinMat);
-  neck.position.y = 0.61;
+  const neck = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.078, 0.1, 0.2, 12)), skinMat);
+  neck.position.y = 0.66;
   torso.add(neck);
 
   // ── HILARIOUS EXPRESSIVE 3D HEAD ────────────────────────────────────────────
@@ -778,32 +822,45 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
   }
 
   // ── ARTICULATED ARMS + OPTIONAL CLUB ────────────────────────────────────────
-  const upperArmGeo = trackGeo(new THREE.CapsuleGeometry(0.068, 0.24, 6, 8));
-  const foreArmGeo = trackGeo(new THREE.CapsuleGeometry(0.058, 0.22, 6, 8));
-  const fistGeo = trackGeo(new THREE.SphereGeometry(0.07, 8, 8));
+  const beefy = spec.archetype === 'idiot' ? 1 : 1.18;
+  const upperArmGeo = trackGeo(limbGeometry(0.072 * beefy, 0.06 * beefy, 0.27));
+  const foreArmGeo = trackGeo(limbGeometry(0.06 * beefy, 0.045 * beefy, 0.22));
+  const sleeveGeo = trackGeo(new THREE.CylinderGeometry(0.088, 0.083, 0.17, 14, 1, true));
+  const sleeveHemGeo = trackGeo(new THREE.TorusGeometry(0.084, 0.012, 6, 14));
+  const fistGeos = makeFistGeos(trackGeo);
+  const elbowCapGeo = trackGeo(new THREE.SphereGeometry(0.06 * beefy, 10, 8));
 
   const buildArm = (side: -1 | 1) => {
     const shoulder = new THREE.Group();
     shoulder.position.set(side * 0.31, 0.5, 0);
     torso.add(shoulder);
 
-    const upper = new THREE.Mesh(upperArmGeo, spec.archetype === 'idiot' ? shirtMat : skinMat);
-    upper.position.y = -0.15;
+    const upper = new THREE.Mesh(upperArmGeo, skinMat);
     upper.castShadow = true;
     shoulder.add(upper);
+    if (spec.archetype === 'idiot') {
+      // half sleeve
+      const sleeve = new THREE.Mesh(sleeveGeo, shirtMat);
+      sleeve.position.y = -0.07;
+      const sleeveHem = new THREE.Mesh(sleeveHemGeo, shirtTrimMat);
+      sleeveHem.rotation.x = Math.PI / 2;
+      sleeveHem.position.y = -0.155;
+      shoulder.add(sleeve, sleeveHem);
+    }
 
     const elbow = new THREE.Group();
     elbow.position.y = -0.31;
     shoulder.add(elbow);
 
+    const elbowCap = new THREE.Mesh(elbowCapGeo, skinMat);
+    elbow.add(elbowCap);
     const fore = new THREE.Mesh(foreArmGeo, skinMat);
-    fore.position.y = -0.13;
     fore.castShadow = true;
     elbow.add(fore);
 
-    const fist = new THREE.Mesh(fistGeo, skinMat);
-    fist.position.y = -0.27;
-    fist.castShadow = true;
+    const fist = fistGroup(fistGeos, skinMat);
+    fist.position.y = -0.22;
+    fist.scale.setScalar(beefy);
     elbow.add(fist);
 
     return { shoulder, elbow };
@@ -856,9 +913,12 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
   }
 
   // ── ARTICULATED LEGS ────────────────────────────────────────────────────────
-  const thighGeo = trackGeo(new THREE.CapsuleGeometry(0.088, 0.3, 6, 8));
-  const shinGeo = trackGeo(new THREE.CapsuleGeometry(0.068, 0.32, 6, 8));
-  const footGeo = trackGeo(new THREE.BoxGeometry(0.12, 0.075, 0.24));
+  const thighGeo = trackGeo(limbGeometry(0.105, 0.082, 0.4));
+  const shinGeo = trackGeo(limbGeometry(0.074, 0.052, 0.36));
+  const clothShinGeo = trackGeo(limbGeometry(0.086, 0.072, 0.36));
+  const shortsHemGeo = trackGeo(new THREE.TorusGeometry(0.098, 0.014, 6, 14));
+  const footGeos = makeFootGeos(trackGeo);
+  const kneeCapGeo = trackGeo(new THREE.SphereGeometry(0.084, 10, 8));
 
   const buildLeg = (side: -1 | 1) => {
     const hip = new THREE.Group();
@@ -866,7 +926,6 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
     hips.add(hip);
 
     const thigh = new THREE.Mesh(thighGeo, pantsMat);
-    thigh.position.y = -0.2;
     thigh.castShadow = true;
     hip.add(thigh);
 
@@ -874,14 +933,27 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
     knee.position.y = -0.42;
     hip.add(knee);
 
-    const shin = new THREE.Mesh(shinGeo, spec.archetype === 'idiot' ? skinMat : pantsMat);
-    shin.position.y = -0.2;
-    shin.castShadow = true;
-    knee.add(shin);
+    const kneeCap = new THREE.Mesh(kneeCapGeo, spec.archetype === 'idiot' ? skinMat : pantsMat);
+    kneeCap.scale.set(0.95, 0.9, 1);
+    knee.add(kneeCap);
 
-    const foot = new THREE.Mesh(footGeo, sandalMat);
-    foot.position.set(0, -0.41, 0.045);
-    foot.castShadow = true;
+    if (spec.archetype === 'idiot') {
+      // knee-length shorts: bare shins
+      const hemRing = new THREE.Mesh(shortsHemGeo, pantsMat);
+      hemRing.rotation.x = Math.PI / 2;
+      hemRing.position.y = -0.36;
+      hip.add(hemRing);
+      const shin = new THREE.Mesh(shinGeo, skinMat);
+      shin.castShadow = true;
+      knee.add(shin);
+    } else {
+      const shin = new THREE.Mesh(clothShinGeo, pantsMat);
+      shin.castShadow = true;
+      knee.add(shin);
+    }
+
+    const foot = chappalFoot(footGeos, skinMat, sandalMat, strapMat);
+    foot.position.set(0, -0.36, 0);
     knee.add(foot);
 
     return { hip, knee };
