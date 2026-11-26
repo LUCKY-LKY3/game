@@ -25,7 +25,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.95.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.96.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -104,6 +104,7 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 ## Fighting realism (v1.0.95)
 - Hit location: `damageEnemy` sets `e.rig.hitKind` (0/3 head snap left/right for jabs/hooks, 1 body for kicks/knees/finishers and some jabs, 2 legs for sweeps/axe kicks); `applyThugPose` hitstun has a pose per kind plus a two-step backward stagger. Sparks spawn at the contact point and height. Knocked-down cousins push up with their hands and a knee to stand. Heroes get head-snap/body-fold hit reactions (`rig.hitKind`, set in `checkEnemyAttackHit`).
 - Combo scaling: damage x(1 - 0.05 per hit after 4, min 0.6); hitstun 0.75x after 8 hits; airborne cousins can only be re-launched weakly (no endless juggles).
+- Arcade 1v1 / Local 2P (`combatEngine.ts`, v1.0.96) match this: `rig.hitKind` reactions per hit location, contact-point sparks, juggle limit, step-in (`stepInLeft`), dodge fatigue, and smarter AI (blocks more vs repeated moves via `repeatCount`, punishes whiffs via `whiffTimer`, GUARD COUNTER out of block via `counterReady`). It already had body pushbox and combo scaling.
 - Body collision: heroes and cousins push apart (`enemyAI.ts`, before cousin separation; cousin gives 75%, boss 40%).
 
 ## Street gags (v1.0.94)

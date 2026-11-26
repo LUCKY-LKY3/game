@@ -273,6 +273,16 @@ interface FighterRuntime {
   calloutSeq: number;
   aiThinkTimer: number;
   aiGoal: 'approach' | 'retreat' | 'pressure' | 'guard' | 'sidestep';
+  /** short lunge toward the opponent at the start of a strike */
+  stepInLeft: number;
+  dodgeFatigue: number;
+  /** same move repeated (the AI blocks mashers more) */
+  lastMove: CombatAction | null;
+  repeatCount: number;
+  /** a strike just missed: open to punishment */
+  whiffTimer: number;
+  /** just blocked a hit: may counter-attack out of guard */
+  counterReady: number;
 }
 
 interface Particle {
@@ -472,6 +482,12 @@ export class AkharaCombatEngine {
       calloutSeq: 0,
       aiThinkTimer: 0.25,
       aiGoal: 'approach',
+      stepInLeft: 0,
+      dodgeFatigue: 0,
+      lastMove: null,
+      repeatCount: 0,
+      whiffTimer: 0,
+      counterReady: 0,
     };
   }
 
@@ -610,8 +626,31 @@ export class AkharaCombatEngine {
 
     const aggro =
       this.difficulty === 'grandmaster' ? 0.82 : this.difficulty === 'pehelwan' ? 0.58 : 0.34;
+    // Mashing the same move makes the AI read it and block more
     const blockChance =
-      this.difficulty === 'grandmaster' ? 0.72 : this.difficulty === 'pehelwan' ? 0.48 : 0.22;
+      (this.difficulty === 'grandmaster' ? 0.72 : this.difficulty === 'pehelwan' ? 0.48 : 0.22) +
+      Math.min(0.35, opp.repeatCount * 0.1);
+    const lvl = this.difficulty === 'grandmaster' ? 2 : this.difficulty === 'pehelwan' ? 1 : 0;
+
+    // Punish a missed swing, or counter straight out of a successful guard
+    if (dist < 2.2 && dz < 0.85 && this.phase === 'FIGHTING') {
+      if (opp.whiffTimer > 0 && Math.random() < [0.2, 0.5, 0.8][lvl] * dt * 12) {
+        opp.whiffTimer = 0;
+        const r = Math.random();
+        if (r < 0.5) inp.lpPressed = true;
+        else if (r < 0.8) inp.kickPressed = true;
+        else inp.rpPressed = true;
+        this.pushCallout(ai, 'PUNISH!');
+        return inp;
+      }
+      if (ai.counterReady > 0 && Math.random() < [0.15, 0.45, 0.75][lvl] * dt * 12) {
+        ai.counterReady = 0;
+        ai.aiGoal = 'pressure';
+        inp.lpPressed = true;
+        this.pushCallout(ai, 'GUARD COUNTER!');
+        return inp;
+      }
+    }
 
     if (ai.aiThinkTimer <= 0) {
       ai.aiThinkTimer =
@@ -769,8 +808,11 @@ export class AkharaCombatEngine {
     // 3. Z-Axis 2.5D Tekken Sidestep Dodge
     if (inp.sidestepPressed && f.y <= 0.02) {
       const stepOut = f.z < 0.25 ? 1 : -1;
-      f.vz = stepOut * 4.8;
-      f.invulnTimer = 0.22;
+      const tired = f.dodgeFatigue > 1.0;
+      f.dodgeFatigue += 0.75;
+      f.vz = stepOut * (tired ? 2.6 : 4.8);
+      f.invulnTimer = tired ? 0.04 : 0.22;
+      if (tired) this.pushCallout(f, 'OUT OF BREATH!');
       soundEngine.playWhoosh(1.45);
       this.spawnParticles(f.x, 0.12, f.z, 6, '#C88D60', 1.8, 0.85);
       this.startAction(f, stepOut > 0 ? 'sidestep_out' : 'sidestep_in', 0.3);
@@ -893,9 +935,14 @@ export class AkharaCombatEngine {
       spec.height !== 'throw' &&
       spec.height !== 'low';
 
-    const impactX = (attacker.x + defender.x) * 0.5;
-    const impactY = spec.height === 'low' ? 0.35 : 1.25;
-    const impactZ = (attacker.z + defender.z) * 0.5;
+    // Where it lands: low = legs, kicks/finishers = body, punches = head (snapping left or right)
+    const a = attacker.action;
+    const hitKind =
+      spec.height === 'low' ? 1 : /kick|finisher|knee/.test(a) ? 1 : a === 'rp' || a === 'lp2' ? 3 : Math.random() < 0.35 ? 1 : 0;
+    defender.rig.hitKind = hitKind;
+    const impactX = defender.x - attacker.facing * 0.32;
+    const impactY = defender.y + (spec.height === 'low' ? 0.4 : hitKind === 1 ? 1.1 : 1.6);
+    const impactZ = defender.z;
 
     if (isBlocking) {
       const chip = spec.height === 'super' ? 4 : Math.max(1, Math.round(spec.damage * 0.14));
@@ -910,6 +957,7 @@ export class AkharaCombatEngine {
       defender.rage = Math.min(100, defender.rage + 6);
       this.hitstopTimer = spec.hitstop * 0.55;
       this.pushCallout(defender, 'GUARDED');
+      defender.counterReady = 0.45;
       soundEngine.playBlock();
       this.spawnParticles(impactX, impactY, impactZ, 8, '#0D9488', 2.8, 0.9);
       return;
@@ -999,7 +1047,8 @@ export class AkharaCombatEngine {
 
     defender.vx = attacker.facing * spec.knockbackX * 2.6;
     if (spec.launchY > 0) {
-      defender.vy = spec.launchY;
+      // already airborne: gravity wins, no endless juggles
+      defender.vy = defender.y > 0.25 ? Math.min(spec.launchY, Math.max(0, 3.4 - defender.y * 2)) : spec.launchY;
     }
 
     const causesKnockdown =
@@ -1527,6 +1576,27 @@ export class AkharaCombatEngine {
     if (f.chainWindow > 0) f.chainWindow = Math.max(0, f.chainWindow - dt);
     if (f.hitFlash > 0) f.hitFlash = Math.max(0, f.hitFlash - dt * 5.2);
     if (f.invulnTimer > 0) f.invulnTimer = Math.max(0, f.invulnTimer - dt);
+    f.dodgeFatigue = Math.max(0, f.dodgeFatigue - dt);
+    f.whiffTimer = Math.max(0, f.whiffTimer - dt);
+    f.counterReady = Math.max(0, f.counterReady - dt);
+
+    // New strike this frame: note repeats, and take a short step in if the opponent is just out of reach
+    const moveSpec = MOVE_DATA[f.action];
+    if (moveSpec && f.actionTimer <= dt + 1e-6 && f.action !== 'rage_art') {
+      f.repeatCount = f.lastMove === f.action ? f.repeatCount + 1 : 0;
+      f.lastMove = f.action;
+      f.stepInLeft = 0;
+      const front = (opp.x - f.x) * f.facing;
+      const reach = moveSpec.rangeX;
+      if (f.y <= 0.02 && front > reach * 0.72 && front < reach + 0.6 && Math.abs(opp.z - f.z) < 0.7) {
+        f.stepInLeft = Math.min(0.6, front - reach * 0.72);
+      }
+    }
+    if (f.stepInLeft > 0) {
+      const step = Math.min(f.stepInLeft, 7 * dt);
+      f.x += f.facing * step;
+      f.stepInLeft -= step;
+    }
 
     if (f.comboResetTimer > 0) {
       f.comboResetTimer -= dt;
@@ -1551,6 +1621,7 @@ export class AkharaCombatEngine {
       f.action === 'victory';
 
     if (!isLoopingState && f.actionTimer >= f.actionDuration) {
+      if (MOVE_DATA[f.action] && !f.hasHitCurrentMove && f.action !== 'rage_art') f.whiffTimer = 0.45;
       if (f.action === 'knockdown') {
         f.invulnTimer = 0.45;
         this.startAction(f, 'wakeup', 0.34);
