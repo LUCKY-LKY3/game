@@ -25,7 +25,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.87.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.88.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -91,6 +91,9 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 - `engine/street/challenges.ts`: one mini challenge per Street Brawl zone / Endless wave (throws, guard breaks, perfect dodges, parry, on-beat hits, finishers, reach style A, 20s no-hit). Progress comes from `addStyle` kinds and hits taken (`stepStyle`). Done = +750 score (x style) and +40 power. Chip under the score box; count on the results.
 - Desi Gussa: active hero below 25% HP deals +30% damage (`gussaOn`, set in `stepStyle`, used in `combat.ts` counterMul).
 - Cousins (not bosses) sometimes sidestep a heavy as it starts (DODGED!, Normal 18% / Hard 30%) so heavy spam isn't free. The red "!" attack warning bypasses the pop-up cap.
+
+## Speech bubbles
+Bubbles are anchored above the speaker: `speechAnchor` in `view.ts` (Street/Endless: hero by profile name, cousin by `spec.name`, generic "Cousin"/"Cousin 2" sticks to the nearest cousin for that line) and `bubbleAnchor` in `combatEngine.ts` (1v1, by side). The HUD (20 Hz) places them at `xPct/yPct` with a 90 ms CSS glide; falls back to left/right side if no anchor. Linger factor is `realDt * 0.85`.
 
 ## Auto-rickshaw
 The passing hazard model is in `streetStage.ts` (search `CNG auto`): extruded green tub + cowl, curved yellow canvas roof, open sides with seats and a driver, chrome pillars, glass windscreen, spoked wheels (groups spun on Z in `enemyAI.ts` `updateAutoRickshaw`), DL plate, RAJA AUTO side decals and HORN OK PLEASE on the back.

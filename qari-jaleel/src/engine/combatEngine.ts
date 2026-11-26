@@ -352,6 +352,8 @@ export class AkharaCombatEngine {
   private powerupDirector: PowerupDirector;
   private activePowerup: ActivePowerupSession | null = null;
   private speechBubble: SpeechBubbleState | null = null;
+  private lastCamera: THREE.PerspectiveCamera | null = null;
+  private bubbleVec = new THREE.Vector3();
   private speechBubbleTimer = 0;
   private chatterTimer = 6;
 
@@ -1619,6 +1621,7 @@ export class AkharaCombatEngine {
     camera: THREE.PerspectiveCamera
   ) {
     const clampedDt = Math.min(rawDt, 0.05);
+    this.lastCamera = camera;
     if (this.paused) return;
 
     this.elapsed += clampedDt;
@@ -1882,7 +1885,7 @@ export class AkharaCombatEngine {
       p2: toHud(this.p2),
       stats: { ...this.stats },
       rageFlashSide: this.rageFlashSide,
-      speechBubble: this.speechBubble ? { ...this.speechBubble } : null,
+      speechBubble: this.speechBubble ? { ...this.speechBubble, ...this.bubbleAnchor() } : null,
     };
   }
 
@@ -1892,4 +1895,17 @@ export class AkharaCombatEngine {
     this.particleGeo.dispose();
     this.particleMat.dispose();
   }
+
+  /** Screen spot above the fighter who is talking */
+  private bubbleAnchor(): { xPct?: number; yPct?: number } {
+    const b = this.speechBubble;
+    if (!b || !this.lastCamera) return {};
+    const f = b.side === 1 ? this.p1 : this.p2;
+    this.bubbleVec.set(f.x, f.y + 2.45, f.z).project(this.lastCamera);
+    return {
+      xPct: Math.round(THREE.MathUtils.clamp((this.bubbleVec.x * 0.5 + 0.5) * 100, 14, 86) * 10) / 10,
+      yPct: Math.round(THREE.MathUtils.clamp((-this.bubbleVec.y * 0.5 + 0.5) * 100, 22, 62) * 10) / 10,
+    };
+  }
+
 }

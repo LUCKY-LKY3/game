@@ -345,7 +345,7 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
     p2: toHud(this.heroes[1]),
     stats: { ...this.stats },
     rageFlashSide: this.rageFlashSide,
-    speechBubble: this.speechBubble ? { ...this.speechBubble } : null,
+    speechBubble: this.speechBubble ? { ...this.speechBubble, ...this.speechAnchor() } : null,
     comedyTimer: this.comedyTimer,
     streakMult: this.endlessMode ? this.scoreMult : 1,
     brawl: {
@@ -515,4 +515,36 @@ export function spawnComicPopup(this: StreetBrawlEngine, wx: number, wy: number,
   while (this.popups.length > COMIC_POPUP_MAX) {
     this.popups.shift();
   }
+}
+
+/** Where the current speech bubble should sit: above whoever is talking (hero, named cousin, or a nearby cousin) */
+export function speechAnchor(this: StreetBrawlEngine): { xPct?: number; yPct?: number } {
+  const b = this.speechBubble;
+  if (!b) return {};
+  let pos: { x: number; y: number; z: number; h: number } | null = null;
+  const hero = this.heroes.find((h) => h.profile.name === b.speaker);
+  if (hero) pos = { x: hero.x, y: hero.y, z: hero.z, h: 2.45 };
+  if (!pos) {
+    const named = this.enemies.find((e) => e.alive && e.spec.name.toLowerCase() === b.speaker.toLowerCase());
+    if (named) pos = { x: named.x, y: named.y, z: named.z, h: named.spec.archetype === 'boss' ? 2.9 : 2.35 };
+  }
+  if (!pos && /cousin|crowd|aunty|uncle/i.test(b.speaker)) {
+    // Generic "Cousin" lines: stick to one nearby cousin for the whole line instead of jumping around
+    const key = b.speaker + '|' + b.text;
+    let e = this.enemies.find((o) => o.uid === this.speechAnchorUid && o.alive);
+    if (key !== this.speechAnchorKey || !e) {
+      const lead = this.getActiveHero();
+      const alive = this.enemies.filter((o) => o.alive).sort((p, q) => Math.abs(p.x - lead.x) - Math.abs(q.x - lead.x));
+      e = alive[/2$/.test(b.speaker) ? Math.min(1, alive.length - 1) : 0];
+      this.speechAnchorKey = key;
+      this.speechAnchorUid = e ? e.uid : -1;
+    }
+    if (e) pos = { x: e.x, y: e.y, z: e.z, h: 2.35 };
+  }
+  if (!pos) return {};
+  this._projVec.set(pos.x, pos.y + pos.h, pos.z).project(this.camera);
+  return {
+    xPct: Math.round(THREE.MathUtils.clamp((this._projVec.x * 0.5 + 0.5) * 100, 14, 86) * 10) / 10,
+    yPct: Math.round(THREE.MathUtils.clamp((-this._projVec.y * 0.5 + 0.5) * 100, 22, 62) * 10) / 10,
+  };
 }

@@ -323,7 +323,27 @@ export function CombatHud({
       {brawl && settings.beatBonus && hud.phase === 'FIGHTING' && <BeatRing flash={brawl.beatFlash} />}
 
       {/* Live Comic Speech Bubble for Unique Powerups (e.g. Jam's snooker cue line, Jav's story) */}
-      {hud.speechBubble && (
+      {hud.speechBubble && (hud.speechBubble.xPct !== undefined ? (
+        // Anchored above whoever is talking; glides between HUD updates so it never jitters
+        <div
+          className="pointer-events-none fixed z-30"
+          style={{
+            left: `${hud.speechBubble.xPct}%`,
+            top: `${hud.speechBubble.yPct}%`,
+            transform: 'translate(-50%, -100%)',
+            transition: 'left 90ms linear, top 90ms linear',
+          }}
+        >
+          <div
+            key={`${hud.speechBubble.speaker}-${hud.speechBubble.text}`}
+            className="bubble-pop relative w-max max-w-[13rem] rounded-2xl bg-[#FFFDF8] px-3 py-1.5 text-[#141210] shadow-[0_4px_14px_rgba(0,0,0,0.4)] sm:max-w-[16rem]"
+          >
+            <div className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">{hud.speechBubble.speaker}</div>
+            <div className="text-[13px] font-semibold leading-tight [text-wrap:balance] sm:text-[15px]">{hud.speechBubble.text}</div>
+            <div className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 bg-[#FFFDF8]" />
+          </div>
+        </div>
+      ) : (
         <div
           key={`${hud.speechBubble.speaker}-${hud.speechBubble.text}`}
           className={`pointer-events-none fixed top-[24%] z-30 flex w-full px-5 sm:top-[22%] ${
@@ -331,20 +351,11 @@ export function CombatHud({
           }`}
         >
           <div className="bubble-pop relative max-w-[14rem] rounded-2xl bg-[#FFFDF8] px-3 py-1.5 text-[#141210] shadow-[0_4px_14px_rgba(0,0,0,0.4)] sm:max-w-[17rem]">
-            <div className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">
-              {hud.speechBubble.speaker}
-            </div>
-            <div className="text-[13px] font-semibold leading-tight [text-wrap:balance] sm:text-[15px]">
-              {hud.speechBubble.text}
-            </div>
-            <div
-              className={`absolute -bottom-1 h-2.5 w-2.5 rotate-45 bg-[#FFFDF8] ${
-                hud.speechBubble.side === 1 ? 'left-6' : 'right-6'
-              }`}
-            />
+            <div className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#B45309]">{hud.speechBubble.speaker}</div>
+            <div className="text-[13px] font-semibold leading-tight [text-wrap:balance] sm:text-[15px]">{hud.speechBubble.text}</div>
           </div>
         </div>
-      )}
+      ))}
 
       {/* Endless no-hit streak chip */}
       {hud.streakMult !== undefined && hud.streakMult > 1 && (

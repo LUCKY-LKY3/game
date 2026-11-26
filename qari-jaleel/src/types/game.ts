@@ -193,6 +193,9 @@ export interface SpeechBubbleState {
   side: 1 | 2;
   speaker: string;
   text: string;
+  /** Screen position (percent) of the speaker's head, filled in by the HUD snapshot */
+  xPct?: number;
+  yPct?: number;
 }
 
 export type BrawlWeaponKind = 'lathi' | 'chair' | 'chai' | 'stool' | 'coconut';

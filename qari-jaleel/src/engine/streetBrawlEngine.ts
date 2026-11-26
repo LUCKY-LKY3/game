@@ -94,6 +94,7 @@ export class StreetBrawlEngine {
   stepTagHighFive = flow.stepTagHighFive;
   checkCrowdHypeDrops = flow.checkCrowdHypeDrops;
   renderAllRigs = view.renderAllRigs;
+  speechAnchor = view.speechAnchor;
   updateCamera = view.updateCamera;
   updateParticles = view.updateParticles;
   spawnParticles = view.spawnParticles;
@@ -245,6 +246,8 @@ export class StreetBrawlEngine {
   rageFlashTimer = 0;
   speechBubble: SpeechBubbleState | null = null;
   speechTimer = 0;
+  speechAnchorKey = '';
+  speechAnchorUid = -1;
   comedyTimer: string | null = null;
   // Saf's bear hug: the victim is carried in his arms and squeezed like a squeaky toy
   hugVictimUid: number | null = null;
@@ -853,7 +856,7 @@ export class StreetBrawlEngine {
       if (this.rageFlashTimer <= 0) this.rageFlashSide = null;
     }
     if (this.speechTimer > 0) {
-      this.speechTimer -= realDt * 0.7; // bubbles linger ~40% longer
+      this.speechTimer -= realDt * 0.85; // bubbles linger a little longer than set, not much
       if (this.speechTimer <= 0) this.speechBubble = null;
     }
     for (let i = this.popups.length - 1; i >= 0; i--) {
