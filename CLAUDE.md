@@ -19,13 +19,13 @@ Two games live in this repo:
 - `?hq` force full render quality. `?closeup` camera beside the hero. `?fullrage` start with the power meter full (press T to fire the power move).
 - `?formtest` page that sends a test score to the Google Form in a new tab (diagnose the web leaderboard).
 - `?wave=N` starts Endless Mohalla at wave N (to test modifiers, bosses, new cousins).
-- `?foes=thali_tiwari,chintu` spawns those cousins in zone 1 wave 1 (any key from `VILLAGE_COUSIN_ROSTER`).
+- `?foes=mama_ji,bowler_bablu,dhaal_dinesh` (new cousins) or `?foes=thali_tiwari,chintu` spawns those cousins in zone 1 wave 1 (any key from `VILLAGE_COUSIN_ROSTER`).
 - `?cousinlab` shows every cousin side by side (front + three-quarter) with Fady for comparison. Add `&only=bunty,golu` to pick, `&face` for head close-ups.
 - `?botdebug` exposes the Street/Endless engine as `window.__brawl` for Playwright bot playtests (read hero hp, style, enemies).
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.91.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.92.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -91,6 +91,12 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 - `engine/street/challenges.ts`: one mini challenge per Street Brawl zone / Endless wave (throws, guard breaks, perfect dodges, parry, on-beat hits, finishers, reach style A, 20s no-hit). Progress comes from `addStyle` kinds and hits taken (`stepStyle`). Done = +750 score (x style) and +40 power. Chip under the score box; count on the results.
 - Desi Gussa: active hero below 25% HP deals +30% damage (`gussaOn`, set in `stepStyle`, used in `combat.ts` counterMul).
 - Cousins (not bosses) sometimes sidestep a heavy as it starts (DODGED!, Normal 18% / Hard 30%) so heavy spam isn't free. The red "!" attack warning bypasses the pop-up cap.
+
+## Practice Yard, new cousins, boss drama, hit feel (v1.0.92)
+- Practice Yard: GameMode `practice_yard` (counts as a street mode; title button, roster label "Start Practice"). `ArenaCanvas` sets `engine.practiceMode = true` and restarts. `engine/street/practice.ts`: 8 lessons (combo, heavy/kick, guard break vs Kalu, throw, perfect dodge, parry, style B, power move) fed by `addStyle` hooks; heroes are topped up below 40% HP; zone progression, challenges and elites are off. Lesson panel sits under the score box.
+- New cousins in `villageThugs.ts`: `mama_ji` (trait `healer`: walks to a cousin knocked out in the last 14 s and revives him at 50% via `reviveCousin`, `fallenCousins` list), `bowler_bablu` (trait `bowler`, ranged: throws a red cricket ball, the 3rd child of the chappal projectile group; deflect = SIXER!), `dhaal_dinesh` (shield partner). Shield wall: two shield cousins within 1.8 also block frontal heavies (kick, sweep, throw or flank them). Elite gold-turban cousins (`spec.elite`, Zone 2+ / Endless wave 6+, 8/16/25% by difficulty): 1.6x HP, 1.25x dmg, 2x score. New cousins are in zone 2/3 waves and Endless tier 2; Dhaal joins Thali from Endless wave 7.
+- Boss drama (`engine/street/bossDrama.ts`): hero reply after the boss battle cry (`HERO_REPLY` per fighter), red warning chip with a tip during special wind-ups (longer wind-ups on Easy/Normal), banter at 75% and 25% HP, 1.4 s slow-mo + last line + BOSS DEFEATED! on the KO. `queueLine`/`speechQueue` for delayed bubbles.
+- Hit feel: random pitch/tone per hit (`sound.ts` `playHit`), dust puff + small shake when a launched cousin lands (`spawnDust`), launched cousins tip over in the air and roll once on big landings (`rollTimer`, `view.ts`).
 
 ## Hit ranges (v1.0.89)
 Hero hit boxes in `combat.ts` `evaluateHeroAttackHits` use `rangeX*0.82 + bonus*0.8` and `rangeZ*0.72` (backward tolerance -0.25), so hits only land when bodies are close. A short step-in (`hero.stepInLeft`, set in `startHeroMove`, applied in the grounded attack branch of `heroControl.ts`) slides you up to 0.7 toward a cousin just out of reach in front. Enemy hit lane depth is 0.78.

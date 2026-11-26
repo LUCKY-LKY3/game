@@ -25,6 +25,10 @@ const POOL: { kind: ChallengeKind; need: number; label: (n: number) => string }[
 ];
 
 export function stepChallenge(this: StreetBrawlEngine, dt: number) {
+  if (this.practiceMode) {
+    this.challenge = null;
+    return;
+  }
   const key = this.endlessMode ? `w${this.endlessWave}` : `z${this.currentZoneIdx}`;
   if (key !== this.challengeKey) {
     this.challengeKey = key;

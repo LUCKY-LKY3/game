@@ -44,7 +44,9 @@ export interface VillageThugSpec {
   buckTeeth: boolean;
   battleCry: string;
   /** shield: blocks light frontal hits. rusher: dashes in fast. */
-  trait?: 'shield' | 'rusher' | 'screamer' | 'thief';
+  trait?: 'shield' | 'rusher' | 'screamer' | 'thief' | 'healer' | 'bowler';
+  /** tougher gold-turban version */
+  elite?: boolean;
   /** Boss special attacks, used in rotation (see street/bossMoves.ts) */
   bossMoves?: ('volley' | 'summon' | 'charge' | 'stomp')[];
   /** Specials only unlock once the boss enrages (below 50% HP) */
@@ -374,6 +376,75 @@ export const VILLAGE_COUSIN_ROSTER: Record<string, Omit<VillageThugSpec, 'id'>> 
     goofyEyes: true,
     buckTeeth: true,
     battleCry: 'Eat my Size-10 Flying Chappal!',
+  },
+  mama_ji: {
+    name: 'Mama Ji',
+    subtitle: 'Revives Fallen Cousins',
+    archetype: 'thug',
+    maxHp: 92,
+    damage: 9,
+    speed: 1.75,
+    scoreValue: 520,
+    skinTone: '#A26B45',
+    shirtColor: '#F5F5F4', // white kurta
+    pantsColor: '#E7E5E4',
+    gamchaColor: '#EA580C',
+    hairColor: '#E7E5E4', // white hair
+    heightScale: 0.94,
+    widthScale: 1.0,
+    bellyBulge: 0.2,
+    hasClub: true, // walking stick
+    headAccessory: 'gamcha_knot',
+    goofyEyes: false,
+    buckTeeth: false,
+    battleCry: 'Uth ja beta, Mama Ji is here!',
+    trait: 'healer',
+  },
+  bowler_bablu: {
+    name: 'Bowler Bablu',
+    subtitle: 'Fast Bowling Cousin',
+    archetype: 'ranged',
+    maxHp: 60,
+    damage: 11,
+    speed: 2.6,
+    scoreValue: 340,
+    skinTone: '#B57749',
+    shirtColor: '#F8FAFC', // cricket whites
+    pantsColor: '#F1F5F9',
+    gamchaColor: '#1D4ED8',
+    hairColor: '#171311',
+    heightScale: 1.04,
+    widthScale: 0.92,
+    bellyBulge: 0.02,
+    hasClub: false,
+    headAccessory: 'bandana',
+    goofyEyes: false,
+    buckTeeth: false,
+    battleCry: 'HOWZAAAT! Yorker incoming!',
+    trait: 'bowler',
+  },
+  dhaal_dinesh: {
+    name: 'Dhaal Dinesh',
+    subtitle: 'Shield Wall Partner',
+    archetype: 'thug',
+    maxHp: 104,
+    damage: 11,
+    speed: 1.75,
+    scoreValue: 380,
+    skinTone: '#9A6A44',
+    shirtColor: '#0F766E',
+    pantsColor: '#FACC15',
+    gamchaColor: '#F97316',
+    hairColor: '#1C1917',
+    heightScale: 1.0,
+    widthScale: 1.08,
+    bellyBulge: 0.16,
+    hasClub: false,
+    headAccessory: 'bowl_cut',
+    goofyEyes: false,
+    buckTeeth: false,
+    battleCry: 'Thali bhai, SHIELD WALL!',
+    trait: 'shield',
   },
   raju_bike: {
     name: 'Raju Splendor',

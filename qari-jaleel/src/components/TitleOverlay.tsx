@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Clapperboard, Coffee, Download, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
+import { Clapperboard, Coffee, Download, Dumbbell, Flame, Settings, Swords, Trophy, Users, X } from 'lucide-react';
 import { SettingsPanel } from './SettingsPanel';
 import { HallOfFame } from './Leaderboard';
 import { Credits } from './Credits';
@@ -214,6 +214,15 @@ export function TitleOverlay({
             >
               <Users className="h-3.5 w-3.5 shrink-0" />
               Local 2P
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onSelectMode('practice_yard')}
+              className="flex items-center justify-center gap-2 border border-[#38BDF8]/45 bg-[#0B1F2A]/90 px-3 py-2.5 text-xs font-bold text-[#BAE6FD] hover:border-[#38BDF8] hover:text-[#F8F4EC] transition-colors whitespace-nowrap landscape:col-span-2"
+            >
+              <Dumbbell className="h-3.5 w-3.5 shrink-0" />
+              Practice Yard · learn the moves
             </button>
 
           </div>

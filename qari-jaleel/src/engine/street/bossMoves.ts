@@ -62,8 +62,11 @@ export function updateBossSpecials(this: StreetBrawlEngine, e: EnemyRuntime, dt:
   e.specialFired = false;
   e.action = 'taunt';
   e.actionTime = 0;
-  e.actionDuration = move === 'charge' ? 0.8 : 0.95;
+  // Longer, readable wind-up on Easy/Normal
+  e.actionDuration = (move === 'charge' ? 0.8 : 0.95) + [0.4, 0.2, 0][this.difficultyLevel];
   e.vx = 0;
+  e.hitFlash = 0.8;
+  this.bossWarning(move);
   const [text, color] = TELEGRAPH[move];
   this.spawnComicPopup(e.x, 2.3, e.z, text, color);
   soundEngine.playBossRoar();

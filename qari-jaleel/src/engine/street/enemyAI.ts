@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
 import { HeroRuntime, EnemyRuntime } from './types';
-import { HERO_MOVES, LANE_MIN_Z, LANE_MAX_Z, triggerHaptic } from './data';
+import { HERO_MOVES, LANE_MIN_Z, LANE_MAX_Z, STREET_ZONES, triggerHaptic } from './data';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 export function updateEnemies(this: StreetBrawlEngine, dt: number) {
@@ -29,10 +29,21 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
       e.y += e.vy * dt;
       e.vy -= 14 * dt;
       if (e.y <= 0) {
+        // Landing from a launch: dust puff, a little shake, and a roll along the ground for big falls
+        const impact = -e.vy;
         e.y = 0;
         e.vy = 0;
+        if (impact > 3.5) {
+          this.spawnDust(e.x, e.z, impact);
+          if (impact > 5.5) {
+            this.shakeIntensity = Math.max(this.shakeIntensity, 0.12);
+            if (e.action === 'knockdown' || e.action === 'ko') e.rollTimer = 0.42;
+            soundEngine.playHit(false);
+          }
+        }
       }
     }
+    if (e.rollTimer > 0) e.rollTimer = Math.max(0, e.rollTimer - dt);
     e.x += e.vx * dt;
     e.z += e.vz * dt;
     e.vx *= Math.exp((e.bowlingActive ? -2.2 : -6.5) * dt);
@@ -362,6 +373,31 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
         this.checkEnemyAttackHit(e);
       }
       continue;
+    }
+
+    // Mama Ji walks over to a fallen cousin and revives him (knock Mama Ji out first!)
+    if (e.spec.trait === 'healer') {
+      e.specialCooldown -= dt;
+      const body = this.fallenCousins.find((f) => this.elapsed - f.t < 14);
+      if (body && e.specialCooldown <= 0) {
+        const dx = body.x - e.x;
+        const dz = body.z - e.z;
+        const d = Math.hypot(dx, dz);
+        if (d > 0.75) {
+          e.x += (dx / d) * e.spec.speed * 1.25 * dt;
+          e.z += (dz / d) * e.spec.speed * dt;
+          e.facing = dx >= 0 ? 1 : -1;
+          e.action = 'walk';
+          continue;
+        }
+        e.action = 'taunt';
+        e.actionTime = 0;
+        e.actionDuration = 1.1;
+        e.specialCooldown = [12, 9, 7][this.difficultyLevel];
+        this.fallenCousins.splice(this.fallenCousins.indexOf(body), 1);
+        this.reviveCousin(body, e);
+        continue;
+      }
     }
 
     // Chappal Chacha keeps distance (~4.8 units) and lobs flying slippers!
@@ -752,8 +788,11 @@ export function spawnEnemyChappal(this: StreetBrawlEngine, e: EnemyRuntime, targ
   slot.fromHero = false;
   slot.ownerEnemyUid = e.uid;
   slot.deflected = false;
+  const bowl = e.spec.trait === 'bowler';
+  slot.mesh.children.forEach((c, i) => (c.visible = bowl ? i === 2 : i < 2));
+  if (bowl) speed = Math.max(speed, 11.5);
   slot.x = e.x + e.facing * 0.65;
-  slot.y = 1.2;
+  slot.y = bowl ? 0.95 : 1.2;
   slot.z = e.z;
   const dx = target.x - e.x;
   const dz = target.z - e.z;
@@ -801,7 +840,9 @@ export function updateProjectiles(this: StreetBrawlEngine, dt: number) {
             Math.sign(pr.vx || 1) * 2.8,
             isDeflectedChappal ? 0 : 3.8,
             isDeflectedChappal
-              ? 'RETURN TO SENDER!'
+              ? pr.mesh.children[2]?.visible
+                ? 'SIXER!'
+                : 'RETURN TO SENDER!'
               : pr.kind === 'coconut'
                 ? 'COCONUT BONK!'
                 : 'STOOL SMASH!'
@@ -990,4 +1031,31 @@ export function onHeroWhiff(this: StreetBrawlEngine, hero: HeroRuntime) {
   best.hasHitThisSwing = false;
   best.aiState = 'circle';
   this.spawnComicPopup(best.x, 2.2, best.z, 'WHIFF! PUNISH!', '#F87171');
+}
+
+/** Mama Ji brings a knocked-out cousin back on his feet at half health */
+export function reviveCousin(this: StreetBrawlEngine, body: { key: string; x: number; z: number }, healer: EnemyRuntime) {
+  const before = this.enemies.length;
+  this.spawnWave([body.key], STREET_ZONES[Math.min(this.currentZoneIdx, STREET_ZONES.length - 1)]);
+  const r = this.enemies[before];
+  if (!r) return;
+  r.x = body.x;
+  r.z = body.z;
+  r.rig.root.position.set(r.x, 0, r.z);
+  r.hp = Math.max(1, Math.round(r.maxHp * 0.5));
+  r.action = 'taunt';
+  r.actionTime = 0;
+  r.actionDuration = 0.7;
+  this.spawnParticles(body.x, 0.9, body.z, 16, 3.2);
+  this.spawnComicPopup(body.x, 2.3, body.z, 'REVIVED!', '#4ADE80');
+  if (this.speechTimer <= 0.5) {
+    const lines = ['Uth ja beta, Mama Ji is here!', 'Drink this haldi doodh. Now FIGHT!', 'No sleeping on the job, beta!'];
+    this.speechBubble = { side: 2, speaker: healer.spec.name, text: lines[Math.floor(Math.random() * lines.length)] };
+    this.speechTimer = 2;
+  }
+}
+
+/** Brown dust puff where a cousin hits the ground */
+export function spawnDust(this: StreetBrawlEngine, x: number, z: number, impact: number) {
+  this.spawnParticles(x, 0.15, z, Math.min(14, Math.round(impact * 1.6)), Math.min(4.2, impact * 0.5));
 }

@@ -332,7 +332,17 @@ export function damageEnemy(this: StreetBrawlEngine,
   // Thali Tiwari's steel plate soaks up light frontal hits; heavy hits, launchers or flanking break through
   if (e.spec.trait === 'shield' && e.alive) {
     const facingAttacker = attacker ? (attacker.x - e.x) * e.facing > 0 : false;
-    if (facingAttacker && !heavy && launchVy < 2.5) {
+    // Shield wall: two shield cousins side by side also stop frontal heavies (flank them, kick or throw them)
+    const a = attacker ? String(attacker.action) : '';
+    const wall =
+      facingAttacker &&
+      this.enemies.some((o) => o.alive && o.uid !== e.uid && o.spec.trait === 'shield' && Math.abs(o.x - e.x) < 1.8 && Math.abs(o.z - e.z) < 1.6) &&
+      !a.includes('kick') &&
+      a !== 'throw_execute' &&
+      a !== 'sweep' &&
+      launchVy < 3.5;
+    if (facingAttacker && ((!heavy && launchVy < 2.5) || wall)) {
+      if (wall && heavy) this.spawnComicPopup(e.x, 2.3, e.z, 'SHIELD WALL!', '#93C5FD');
       e.hp = Math.max(1, e.hp - Math.max(1, Math.round(damage * 0.15)));
       e.hitFlash = 0.35;
       e.vx = knockbackVx * 0.25;
@@ -442,6 +452,10 @@ export function damageEnemy(this: StreetBrawlEngine,
     e.vy = Math.max(3.6, launchVy);
     e.koFadeTimer = 1.5;
     this.totalDefeated += 1;
+    if (e.spec.archetype !== 'boss' && e.spec.trait !== 'healer' && this.enemies.some((o) => o.alive && o.spec.trait === 'healer')) {
+      this.fallenCousins.push({ key: e.spec.id.replace(/_\d+$/, ''), x: e.x, z: e.z, t: this.elapsed });
+      if (this.fallenCousins.length > 4) this.fallenCousins.shift();
+    }
     if (e.spec.archetype === 'boss') this.bossesDefeated += 1;
     this.score += Math.round(e.spec.scoreValue * this.scoreMult * this.styleMult());
     this.maybeDropPickup(e);
@@ -460,7 +474,9 @@ export function damageEnemy(this: StreetBrawlEngine,
       this.slowMoFocusX = e.x;
       this.slowMoFocusZ = e.z;
     }
+    if (e.spec.archetype === 'boss') this.bossFinish(e);
   } else {
+    if (e.spec.archetype === 'boss') this.bossBanter(e);
     // Bade Tau Phase 2 ("Moustache Rage") at < 50% HP!
     if (
       e.spec.archetype === 'boss' &&

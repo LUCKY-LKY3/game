@@ -93,7 +93,9 @@ export function RosterSelect({
   const isEndless = mode === 'endless_mohalla';
   const modeTitle = isEndless
     ? 'Endless Mohalla · Fair Fight'
-    : mode === 'street_brawl'
+    : mode === 'practice_yard'
+      ? 'Practice Yard'
+      : mode === 'street_brawl'
       ? 'Village Street Brawl · Tag Team'
       : mode === 'arcade'
         ? 'Arcade Tournament'
@@ -124,10 +126,10 @@ export function RosterSelect({
           className="flex items-center gap-2 bg-[#F59E0B] px-5 py-2 text-xs font-bold text-[#141210] hover:bg-[#D97706] transition-colors whitespace-nowrap shrink-0 sm:text-sm short:px-3 short:py-1.5"
         >
           <Swords className="h-4 w-4" />
-          {isEndless ? 'Start Endless Mohalla' : isBrawl ? 'Start Street Brawl' : 'Start Match'}
+          {isEndless ? 'Start Endless Mohalla' : mode === 'practice_yard' ? 'Start Practice' : isBrawl ? 'Start Street Brawl' : 'Start Match'}
         </button>
       </header>
-      {isBrawl && !isEndless && (
+      {isBrawl && !isEndless && mode !== 'practice_yard' && (
         <div className="flex items-center justify-center gap-2 border-b border-[#F8F4EC]/12 py-1.5">
           <span className="text-xs text-[#B6AA9A]">Difficulty:</span>
           {(['novice', 'pehelwan', 'grandmaster'] as Difficulty[]).map((d) => (

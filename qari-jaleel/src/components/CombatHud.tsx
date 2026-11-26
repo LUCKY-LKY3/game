@@ -410,6 +410,15 @@ export function CombatHud({
         </div>
       )}
 
+      {/* Boss special warning with a tip */}
+      {brawl?.bossWarn && (
+        <div className="pointer-events-none fixed inset-x-0 top-[36%] z-30 flex justify-center">
+          <div className="animate-pulse bg-[#7F1D1D]/90 px-3 py-1 text-[11px] font-black tracking-wider text-[#FEF2F2] uppercase ring-2 ring-[#EF4444]">
+            ⚠ {brawl.bossWarn}
+          </div>
+        </div>
+      )}
+
       {/* Street Brawl Tag-Switch / Pickup Toasts */}
       {brawl && (brawl.switchBanner || brawl.pickupToast) && (
         <div className="pointer-events-none fixed inset-x-0 top-28 z-20 flex flex-col items-center gap-1.5 sm:top-32">
@@ -732,7 +741,7 @@ export function CombatHud({
             <div className="flex items-start gap-1">
               <div className="bg-[#141210]/85 px-2 py-0.5 text-center">
                 <div className="font-mono-num text-[8px] font-bold tracking-[0.12em] text-[#F59E0B] uppercase whitespace-nowrap">
-                  {brawl.isEndless ? `Wave ${brawl.endlessWave}` : `Zone ${brawl.zone}/${brawl.totalZones}`}
+                  {brawl.practice ? 'Practice' : brawl.isEndless ? `Wave ${brawl.endlessWave}` : `Zone ${brawl.zone}/${brawl.totalZones}`}
                   {' · '}
                   {brawl.goArrowVisible ? 'GO >>' : `${brawl.enemiesRemaining} left`}
                 </div>
@@ -771,6 +780,15 @@ export function CombatHud({
               </div>
             </div>
 
+            {brawl.practice && (
+              <div className="max-w-[18rem] bg-[#0B1F2A]/90 px-2 py-1 text-center ring-1 ring-[#38BDF8]/50">
+                <div className="text-[9px] font-black tracking-widest text-[#38BDF8] uppercase">
+                  Lesson {brawl.practice.step}/{brawl.practice.total} · {brawl.practice.title}
+                  {brawl.practice.need > 1 ? ` ${brawl.practice.have}/${brawl.practice.need}` : ''}
+                </div>
+                <div className="text-[10px] leading-tight font-semibold text-[#F8F4EC]">{brawl.practice.hint}</div>
+              </div>
+            )}
             {brawl.challenge && (
               <div
                 className={`max-w-[13rem] truncate px-1.5 py-0.5 text-[9px] font-black tracking-wide uppercase ${

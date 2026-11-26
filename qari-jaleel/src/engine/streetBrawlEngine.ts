@@ -22,6 +22,8 @@ import { getMods } from '../utils/upgrades';
 import * as view from './street/view';
 import * as style from './street/style';
 import * as challenges from './street/challenges';
+import * as bossDrama from './street/bossDrama';
+import * as practice from './street/practice';
 
 /**
  * True Double Dragon Tag-Team Village Street Brawl Engine:
@@ -83,6 +85,18 @@ export class StreetBrawlEngine {
   progressChallenge = challenges.progressChallenge;
   tryEnemyGuard = combat.tryEnemyGuard;
   onHeroWhiff = enemyAI.onHeroWhiff;
+  reviveCousin = enemyAI.reviveCousin;
+  spawnDust = enemyAI.spawnDust;
+  startPractice = practice.startPractice;
+  practiceProgress = practice.practiceProgress;
+  stepPractice = practice.stepPractice;
+  practiceHud = practice.practiceHud;
+  queueLine = bossDrama.queueLine;
+  stepSpeechQueue = bossDrama.stepSpeechQueue;
+  bossIntroReply = bossDrama.bossIntroReply;
+  bossWarning = bossDrama.bossWarning;
+  bossBanter = bossDrama.bossBanter;
+  bossFinish = bossDrama.bossFinish;
   maybeDropPickup = endlessExtras.maybeDropPickup;
   clearPickups = endlessExtras.clearPickups;
   updateEndlessExtras = endlessExtras.updateEndlessExtras;
@@ -151,6 +165,15 @@ export class StreetBrawlEngine {
   beatFlash = 0;
   challenge: challenges.ChallengeState | null = null;
   challengeKey = '';
+  fallenCousins: { key: string; x: number; z: number; t: number }[] = [];
+  practiceMode = false;
+  practiceLesson = 0;
+  practiceHave = 0;
+  practiceDone = false;
+  practiceNextAt = 0;
+  speechQueue: { at: number; bubble: SpeechBubbleState; secs: number }[] = [];
+  bossWarn: string | null = null;
+  bossWarnTimer = 0;
   challengeNoHit = 0;
   challengesDone = 0;
   gussaOn = false;
@@ -461,6 +484,10 @@ export class StreetBrawlEngine {
     const strapGeo = new THREE.TorusGeometry(0.07, 0.018, 6, 10, Math.PI);
     const stoolGeo = new THREE.BoxGeometry(0.46, 0.36, 0.46);
     const cocoGeo = new THREE.SphereGeometry(0.24, 10, 8);
+    const ballGeo = new THREE.SphereGeometry(0.11, 12, 10);
+    const ballMat = new THREE.MeshStandardMaterial({ color: '#B91C1C', roughness: 0.35 });
+    this.projGeos.push(ballGeo);
+    this.projMats.push(ballMat);
     this.projGeos.push(soleGeo, strapGeo, stoolGeo, cocoGeo);
 
     const specs: ('chappal' | 'stool' | 'coconut')[] = [
@@ -478,7 +505,10 @@ export class StreetBrawlEngine {
         const sole = new THREE.Mesh(soleGeo, chappalMat);
         const strap = new THREE.Mesh(strapGeo, strapMat);
         strap.position.set(0, 0.03, 0.04);
-        g.add(sole, strap);
+        // Bowler Bablu's cricket ball rides the same slot (shown instead of the slipper)
+        const ball = new THREE.Mesh(ballGeo, ballMat);
+        ball.visible = false;
+        g.add(sole, strap, ball);
       } else if (kind === 'stool') {
         const m = new THREE.Mesh(stoolGeo, stoolMat);
         m.castShadow = true;
@@ -653,6 +683,10 @@ export class StreetBrawlEngine {
     this.beatFlash = 0;
     this.challenge = null;
     this.challengeKey = '';
+    this.fallenCousins = [];
+    this.speechQueue = [];
+    this.bossWarn = null;
+    this.bossWarnTimer = 0;
     this.challengeNoHit = 0;
     this.challengesDone = 0;
     this.gussaOn = false;
@@ -781,6 +815,8 @@ export class StreetBrawlEngine {
       this.announcement = 'ENDLESS MOHALLA';
       this.subAnnouncement = 'WAVE 1 · SURVIVE THE COUSIN SWARM';
       this.spawnEndlessWave(this.endlessWave);
+    } else if (this.practiceMode) {
+      this.startPractice();
     } else {
       this.announcement = 'ZONE 1 · CHAI CHOWK';
       this.subAnnouncement = 'CLEAN OUT THE VILLAGE LANE';
@@ -859,6 +895,11 @@ export class StreetBrawlEngine {
     if (this.rageFlashTimer > 0) {
       this.rageFlashTimer -= realDt;
       if (this.rageFlashTimer <= 0) this.rageFlashSide = null;
+    }
+    this.stepSpeechQueue();
+    if (this.bossWarnTimer > 0) {
+      this.bossWarnTimer -= realDt;
+      if (this.bossWarnTimer <= 0) this.bossWarn = null;
     }
     if (this.speechTimer > 0) {
       this.speechTimer -= realDt * 0.85; // bubbles linger a little longer than set, not much
@@ -1006,6 +1047,7 @@ export class StreetBrawlEngine {
     this.updateEndlessExtras(dt);
     this.stepStyle(dt);
     this.stepChallenge(dt);
+    this.stepPractice();
 
     // Check squad defeat / auto-switch if active hero falls
     if (active.hp <= 0) {

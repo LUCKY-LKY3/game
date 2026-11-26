@@ -151,6 +151,10 @@ export interface EnemyRuntime {
   lightStreakTimer: number;
   /** hits soaked while guarding; at 2 they counter-attack */
   blockedHits: number;
+  /** boss banter lines already said (bits) */
+  banter: number;
+  /** ground roll after a big knockdown landing (seconds left) */
+  rollTimer: number;
   guardCooldown: number;
   specialCooldown: number;
   specialIdx: number;

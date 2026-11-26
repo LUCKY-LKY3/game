@@ -95,8 +95,10 @@ class AkharaSoundEngine {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(heavy ? 160 : 210, now);
-    osc.frequency.exponentialRampToValueAtTime(heavy ? 36 : 62, now + (heavy ? 0.16 : 0.09));
+    // Every hit sounds a little different: random pitch and tone
+    const v = 0.82 + Math.random() * 0.36;
+    osc.frequency.setValueAtTime((heavy ? 160 : 210) * v, now);
+    osc.frequency.exponentialRampToValueAtTime((heavy ? 36 : 62) * v, now + (heavy ? 0.16 : 0.09));
     gain.gain.setValueAtTime(heavy ? 0.45 : 0.28, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + (heavy ? 0.17 : 0.1));
     osc.connect(gain);
@@ -109,7 +111,7 @@ class AkharaSoundEngine {
     noise.buffer = this.noiseBuffer(ctx, heavy ? 0.12 : 0.07);
     const filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.value = heavy ? 850 : 1400;
+    filter.frequency.value = (heavy ? 850 : 1400) * (0.75 + Math.random() * 0.6);
     filter.Q.value = 0.9;
     const nGain = ctx.createGain();
     nGain.gain.setValueAtTime(heavy ? 0.35 : 0.22, now);

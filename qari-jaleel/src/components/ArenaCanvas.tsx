@@ -342,6 +342,10 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
         (winnerSide) => onMatchFinishRef.current?.(winnerSide),
         mode === 'endless_mohalla'
       );
+      if (mode === 'practice_yard') {
+        engine.practiceMode = true;
+        engine.restartMatch();
+      }
       if (window.location.search.includes('botdebug')) (window as unknown as { __brawl: unknown }).__brawl = engine; // debug: bot playtests
     } else {
       const villageStage = buildVillageStage(scene, stageId, maxAniso);

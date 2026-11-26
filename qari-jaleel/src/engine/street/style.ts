@@ -35,6 +35,12 @@ export function addStyle(this: StreetBrawlEngine, kind: 'hit' | 'dodge' | 'parry
   else if (kind === 'throw') gain = 7;
   else if (kind === 'blocked') gain = -6;
   if (kind !== 'hit' && kind !== 'blocked') this.progressChallenge(kind);
+  if (kind === 'hit') {
+    this.practiceProgress('hit');
+    if (move && /rp|kick|finisher|sweep/.test(move)) this.practiceProgress('heavyhit');
+  } else if (kind === 'guardbreak' || kind === 'throw' || kind === 'dodge' || kind === 'parry') {
+    this.practiceProgress(kind);
+  }
   const before = styleIndex(this.styleMeter);
   this.styleMeter = Math.max(0, Math.min(100, this.styleMeter + gain));
   if (gain > 0) this.styleIdle = 0;

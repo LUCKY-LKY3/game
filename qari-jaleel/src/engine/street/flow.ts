@@ -28,7 +28,7 @@ export function planEndlessWave(waveNum: number): { keys: string[]; sub: string;
           ? 'mela'
           : null;
   const tier1 = ['bunty', 'golu', 'tinku', 'chintu'];
-  const tier2 = ['pappu', 'lathi_lala', 'chappal_chacha', 'thali_tiwari'];
+  const tier2 = ['pappu', 'lathi_lala', 'chappal_chacha', 'thali_tiwari', 'bowler_bablu', 'mama_ji'];
   let pool = waveNum < 3 ? tier1 : waveNum < 6 ? [...tier1, ...tier2.slice(0, 2)] : [...tier1, ...tier2, 'kalu_goon'];
   if (mod === 'mela') pool = tier1;
   let total = Math.min(12, 3 + Math.floor(waveNum * 0.85));
@@ -44,13 +44,17 @@ export function planEndlessWave(waveNum: number): { keys: string[]; sub: string;
   const minions = isBossWave ? 2 + Math.floor(waveNum / 10) : total;
   for (let i = 0; i < minions; i++) {
     let k = pool[(waveNum * 3 + i * 2 + seed) % pool.length];
-    if (k === 'chappal_chacha' && ++ranged > 1) k = 'bunty';
+    if ((k === 'chappal_chacha' || k === 'bowler_bablu') && ++ranged > 1) k = 'bunty';
+    if (k === 'mama_ji' && keys.includes('mama_ji')) k = 'golu';
     keys.push(k);
   }
   if (!isBossWave && mod !== 'mela') {
     if (waveNum >= 4 && waveNum % 3 === 1) keys.splice(1, 1, 'bullhorn_bhai');
     if (waveNum >= 5 && waveNum % 3 === 2) keys.splice(Math.min(2, keys.length - 1), 1, 'jeb_katra');
   }
+  // Shield wall pair later on: Thali Tiwari brings his partner
+  const ti = keys.indexOf('thali_tiwari');
+  if (waveNum >= 7 && ti >= 0 && !keys.includes('dhaal_dinesh')) keys.splice(ti + 1, 0, 'dhaal_dinesh');
   if (!isBossWave && phase === 3) {
     keys.splice(Math.ceil(keys.length / 2), 0, 'moti_pehelwan');
     sub = 'MOTI PEHELWAN AMBUSH!';
@@ -101,6 +105,23 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       damage: Math.max(4, Math.round(base.damage * this.enemyDmgScale * (dmgScale ?? Math.min(1.5, waveScale)))),
       hasClub: armed || base.hasClub,
     };
+    // Elite gold-turban cousins from Zone 2 / Endless wave 6: tougher, worth double
+    const lateRun = this.endlessMode ? this.endlessWave >= 6 : this.currentZoneIdx >= 1;
+    if (
+      !this.practiceMode &&
+      lateRun &&
+      (spec.archetype === 'idiot' || spec.archetype === 'thug') &&
+      !spec.trait &&
+      Math.random() < [0.08, 0.16, 0.25][this.difficultyLevel]
+    ) {
+      spec.elite = true;
+      spec.name = `Elite ${spec.name}`;
+      spec.maxHp = Math.round(spec.maxHp * 1.6);
+      spec.damage = Math.round(spec.damage * 1.25);
+      spec.scoreValue *= 2;
+      spec.headAccessory = 'boss_turban';
+      spec.gamchaColor = '#EAB308';
+    }
     const rig = createVillageThugRig(spec);
     const fromRight = idx % 2 === 0 || spec.archetype === 'boss' || spec.archetype === 'biker';
     const spawnX = fromRight
@@ -150,6 +171,8 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       lightStreak: 0,
       lightStreakTimer: 0,
       blockedHits: 0,
+      banter: 0,
+      rollTimer: 0,
       guardCooldown: 1 + Math.random(),
       specialCooldown: 3.2,
       specialIdx: 0,
@@ -177,6 +200,7 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
         subtitle: spec.subtitle.toUpperCase(),
       };
       soundEngine.playBossRoar();
+      this.bossIntroReply();
     }
     if (spec.archetype === 'boss' || spec.archetype === 'biker' || key === 'moti_pehelwan') {
       this.speechBubble = {
@@ -203,6 +227,7 @@ export function clearEnemies(this: StreetBrawlEngine) {
 }
 
 export function updateZoneProgression(this: StreetBrawlEngine) {
+  if (this.practiceMode) return;
   const livingCount = this.enemies.filter((e) => e.alive).length;
 
   // Endless Mohalla Survival Mode: infinite escalating waves!

@@ -17,10 +17,10 @@ export type PortraitFilterStyle = 'gouache' | 'arcade_ink' | 'mela_poster' | 'na
 
 export type StageId = 'banyan_akhara' | 'chai_chowk' | 'mela_dusk';
 
-export type GameMode = 'street_brawl' | 'endless_mohalla' | 'arcade' | 'versus_2p' | 'quick_ai';
+export type GameMode = 'street_brawl' | 'endless_mohalla' | 'practice_yard' | 'arcade' | 'versus_2p' | 'quick_ai';
 
 export function isStreetBrawlMode(mode: GameMode): boolean {
-  return mode === 'street_brawl' || mode === 'endless_mohalla';
+  return mode === 'street_brawl' || mode === 'endless_mohalla' || mode === 'practice_yard';
 }
 
 export type Difficulty = 'novice' | 'pehelwan' | 'grandmaster';
@@ -308,6 +308,8 @@ export interface StreetBrawlHudState {
   styleFill: number;
   beatFlash: boolean;
   challenge: { label: string; have: number; need: number; done: boolean } | null;
+  bossWarn: string | null;
+  practice: { step: number; total: number; title: string; hint: string; have: number; need: number } | null;
   bossPhase2Active: boolean;
   scorecard: BrawlScorecard | null;
 }

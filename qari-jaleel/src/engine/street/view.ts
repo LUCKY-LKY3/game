@@ -167,6 +167,15 @@ export function renderAllRigs(this: StreetBrawlEngine, _dt: number) {
       e.phase2Rage,
       e.visualYaw
     );
+    // Tumbling: launched cousins tip over in the air, then roll once along the ground on a big landing
+    const spinDir = e.vx >= 0 ? -1 : 1;
+    if ((e.action === 'knockdown' || e.action === 'ko') && e.y > 0.08) {
+      e.rig.root.rotation.z = spinDir * Math.min(1.3, e.y * 0.9 + Math.max(0, -e.vy) * 0.08);
+    } else if (e.rollTimer > 0) {
+      e.rig.root.rotation.z = spinDir * (1.3 + (1 - e.rollTimer / 0.42) * (Math.PI * 2 - 1.3));
+    } else {
+      e.rig.root.rotation.z = 0;
+    }
     if (hugged) {
       // Squeaky-toy victim: squashed by each squeeze, legs dangling, arms flailing
       const sq = this.hugSquash;
@@ -412,6 +421,8 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
       styleGrade: STYLE_GRADES[styleIndex(this.styleMeter)],
       styleFill: Math.round(this.styleMeter) / 100,
       beatFlash: this.beatFlash > 0,
+      bossWarn: this.bossWarn,
+      practice: this.practiceHud(),
       challenge: this.challenge ? { label: this.challenge.label, have: this.challenge.have, need: this.challenge.need, done: this.challenge.done } : null,
       bossPhase2Active: this.bossPhase2Triggered && Boolean(boss),
       scorecard: this.scorecard ? { ...this.scorecard } : null,
