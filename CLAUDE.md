@@ -25,7 +25,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.82.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.83.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -86,6 +86,9 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 - Dodge fatigue (`hero.dodgeFatigue`): spamming dodge quickly loses its invulnerability (OUT OF BREATH!). Perfect dodge only counts early in the sidestep.
 - Style grade D..S (`engine/street/style.ts`): mixing moves, dodges, parries, guard breaks, throws, finishers and on-beat hits fill it; repeats earn little, getting hit costs 30, it drains when idle. Multiplies score (x1..x2). Shown under the combo on the HUD; best grade on the results.
 - Pop-up tidy-up (`view.ts` `spawnComicPopup`): max 3 fresh pop-ups, low-priority hit noises and shouts drop when something else is showing; ON BEAT flashes the beat ring instead of text.
+
+## Auto-rickshaw
+The passing hazard model is in `streetStage.ts` (search `CNG auto`): extruded green tub + cowl, curved yellow canvas roof, open sides with seats and a driver, chrome pillars, glass windscreen, spoked wheels (groups spun on Z in `enemyAI.ts` `updateAutoRickshaw`), DL plate, RAJA AUTO side decals and HORN OK PLEASE on the back.
 
 ## Share card
 `utils/shareCard.ts` draws a 1200x630 funny result picture on a canvas (logo, hero portraits, wave/rank, score, equipped title, caption in a speech bubble). `components/ShareCard.tsx` shows it with Share (Web Share API with the file) and Save. Opened from the Share button on the Street Brawl / Endless results screen.
