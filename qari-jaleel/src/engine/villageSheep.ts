@@ -5,10 +5,25 @@ export interface VillageSheepHandle {
   update: (time: number, dt: number, scrollCenterX?: number) => void;
   reactToNearbyBrawl: (brawlX: number, brawlZ: number) => boolean;
   getPosition: () => { x: number; z: number };
+  /** Send the sheep charging at a spot (it headbutts whatever is there) */
+  chargeAt: (x: number, z: number) => void;
+  /** Update the charge target while charging (follows a moving cousin); false once the charge is over */
+  steer: (x: number, z: number) => boolean;
+  /** Pop-up moments since the last call (text + where; bonk = headbutt landed) */
+  takeEvents: () => SheepEvent[];
   dispose: () => void;
 }
 
-type SheepBehavior = 'trot' | 'scamper' | 'graze' | 'look';
+export interface SheepEvent {
+  text: string;
+  x: number;
+  z: number;
+  bonk?: boolean;
+  baa?: boolean;
+}
+
+type SheepBehavior = 'trot' | 'scamper' | 'graze' | 'look' | 'faint' | 'spin' | 'pronk' | 'moonwalk' | 'stare' | 'charge';
+const STUPID: SheepBehavior[] = ['faint', 'spin', 'pronk', 'moonwalk', 'stare'];
 
 /**
  * Creates a lively, multi-part 3D Indian village sheep that hangs around, grazes,
@@ -279,6 +294,10 @@ export function createVillageSheep(): VillageSheepHandle {
   let gaitPhase = 0;
   let baaCooldown = 0;
   let startleHopTimer = 0;
+  let roll = 0; // fainting: tipped on its side
+  let stupidCooldown = 6 + Math.random() * 6;
+  const events: SheepEvent[] = [];
+  const say = (text: string, extra: Partial<SheepEvent> = {}) => events.push({ text, x: posX, z: posZ, ...extra });
 
   // Scenic roadside waypoints keeping the sheep trotting along the edges without obstructing the expanded central combat lane
   const waypoints: [number, number][] = [
@@ -297,7 +316,32 @@ export function createVillageSheep(): VillageSheepHandle {
 
   let currentCenterX = 0;
 
+  const startStupid = () => {
+    behavior = STUPID[Math.floor(Math.random() * STUPID.length)];
+    stupidCooldown = 8 + Math.random() * 10;
+    if (behavior === 'faint') {
+      stateTimer = 2.2;
+      say('*FAINTS*', { baa: true });
+    } else if (behavior === 'spin') {
+      stateTimer = 2.0;
+      say('BAA?! (chasing own tail)');
+    } else if (behavior === 'pronk') {
+      stateTimer = 2.2;
+      say('BOING! BOING!', { baa: true });
+    } else if (behavior === 'moonwalk') {
+      stateTimer = 2.6;
+      say('SHEEP MOONWALK!');
+    } else {
+      stateTimer = 2.6;
+      say('...');
+    }
+  };
+
   const pickNextBehavior = () => {
+    if (stupidCooldown <= 0 && Math.random() < 0.45) {
+      startStupid();
+      return;
+    }
     const roll = Math.random();
     if (behavior === 'graze' || behavior === 'look') {
       // After pausing, pick a new visible spot across the active view and either trot or scamper!
@@ -331,7 +375,100 @@ export function createVillageSheep(): VillageSheepHandle {
     const dt = Math.min(0.05, Math.max(0.001, rawDt));
     currentCenterX = scrollCenterX;
     stateTimer -= dt;
+    stupidCooldown -= dt;
     if (baaCooldown > 0) baaCooldown = Math.max(0, baaCooldown - dt);
+    // Stand back up after fainting
+    roll = THREE.MathUtils.damp(roll, behavior === 'faint' && stateTimer > 0.35 ? Math.PI / 2 : 0, behavior === 'faint' ? 14 : 6, dt);
+    group.rotation.z = roll;
+
+    // ── Silly behaviours ──
+    if (behavior === 'faint' || behavior === 'spin' || behavior === 'pronk' || behavior === 'moonwalk' || behavior === 'stare' || behavior === 'charge') {
+      let moving = false;
+      if (behavior === 'faint') {
+        // stiff legs sticking straight out
+        flLeg.rotation.x = frLeg.rotation.x = blLeg.rotation.x = brLeg.rotation.x = 0;
+        bodyRig.position.y = 0.62;
+        if (stateTimer <= 0) {
+          say('...baa?');
+          behavior = 'look';
+          stateTimer = 1.2;
+        }
+      } else if (behavior === 'spin') {
+        yaw += dt * 9;
+        moving = true;
+        if (stateTimer <= 0) {
+          say('*dizzy baa*');
+          behavior = 'look';
+          stateTimer = 1.4;
+        }
+      } else if (behavior === 'pronk') {
+        // all four legs stiff, boinging straight up and down
+        bodyRig.position.y = 0.62 + Math.abs(Math.sin(time * 8.5)) * 0.75;
+        flLeg.rotation.x = frLeg.rotation.x = blLeg.rotation.x = brLeg.rotation.x = 0;
+        bodyRig.rotation.x = Math.sin(time * 8.5) * 0.1;
+        if (stateTimer <= 0) {
+          behavior = 'graze';
+          stateTimer = 1.5;
+        }
+      } else if (behavior === 'moonwalk') {
+        posX -= Math.sin(yaw) * 1.1 * dt;
+        posZ -= Math.cos(yaw) * 1.1 * dt;
+        gaitPhase -= dt * 9; // legs run backwards
+        flLeg.rotation.x = Math.sin(gaitPhase) * 0.45;
+        brLeg.rotation.x = Math.sin(gaitPhase) * 0.45;
+        frLeg.rotation.x = -Math.sin(gaitPhase) * 0.45;
+        blLeg.rotation.x = -Math.sin(gaitPhase) * 0.45;
+        bodyRig.position.y = 0.62 + Math.abs(Math.sin(gaitPhase)) * 0.04;
+        if (stateTimer <= 0) {
+          say('HEE-BAA!');
+          behavior = 'look';
+          stateTimer = 1.0;
+        }
+      } else if (behavior === 'stare') {
+        // turns to the camera and stares... head slowly tilting
+        const lookYaw = Math.atan2(0, 1);
+        yaw += (lookYaw - yaw) * (1 - Math.exp(-4 * dt));
+        headPivot.rotation.z = Math.min(0.6, (2.6 - stateTimer) * 0.3);
+        headPivot.rotation.x = -0.15;
+        if (stateTimer <= 0) {
+          headPivot.rotation.z = 0;
+          say('BAA.');
+          behavior = 'scamper';
+          pickNextBehavior();
+        }
+      } else {
+        // charge: head down, sprint at the target, headbutt
+        const dx = targetX - posX;
+        const dz = targetZ - posZ;
+        const dist = Math.hypot(dx, dz);
+        yaw = Math.atan2(dx, dz);
+        headPivot.rotation.x = 0.45;
+        if (dist < 0.6 || stateTimer <= 0) {
+          if (dist < 0.9) say('BAA-BOOM!', { bonk: true, baa: true });
+          behavior = 'look';
+          stateTimer = 1.2;
+          headPivot.rotation.x = 0;
+        } else {
+          const step = Math.min(dist, 5.4 * dt);
+          posX += (dx / dist) * step;
+          posZ += (dz / dist) * step;
+          moving = true;
+        }
+      }
+      if (moving) {
+        gaitPhase += dt * 16;
+        const sw = Math.sin(gaitPhase) * 0.7;
+        flLeg.rotation.x = sw;
+        brLeg.rotation.x = -sw;
+        frLeg.rotation.x = -sw;
+        blLeg.rotation.x = sw;
+        bodyRig.position.y = 0.62 + Math.abs(Math.sin(gaitPhase)) * 0.12;
+      }
+      posZ = Math.max(-4.65, Math.min(3.55, posZ));
+      group.position.set(posX, 0, posZ);
+      group.rotation.y = yaw;
+      return;
+    }
     if (startleHopTimer > 0) startleHopTimer = Math.max(0, startleHopTimer - dt);
 
     // If the street scrolled ahead, gently encourage the sheep to scamper along the roadside into view!
@@ -478,10 +615,28 @@ export function createVillageSheep(): VillageSheepHandle {
 
   const getPosition = () => ({ x: posX, z: posZ });
 
+  const chargeAt = (x: number, z: number) => {
+    if (behavior === 'faint' || behavior === 'charge') return;
+    behavior = 'charge';
+    targetX = x;
+    targetZ = z;
+    stateTimer = 3.2;
+    say('BAAAAA!!', { baa: true });
+  };
+
+  const steer = (x: number, z: number) => {
+    if (behavior !== 'charge') return false;
+    targetX = x;
+    targetZ = z;
+    return true;
+  };
+
+  const takeEvents = () => events.splice(0, events.length);
+
   const dispose = () => {
     geometries.forEach((g) => g.dispose());
     materials.forEach((m) => m.dispose());
   };
 
-  return { group, update, reactToNearbyBrawl, getPosition, dispose };
+  return { group, update, reactToNearbyBrawl, getPosition, chargeAt, steer, takeEvents, dispose };
 }

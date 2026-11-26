@@ -183,6 +183,7 @@ export interface StreetStageHandle {
   triggerCharpoyBounce: (c: StreetCharpoy) => void;
   triggerCrowdCheer: () => void;
   reactSheepToBrawl: (brawlX: number, brawlZ: number) => boolean;
+  sheep: VillageSheepHandle;
   setShockwaveRing: (active: boolean, x: number, z: number, radius: number, opacity: number) => void;
   spawnCrowdDrop: (
     kind: 'chai' | 'lathi' | 'coconut',
@@ -2660,6 +2661,7 @@ export function buildStreetStage(
     triggerCharpoyBounce,
     triggerCrowdCheer,
     reactSheepToBrawl,
+    sheep,
     setShockwaveRing,
     spawnCrowdDrop,
     resetProps,

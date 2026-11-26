@@ -171,6 +171,8 @@ export class StreetBrawlEngine {
   practiceHave = 0;
   practiceDone = false;
   practiceNextAt = 0;
+  sheepChargeTimer = 15;
+  sheepVictimUid = -1;
   speechQueue: { at: number; bubble: SpeechBubbleState; secs: number }[] = [];
   bossWarn: string | null = null;
   bossWarnTimer = 0;
@@ -1010,6 +1012,33 @@ export class StreetBrawlEngine {
     // Startle the scenic roadside village sheep with a playful "Baaa!" when brawls pass near it
     if (this.enemies.some((e) => e.alive) && this.stage.reactSheepToBrawl(active.x, active.z)) {
       soundEngine.playSheepBaa();
+    }
+
+    // The sheep does stupid things: pop-ups, and now and then it headbutts a cousin
+    this.sheepChargeTimer -= dt;
+    if (this.sheepChargeTimer <= 0 && this.phase === 'FIGHTING') {
+      this.sheepChargeTimer = 22 + Math.random() * 18;
+      const sp = this.stage.sheep.getPosition();
+      const victim = this.enemies.find((e) => e.alive && e.spec.archetype !== 'boss' && Math.hypot(e.x - sp.x, e.z - sp.z) < 7);
+      if (victim) {
+        this.stage.sheep.chargeAt(victim.x, victim.z);
+        this.sheepVictimUid = victim.uid;
+      }
+    }
+    if (this.sheepVictimUid >= 0) {
+      const v = this.enemies.find((e) => e.uid === this.sheepVictimUid && e.alive);
+      if (!v || !this.stage.sheep.steer(v.x, v.z)) this.sheepVictimUid = -1;
+    }
+    for (const ev of this.stage.sheep.takeEvents()) {
+      this.spawnComicPopup(ev.x, 1.4, ev.z, ev.text, '#F8F4EC');
+      if (ev.baa) soundEngine.playSheepBaa();
+      if (ev.bonk) {
+        const hit = this.enemies.find((e) => e.alive && Math.hypot(e.x - ev.x, e.z - ev.z) < 1.6);
+        if (hit) {
+          this.damageEnemy(hit, null, 12, true, (hit.x >= ev.x ? 1 : -1) * 3.5, 4.2, 'SHEEP ATTACK!');
+          this.shakeIntensity = Math.max(this.shakeIntensity, 0.2);
+        }
+      }
     }
 
     this.updateHeroWithInput(active, p1Input, dt);
