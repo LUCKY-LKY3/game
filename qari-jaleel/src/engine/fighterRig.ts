@@ -165,6 +165,8 @@ export interface ArticulatedFighterRig {
   coverKind: number;
   /** zone-clear celebration routine for the 'high_five' action */
   celebrateKind: number;
+  /** the routine goes comically wrong in its second half */
+  celebrateGag: boolean;
   /** Immy's Born To Run: true = keeps heart boxers on, false = bare with a censor prop */
   modest: boolean;
   stripLegs: { mat: THREE.MeshPhysicalMaterial; color: THREE.Color; map: THREE.Texture | null; bump: THREE.Texture | null; skinMap: THREE.Texture | null; on: boolean };
@@ -2445,6 +2447,7 @@ export function createFighterRig(
     coverProps,
     coverKind: 0,
     celebrateKind: 0,
+    celebrateGag: false,
     modest: false,
     stripLegs: { mat: pantsMat, color: pantsMat.color.clone(), map: pantsMat.map, bump: pantsMat.bumpMap, skinMap: limbSkinMat.map, on: false },
     dispose,
@@ -4726,6 +4729,136 @@ export function applyFighterPose(
         rShX = -0.5 - 2.2 * up;
         rShZ = 0.6;
         rElX = -0.3;
+      }
+      // ── Comic second half: everything goes a bit wrong ──
+      if (rig.celebrateGag) {
+        const g = (from: number) => Math.min(1, Math.max(0, (p - from) / 0.12)); // quick blend into the gag
+        const fallOnBum = (w: number) => {
+          hipsY = THREE.MathUtils.lerp(hipsY, 0.36, w);
+          hipsRotX = THREE.MathUtils.lerp(hipsRotX, -0.7, w);
+          lHipX = THREE.MathUtils.lerp(lHipX, -1.45, w);
+          rHipX = THREE.MathUtils.lerp(rHipX, -1.3, w);
+          lKneeX = THREE.MathUtils.lerp(lKneeX, 0.35, w);
+          rKneeX = THREE.MathUtils.lerp(rKneeX, 0.5, w);
+          lShX = THREE.MathUtils.lerp(lShX, 0.6, w);
+          rShX = THREE.MathUtils.lerp(rShX, 0.6, w);
+          lShZ = THREE.MathUtils.lerp(lShZ, -0.5, w);
+          rShZ = THREE.MathUtils.lerp(rShZ, 0.5, w);
+          lElX = THREE.MathUtils.lerp(lElX, -0.3, w);
+          rElX = THREE.MathUtils.lerp(rElX, -0.3, w);
+          headRotZ = Math.sin(time * 9) * 0.2 * w;
+        };
+        if (k === 0) {
+          // Missed high five: hands sail past, both stumble forward
+          const w = g(0.5);
+          torsoRotX = THREE.MathUtils.lerp(torsoRotX, 0.5, w);
+          hipsRotZ = Math.sin(time * 10) * 0.25 * w;
+          rShX = THREE.MathUtils.lerp(rShX, -1.2, w);
+          lHipX = THREE.MathUtils.lerp(lHipX, -0.8, w);
+          lKneeX = THREE.MathUtils.lerp(lKneeX, 0.9, w);
+          headRotX = 0.3 * w;
+        } else if (k === 1) {
+          // Bounced off the chest bump onto the bum
+          fallOnBum(g(0.5));
+        } else if (k === 2) {
+          // Pulled a back muscle mid-bhangra: frozen hunch, hands on lower back, trembling
+          const w = g(0.6);
+          torsoRotX = THREE.MathUtils.lerp(torsoRotX, 0.54, w) + Math.sin(time * 40) * 0.03 * w;
+          hipsY = THREE.MathUtils.lerp(hipsY, 0.86, w);
+          lShX = THREE.MathUtils.lerp(lShX, 0.75, w);
+          rShX = THREE.MathUtils.lerp(rShX, 0.75, w);
+          lShZ = THREE.MathUtils.lerp(lShZ, -0.4, w);
+          rShZ = THREE.MathUtils.lerp(rShZ, 0.4, w);
+          lElX = THREE.MathUtils.lerp(lElX, -1.7, w);
+          rElX = THREE.MathUtils.lerp(rElX, -1.7, w);
+          lHipX = THREE.MathUtils.lerp(lHipX, -0.2, w);
+          rHipX = THREE.MathUtils.lerp(rHipX, 0.1, w);
+          lKneeX = THREE.MathUtils.lerp(lKneeX, 0.5, w);
+          rKneeX = THREE.MathUtils.lerp(rKneeX, 0.5, w);
+          headRotX = -0.3 * w;
+        } else if (k === 3) {
+          // Flexing so hard he shakes and his head goes red with effort
+          const w = g(0.55);
+          hipsX = Math.sin(time * 45) * 0.025 * w;
+          torsoRotX = THREE.MathUtils.lerp(torsoRotX, -0.35, w);
+          headRotX = THREE.MathUtils.lerp(headRotX, -0.45, w);
+          hipsY -= 0.06 * w;
+        } else if (k === 4) {
+          // Dabbed too hard: spins round and stumbles
+          const w = g(0.55);
+          hipsRotY = w * Math.PI * 2;
+          hipsRotZ = Math.sin(time * 8) * 0.3 * w;
+          lKneeX = 0.3 + 0.6 * w;
+        } else if (k === 5) {
+          // Thumka goes wild: huge hip swings, nearly topples
+          const w = g(0.55);
+          const sway = Math.sin(time * 9);
+          hipsX = sway * 0.22 * w + hipsX * (1 - w);
+          hipsRotZ = sway * 0.6 * w + hipsRotZ * (1 - w);
+          headRotZ = -sway * 0.32;
+        } else if (k === 6) {
+          // Bows far too low, bonks the head, comes up woozy
+          const down = p < 0.55 ? Math.sin(Math.min(1, p / 0.45) * Math.PI * 0.5) : 1 - g(0.6);
+          torsoRotX = 0.54 * down;
+          hipsRotX = 0.65 * down;
+          headRotX = 0.45 * down;
+          if (p > 0.6) {
+            headRotZ = Math.sin(time * 7) * 0.3;
+            hipsRotZ = Math.sin(time * 5) * 0.15;
+          }
+        } else if (k === 7) {
+          // Too dizzy after the spin: wobble, then plop down
+          const w = g(0.6);
+          hipsRotZ = Math.sin(time * 7) * 0.35 * w;
+          headRotZ = Math.sin(time * 9) * 0.3 * w;
+          if (p > 0.78) fallOnBum(g(0.78));
+        } else if (k === 8) {
+          // Nods off standing up
+          const w = g(0.55);
+          headRotX = THREE.MathUtils.lerp(headRotX, 0.45, w);
+          torsoRotX = THREE.MathUtils.lerp(torsoRotX, 0.2, w);
+          hipsRotZ = Math.sin(time * 2) * 0.12 * w;
+          hipsY -= 0.05 * w;
+        } else if (k === 9) {
+          // Shadow boxing... punches his own face
+          const w = g(0.6);
+          rShX = THREE.MathUtils.lerp(rShX, -1.95, w);
+          rShZ = THREE.MathUtils.lerp(rShZ, -0.22, w);
+          rElX = THREE.MathUtils.lerp(rElX, -2.0, w);
+          headRotX = THREE.MathUtils.lerp(headRotX, -0.5, w);
+          torsoRotX = THREE.MathUtils.lerp(torsoRotX, -0.3, w);
+          hipsX = -0.12 * w;
+          lShX = THREE.MathUtils.lerp(lShX, -0.3, w);
+          lElX = THREE.MathUtils.lerp(lElX, -0.4, w);
+        } else if (k === 10) {
+          // Crane stance wobbles... and over he goes
+          const w = g(0.72);
+          hipsRotZ = (Math.sin(time * 14) * 0.25 + 0.55) * w;
+          hipsY -= 0.3 * w;
+          lShZ = THREE.MathUtils.lerp(lShZ, -1.4, w);
+          rShZ = THREE.MathUtils.lerp(rShZ, 1.4, w);
+        } else if (k === 11) {
+          // Kiss lands... he swoons at his own charm
+          const w = g(0.6);
+          torsoRotX = THREE.MathUtils.lerp(torsoRotX, -0.3, w);
+          headRotX = -0.35 * w;
+          lShX = THREE.MathUtils.lerp(lShX, -1.4, w);
+          lShZ = THREE.MathUtils.lerp(lShZ, 0.2, w);
+          lElX = THREE.MathUtils.lerp(lElX, -1.95, w);
+          rKneeX = 0.3 + 0.8 * w;
+          rHipX = -0.5 * w;
+        } else {
+          // Falls asleep mid-yawn: slumps, arms dangle, sways
+          const w = g(0.6);
+          torsoRotX = THREE.MathUtils.lerp(torsoRotX, 0.5, w);
+          headRotX = THREE.MathUtils.lerp(headRotX, 0.45, w);
+          lShX = THREE.MathUtils.lerp(lShX, 0.2, w);
+          rShX = THREE.MathUtils.lerp(rShX, 0.2, w);
+          lElX = THREE.MathUtils.lerp(lElX, -0.2, w);
+          rElX = THREE.MathUtils.lerp(rElX, -0.2, w);
+          hipsRotZ = Math.sin(time * 1.8) * 0.2 * w;
+          hipsY -= 0.08 * w;
+        }
       }
       break;
     }

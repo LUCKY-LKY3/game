@@ -9,6 +9,7 @@ import { soundEngine } from '../sound';
 import { StreetZoneConfig, HeroRuntime, EnemyRuntime } from './types';
 import { VILLAGE_BOON_POOL, STREET_ZONES } from './data';
 import { STYLE_GRADES } from './style';
+import { JAV_GAALIS } from '../../data/jokes';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 /** Endless wave plan: who comes, in what order, the twist (if any), plus banner text. Boss every 5th wave. */
@@ -411,7 +412,7 @@ export function finishRun(this: StreetBrawlEngine, victory: boolean) {
   this.onMatchFinish?.(victory ? 1 : 2);
 }
 
-const CELEBRATE_SECS = 1.6;
+const CELEBRATE_SECS = 2.3;
 const CELEBRATE_CALLS: Record<number, string> = {
   2: 'BALLE BALLE!', 3: 'FLEX!', 4: 'DAB!', 5: 'THUMKA!', 6: 'NAMASTE!', 7: 'WOOO!',
   8: 'TOO EASY.', 9: 'NEXT!', 10: 'RESPECT!', 11: 'MWAH!', 12: 'YAAAWN...',
@@ -426,10 +427,19 @@ const CELEBRATIONS: Record<string, number[]> = {
   rebel_shadow: [11, 5, 4], // blow a kiss, thumka, dab
 };
 function pickCelebrations(active: HeroRuntime, partner: HeroRuntime) {
+  active.rig.celebrateGag = false;
+  partner.rig.celebrateGag = false;
   if (partner.hp > 0 && Math.random() < 0.3) {
     const k = Math.random() < 0.5 ? 0 : 1; // together: high five or chest bump
     active.rig.celebrateKind = k;
     partner.rig.celebrateKind = k;
+    if (k === 0) {
+      const miss = Math.random() < 0.6; // the high five usually misses
+      active.rig.celebrateGag = miss;
+      partner.rig.celebrateGag = miss;
+    } else {
+      partner.rig.celebrateGag = true; // somebody always bounces off the chest bump
+    }
     return;
   }
   for (const h of [active, partner]) {
@@ -437,8 +447,26 @@ function pickCelebrations(active: HeroRuntime, partner: HeroRuntime) {
     let k = list[Math.floor(Math.random() * list.length)];
     if (h === partner && k === active.rig.celebrateKind) k = list[(list.indexOf(k) + 1) % list.length];
     h.rig.celebrateKind = k;
+    h.rig.celebrateGag = Math.random() < 0.8;
   }
 }
+
+/** What goes wrong, said by whoever it happened to, plus a pop-up */
+const GAG_LINES: Record<number, { line: string; pop: string }[]> = {
+  0: [{ line: "...We'll practise that one.", pop: 'MISSED!' }, { line: 'Bro, my hand was RIGHT there!', pop: 'AIR FIVE!' }],
+  1: [{ line: 'Bro, are you made of concrete?!', pop: 'BOUNCED!' }, { line: 'I saw my Nani for a second there.', pop: 'TIMBER!' }],
+  2: [{ line: 'OOF! My back! Too much bhangra!', pop: 'CRACK!' }, { line: 'Somebody call the physio uncle!', pop: 'OUCH!' }],
+  3: [{ line: 'RIIIP. That was my good kurta.', pop: 'RIIIP!' }, { line: 'Too... much... muscle...', pop: 'VEIN POP!' }],
+  4: [{ line: 'Is dabbing still cool? ...Nobody answer.', pop: 'CRINGE!' }, { line: 'Dabbed so hard I saw tomorrow.', pop: 'WHOOPS!' }],
+  5: [{ line: 'Shake it like the shaadi DJ is watching!', pop: 'THUMKA!' }, { line: 'Aunty taught me this. Aunty would be proud.', pop: 'SHAADI MODE!' }],
+  6: [{ line: 'BONK. The floor was nearer than anticipated.', pop: 'BONK!' }, { line: 'A most humble bow. Too humble, evidently.', pop: 'BONK!' }],
+  7: [{ line: 'The street... is spinning... is that normal?', pop: 'DIZZY!' }, { line: 'Which one of you is the real cousin?', pop: 'WOBBLE!' }],
+  8: [{ line: 'Too easy. Wake me for the hard part.', pop: 'Zzz...' }, { line: 'Cousins? More like snoozins.', pop: 'Zzz...' }],
+  9: [{ line: 'OW! Who hit me? ...Oh.', pop: 'SELF K.O.!' }, { line: 'Undefeated. Except by myself.', pop: 'OOPS!' }],
+  10: [{ line: 'Perfect balaaaance— WHOA!', pop: 'TIMBER!' }, { line: 'The crane has... landed.', pop: 'FLOP!' }],
+  11: [{ line: "This one's for the aunties. Mwah!", pop: 'AUNTY: CHHI!' }, { line: "Careful, ladies. I'm dangerously charming.", pop: 'EWW!' }],
+  12: [{ line: 'Wake me at the next zone... zzz', pop: 'Zzz...' }, { line: 'Five more minutes...', pop: 'SNORE!' }],
+};
 
 export function stepTagHighFive(this: StreetBrawlEngine, dt: number) {
   this.highFiveTimer = Math.max(0, this.highFiveTimer - dt);
@@ -475,9 +503,28 @@ export function stepTagHighFive(this: StreetBrawlEngine, dt: number) {
     this.spawnParticles(midX, 1.65, midZ, 18, 4.2);
     this.spawnComicPopup(midX, 2.25, midZ, paired ? (active.rig.celebrateKind === 1 ? 'CHEST BUMP!' : 'TAG TEAM!') : CELEBRATE_CALLS[active.rig.celebrateKind] ?? 'TAG TEAM!', '#FACC15');
   }
+  // The comic beat: whoever's routine goes wrong says so
+  if (!this.celebrationGagSaid && this.highFiveTimer <= CELEBRATE_SECS * 0.38) {
+    this.celebrationGagSaid = true;
+    const who = active.rig.celebrateGag && active.rig.celebrateKind !== 1 ? active : partner.hp > 0 && partner.rig.celebrateGag ? partner : null;
+    if (who) {
+      const opts = GAG_LINES[who.rig.celebrateKind] ?? GAG_LINES[0];
+      const pick = opts[Math.floor(Math.random() * opts.length)];
+      let line = pick.line;
+      if (who.profile.id === 'rebel_tactician') line += ' ' + JAV_GAALIS[Math.floor(Math.random() * JAV_GAALIS.length)];
+      this.speechBubble = { side: who.index === 0 ? 1 : 2, speaker: who.profile.name, text: line };
+      this.speechTimer = 2.2;
+      this.spawnComicPopup(who.x, 2.5, who.z, pick.pop, '#F472B6');
+      if (pick.pop === 'BONK!' || pick.pop === 'SELF K.O.!' || pick.pop === 'TIMBER!' || pick.pop === 'BOUNCED!') {
+        soundEngine.playHit(false);
+        this.shakeIntensity = Math.max(this.shakeIntensity, 0.15);
+      }
+    }
+  }
 
   if (this.highFiveTimer <= 0) {
     this.celebrationPicked = false;
+    this.celebrationGagSaid = false;
     active.action = 'idle';
     active.actionTime = 0;
     active.actionDuration = 0;

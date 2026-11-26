@@ -25,7 +25,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.90.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.91.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -96,7 +96,7 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 Hero hit boxes in `combat.ts` `evaluateHeroAttackHits` use `rangeX*0.82 + bonus*0.8` and `rangeZ*0.72` (backward tolerance -0.25), so hits only land when bodies are close. A short step-in (`hero.stepInLeft`, set in `startHeroMove`, applied in the grounded attack branch of `heroControl.ts`) slides you up to 0.7 toward a cousin just out of reach in front. Enemy hit lane depth is 0.78.
 
 ## Zone-clear celebrations
-`stepTagHighFive` in `flow.ts` (1.6 s) picks routines via `pickCelebrations`: 30% a paired high five / chest bump, otherwise each fighter does one of their own (`CELEBRATIONS` per fighter id, popups in `CELEBRATE_CALLS`). Poses live in `fighterRig.ts` `case 'high_five'` switched on `rig.celebrateKind` (0 high five, 1 chest bump, 2 bhangra, 3 flex, 4 dab, 5 thumka, 6 namaste bow, 7 spin pump, 8 arms folded, 9 shadow boxing, 10 kung fu salute + crane, 11 blow a kiss, 12 yawn stretch). Solo routines face the camera (`view.ts`). Preview: `?headlab&body&only=0&action=high_five&phase=0.5&t=0.4&cel=2`.
+`stepTagHighFive` in `flow.ts` (1.6 s) picks routines via `pickCelebrations`: 30% a paired high five / chest bump, otherwise each fighter does one of their own (`CELEBRATIONS` per fighter id, popups in `CELEBRATE_CALLS`). Poses live in `fighterRig.ts` `case 'high_five'` switched on `rig.celebrateKind` (0 high five, 1 chest bump, 2 bhangra, 3 flex, 4 dab, 5 thumka, 6 namaste bow, 7 spin pump, 8 arms folded, 9 shadow boxing, 10 kung fu salute + crane, 11 blow a kiss, 12 yawn stretch). Solo routines face the camera (`view.ts`). Comic gags (v1.0.91, 2.3 s): `rig.celebrateGag` makes the second half go wrong (high five misses 60%, chest bump knocks the partner on his bum, pulled back, kurta rip shake, over-dab spin, wild thumka, bow-bonk, dizzy plop, nodding off, self-punch, crane topples, swoon, falls asleep); 80% of solo routines gag. The victim says a line from `GAG_LINES` in `flow.ts` (Jav adds a gaali) with a pop-up. Preview: `?headlab&body&only=0&action=high_five&phase=0.8&t=0.4&cel=2&gag`.
 
 ## Speech bubbles
 Bubbles are anchored above the speaker: `speechAnchor` in `view.ts` (Street/Endless: hero by profile name, cousin by `spec.name`, generic "Cousin"/"Cousin 2" sticks to the nearest cousin for that line) and `bubbleAnchor` in `combatEngine.ts` (1v1, by side). The HUD (20 Hz) places them at `xPct/yPct` with a 90 ms CSS glide; falls back to left/right side if no anchor. Linger factor is `realDt * 0.85`.

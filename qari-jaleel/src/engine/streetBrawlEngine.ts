@@ -186,6 +186,7 @@ export class StreetBrawlEngine {
   highFiveTimer = 0;
   highFiveChimePlayed = false;
   celebrationPicked = false;
+  celebrationGagSaid = false;
 
   // Enemy Cooperative Rear-Grab State
   grabbedByEnemyUid: number | null = null;
@@ -677,6 +678,7 @@ export class StreetBrawlEngine {
     this.highFiveTimer = 0;
     this.highFiveChimePlayed = false;
     this.celebrationPicked = false;
+    this.celebrationGagSaid = false;
     this.grabbedByEnemyUid = null;
     this.grabEscapeProgress = 0;
     this.grabHoldTimer = 0;
