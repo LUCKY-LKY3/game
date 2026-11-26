@@ -172,6 +172,8 @@ export interface FighterHudState {
   trailHp: number;
   recoverableHp?: number;
   rage: number; // 0..100
+  /** stamina 0..100 */
+  energy?: number;
   combo: number;
   roundsWon: number;
   action: CombatAction;

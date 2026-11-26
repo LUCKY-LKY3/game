@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { soundEngine } from '../sound';
 import { HeroRuntime, EnemyRuntime } from './types';
 import { HERO_MOVES, LANE_MIN_Z, LANE_MAX_Z, triggerHaptic } from './data';
+import { TIRED_AT, TIRED_DMG } from '../energy';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntime) {
@@ -48,7 +49,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
   const counterMul = (hero.counterTimer > 0 ? 1.5 : 1) * (hero.index === this.activeHeroIndex && this.gussaOn ? 1.3 : 1);
   const lazyMul = hero.style === 'lazy_giant' && (hero.action === 'lp' || hero.action === 'lp2' || hero.action === 'rp' || hero.action === 'combo_finisher') ? 1.9 : 1;
   // Long combos lose a bit of punch (down to 60%), like a real fighter tiring
-  const comboScale = Math.max(0.6, 1 - Math.max(0, hero.comboCount - 4) * 0.05);
+  const comboScale = Math.max(0.6, 1 - Math.max(0, hero.comboCount - 4) * 0.05) * (hero.energy < TIRED_AT ? TIRED_DMG : 1);
   const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul * lazyMul * comboScale * getMods(this.endlessMode).damageMul);
 
   // 1. Smashable terracotta clay pots

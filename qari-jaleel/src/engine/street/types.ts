@@ -100,6 +100,10 @@ export interface HeroRuntime {
   counterTimer: number;
   /** rises with each dodge, drains over time; a tired dodge gives almost no invulnerability */
   dodgeFatigue: number;
+  /** stamina 0..100 (engine/energy.ts) */
+  energy: number;
+  energyIdle: number;
+  tiredShown: boolean;
   /** distance still to cover by the short step-in at the start of a strike */
   stepInLeft: number;
   aiThinkTimer: number;

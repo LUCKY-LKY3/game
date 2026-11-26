@@ -5,6 +5,7 @@ import { soundEngine } from '../sound';
 import { getSettings } from '../../utils/settings';
 import { BufferedMoveKind, HeroRuntime, EnemyRuntime } from './types';
 import { HERO_MOVES, LANE_MIN_Z, LANE_MAX_Z, triggerHaptic } from './data';
+import { DODGE_COST, energyCost, regenEnergy, TIRED_AT, TIRED_SLOW } from '../energy';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, inp: PlayerInputState, dt: number) {
@@ -18,6 +19,9 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
   hero.hitFlash = Math.max(0, hero.hitFlash - dt * 5);
   hero.invulnTimer = Math.max(0, hero.invulnTimer - dt);
   hero.dodgeFatigue = Math.max(0, hero.dodgeFatigue - dt);
+  hero.energyIdle += dt;
+  hero.energy = regenEnergy(hero.energy, hero.energyIdle, hero.action === 'idle' || hero.action === 'block', dt);
+  if (hero.tiredShown && hero.energy > 45) hero.tiredShown = false;
   hero.superArmorTimer = Math.max(0, hero.superArmorTimer - dt);
   hero.counterTimer = Math.max(0, hero.counterTimer - dt);
   if (hero.lpChainWindow > 0) {
@@ -779,8 +783,10 @@ export function performDodgeSidestep(this: StreetBrawlEngine, hero: HeroRuntime,
   hero.isSprinting = false;
   const dodgeDirZ = inp.up ? -1 : inp.down ? 1 : hero.z > 0 ? -1 : 1;
   // Dodge spam gets tired: the 2nd quick dodge is shorter, after that it barely protects you
-  const tired = hero.dodgeFatigue > [1.6, 1.0, 0.7][this.difficultyLevel];
+  const tired = hero.dodgeFatigue > [1.6, 1.0, 0.7][this.difficultyLevel] || hero.energy < DODGE_COST;
   hero.dodgeFatigue += 0.75;
+  hero.energy = Math.max(0, hero.energy - DODGE_COST * this.energyScale());
+  hero.energyIdle = 0;
   hero.z = THREE.MathUtils.clamp(hero.z + dodgeDirZ * (tired ? 0.6 : 1.25), LANE_MIN_Z, LANE_MAX_Z);
   hero.vx = hero.facing * 2.2;
   hero.vz = 0;
@@ -1010,7 +1016,15 @@ export function startHeroMove(this: StreetBrawlEngine, hero: HeroRuntime, move: 
       : 1.0;
   const dholBoost = this.hasBoon('double_dhol') ? 0.85 : 1.0;
   const lazyPunch = hero.style === 'lazy_giant' && (move === 'lp' || move === 'lp2' || move === 'rp' || move === 'combo_finisher');
-  hero.actionDuration = spec.duration * boxerBoost * dholBoost * (lazyPunch ? 1.45 : 1);
+  // Energy: every strike costs some; when gassed, strikes are slower (and weaker, see combat.ts)
+  const gassed = hero.energy < TIRED_AT;
+  hero.energy = Math.max(0, hero.energy - energyCost(move, this.energyScale()));
+  hero.energyIdle = 0;
+  if (hero.energy < TIRED_AT && !hero.tiredShown && hero.index === this.activeHeroIndex) {
+    hero.tiredShown = true;
+    this.spawnComicPopup(hero.x, 2.4, hero.z, 'TIRED! HAAF HAAF', '#F87171');
+  }
+  hero.actionDuration = spec.duration * boxerBoost * dholBoost * (lazyPunch ? 1.45 : 1) * (gassed ? TIRED_SLOW : 1);
   // Too big to flinch: lazy giant swings cannot be interrupted
   if (lazyPunch) hero.superArmorTimer = Math.max(hero.superArmorTimer, hero.actionDuration * 0.9);
   hero.hitIdsThisSwing.clear();

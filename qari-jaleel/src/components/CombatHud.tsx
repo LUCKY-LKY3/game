@@ -718,6 +718,12 @@ export function CombatHud({
                           {hero.rage >= 100 && <span className="text-[8px] font-black text-[#FDE047]">POWER!</span>}
                         </div>
                       )}
+                      {isActive && (
+                        <div className="mt-0.5 flex items-center gap-1" title="Energy: every swing and dodge costs some; ease off to refill">
+                          <div className="flex-1 h-1 overflow-hidden bg-[#141210]/80"><div className={`h-full transition-[width] duration-100 ${(hero.energy ?? 100) < 20 ? 'animate-pulse bg-[#EF4444]' : (hero.energy ?? 100) < 45 ? 'bg-[#FACC15]' : 'bg-[#4ADE80]'}`} style={{ width: `${hero.energy ?? 100}%` }} /></div>
+                          {(hero.energy ?? 100) < 20 && <span className="text-[8px] font-black text-[#F87171]">TIRED</span>}
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
@@ -933,6 +939,7 @@ export function CombatHud({
                   {hud.p1.rage >= 100 ? 'POWERUP READY' : `POWERUP ${hud.p1.rage}%`}
                 </span>
               </div>
+              <div className="mt-0.5 w-28 sm:w-40"><div className="h-1 overflow-hidden bg-[#141210]/80"><div className={`h-full transition-[width] duration-100 ${(hud.p1.energy ?? 100) < 20 ? 'animate-pulse bg-[#EF4444]' : (hud.p1.energy ?? 100) < 45 ? 'bg-[#FACC15]' : 'bg-[#4ADE80]'}`} style={{ width: `${hud.p1.energy ?? 100}%` }} /></div></div>
             </div>
           </div>
 
@@ -1041,6 +1048,7 @@ export function CombatHud({
                   {hud.p2.rage >= 100 ? 'POWERUP READY' : `POWERUP ${hud.p2.rage}%`}
                 </span>
               </div>
+              <div className="mt-0.5 ml-auto w-28 sm:w-40"><div className="h-1 overflow-hidden bg-[#141210]/80"><div className={`h-full transition-[width] duration-100 ${(hud.p2.energy ?? 100) < 20 ? 'animate-pulse bg-[#EF4444]' : (hud.p2.energy ?? 100) < 45 ? 'bg-[#FACC15]' : 'bg-[#4ADE80]'}`} style={{ width: `${hud.p2.energy ?? 100}%` }} /></div></div>
             </div>
           </div>
         </div>

@@ -640,6 +640,9 @@ export class StreetBrawlEngine {
       aiThinkTimer: 0.25,
       counterTimer: 0,
       dodgeFatigue: 0,
+      energy: 100,
+      energyIdle: 1,
+      tiredShown: false,
       stepInLeft: 0,
       powerupKind: getPowerupKindForFighter(profile.id),
       powerupOriginX: x,
@@ -848,6 +851,11 @@ export class StreetBrawlEngine {
     h.weaponMeshes.chair.visible = k === 'chair';
     h.weaponMeshes.stool.visible = k === 'stool';
     h.weaponMeshes.coconut.visible = k === 'coconut';
+  }
+
+  /** Energy costs by difficulty (Endless is Normal) */
+  energyScale(): number {
+    return [0.75, 1, 1.2][this.difficultyLevel];
   }
 
   getActiveHero(): HeroRuntime {

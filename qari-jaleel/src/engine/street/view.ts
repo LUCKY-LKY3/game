@@ -293,6 +293,7 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
     trailHp: h.trailHp,
     recoverableHp: Math.ceil(h.recoverableHp),
     rage: Math.round(h.rage),
+    energy: Math.round(h.energy),
     combo: h.comboCount,
     roundsWon: 0,
     action: h.action,

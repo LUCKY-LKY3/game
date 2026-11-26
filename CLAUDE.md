@@ -25,7 +25,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.96.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.97.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -100,6 +100,9 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 
 ## Silly sheep
 `engine/villageSheep.ts`: besides trot/graze/look the sheep randomly does stupid things (`STUPID`: faint stiff on its side, chase own tail, pronk boing, moonwalk, creepy stare at camera) and reports pop-ups via `takeEvents()`. Every 22-40 s the engine (`streetBrawlEngine.ts`, after the sheep startle) sends it charging at a nearby cousin (`chargeAt` + `steer` to follow); the BAA-BOOM headbutt does 12 damage and launches him (SHEEP ATTACK!). Stage exposes `sheep`.
+
+## Energy (stamina) bar (v1.0.97)
+`engine/energy.ts` is shared by both engines: each strike costs energy (`COST`, jab 5 .. finisher 14; scaled 0.75/1/1.2 by difficulty), a dodge costs 14. It refills after 0.7 s without swinging (26/s standing or guarding, 16/s moving). Below 20 the fighter is TIRED: strikes 1.35x slower, 0.7x damage, dodges give almost no invulnerability. Street: `hero.energy/energyIdle/tiredShown` (`heroControl.ts` startHeroMove + dodge, damage in `combat.ts`). Arcade: `FighterRuntime.energy` in `combatEngine.ts` `startAction`/physics/`resolveAttackHit`. HUD: thin green/yellow/red bar under the power bar (`energy` in `FighterHudState`).
 
 ## Fighting realism (v1.0.95)
 - Hit location: `damageEnemy` sets `e.rig.hitKind` (0/3 head snap left/right for jabs/hooks, 1 body for kicks/knees/finishers and some jabs, 2 legs for sweeps/axe kicks); `applyThugPose` hitstun has a pose per kind plus a two-step backward stagger. Sparks spawn at the contact point and height. Knocked-down cousins push up with their hands and a knee to stand. Heroes get head-snap/body-fold hit reactions (`rig.hitKind`, set in `checkEnemyAttackHit`).

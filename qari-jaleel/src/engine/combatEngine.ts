@@ -15,6 +15,7 @@ import { ArticulatedFighterRig, applyFighterPose } from './fighterRig';
 import { getPowerupKindForFighter, PowerupDirector, PowerupKind } from './powerupDirector';
 import { resolveFighterStyle } from '../data/roster';
 import { soundEngine } from './sound';
+import { DODGE_COST, energyCost, regenEnergy, TIRED_AT, TIRED_DMG, TIRED_SLOW } from './energy';
 import { getSettings } from '../utils/settings';
 
 interface MoveSpec {
@@ -276,6 +277,8 @@ interface FighterRuntime {
   /** short lunge toward the opponent at the start of a strike */
   stepInLeft: number;
   dodgeFatigue: number;
+  energy: number;
+  energyIdle: number;
   /** same move repeated (the AI blocks mashers more) */
   lastMove: CombatAction | null;
   repeatCount: number;
@@ -484,6 +487,8 @@ export class AkharaCombatEngine {
       aiGoal: 'approach',
       stepInLeft: 0,
       dodgeFatigue: 0,
+      energy: 100,
+      energyIdle: 1,
       lastMove: null,
       repeatCount: 0,
       whiffTimer: 0,
@@ -593,10 +598,17 @@ export class AkharaCombatEngine {
   private startAction(f: FighterRuntime, action: CombatAction, durationOverride?: number) {
     const spec = MOVE_DATA[action];
     const speedFactor = 1.12 - (f.profile.stats.speed - 5) * 0.025;
+    const cost = energyCost(action, this.difficulty === 'grandmaster' ? 1.2 : this.difficulty === 'novice' ? 0.75 : 1);
+    const gassed = cost > 0 && f.energy < TIRED_AT;
+    if (cost > 0) {
+      f.energy = Math.max(0, f.energy - cost);
+      f.energyIdle = 0;
+      if (f.energy < TIRED_AT && !gassed) this.pushCallout(f, 'TIRED!');
+    }
     f.action = action;
     f.actionTimer = 0;
     f.actionDuration =
-      durationOverride ?? (spec ? spec.duration * Math.max(0.84, speedFactor) : 0.35);
+      durationOverride ?? (spec ? spec.duration * Math.max(0.84, speedFactor) * (gassed ? TIRED_SLOW : 1) : 0.35);
     f.hasHitCurrentMove = false;
     f.rageHitsLanded = 0;
 
@@ -808,8 +820,10 @@ export class AkharaCombatEngine {
     // 3. Z-Axis 2.5D Tekken Sidestep Dodge
     if (inp.sidestepPressed && f.y <= 0.02) {
       const stepOut = f.z < 0.25 ? 1 : -1;
-      const tired = f.dodgeFatigue > 1.0;
+      const tired = f.dodgeFatigue > 1.0 || f.energy < DODGE_COST;
       f.dodgeFatigue += 0.75;
+      f.energy = Math.max(0, f.energy - DODGE_COST);
+      f.energyIdle = 0;
       f.vz = stepOut * (tired ? 2.6 : 4.8);
       f.invulnTimer = tired ? 0.04 : 0.22;
       if (tired) this.pushCallout(f, 'OUT OF BREATH!');
@@ -969,7 +983,7 @@ export class AkharaCombatEngine {
       ? Math.round(spec.damage / 3)
       : Math.round(spec.damage * powerMult);
     const comboScale = Math.max(0.55, 1 - attacker.comboCount * 0.1);
-    const finalDamage = Math.max(2, Math.round(rawDamage * comboScale));
+    const finalDamage = Math.max(2, Math.round(rawDamage * comboScale * (attacker.energy < TIRED_AT ? TIRED_DMG : 1)));
 
     // Counter-hit bonus if defender was mid-startup
     const isCounter = Boolean(MOVE_DATA[defender.action]) && !isRageMulti;
@@ -1577,6 +1591,8 @@ export class AkharaCombatEngine {
     if (f.hitFlash > 0) f.hitFlash = Math.max(0, f.hitFlash - dt * 5.2);
     if (f.invulnTimer > 0) f.invulnTimer = Math.max(0, f.invulnTimer - dt);
     f.dodgeFatigue = Math.max(0, f.dodgeFatigue - dt);
+    f.energyIdle += dt;
+    f.energy = regenEnergy(f.energy, f.energyIdle, f.action === 'idle' || f.action === 'block', dt);
     f.whiffTimer = Math.max(0, f.whiffTimer - dt);
     f.counterReady = Math.max(0, f.counterReady - dt);
 
@@ -1939,6 +1955,7 @@ export class AkharaCombatEngine {
       trailHp: f.trailHp,
       recoverableHp: Math.ceil(f.recoverableHp),
       rage: Math.round(f.rage),
+      energy: Math.round(f.energy),
       combo: f.comboCount,
       roundsWon: f.roundsWon,
       action: f.action,
