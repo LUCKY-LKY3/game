@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { chappalFoot, fabricTexture, fistGroup, hashString, limbGeometry, makeFistGeos, makeFootGeos, ribbonGeometry, torsoGeometry } from './thugParts';
+import { chappalFoot, fabricTexture, fistGroup, hashString, headGeometry, limbGeometry, makeFistGeos, makeFootGeos, ribbonGeometry, torsoGeometry } from './thugParts';
 import { applyWarmRimHighlight } from './fighterRig';
 
 export type ThugArchetype = 'idiot' | 'thug' | 'ranged' | 'biker' | 'boss';
@@ -648,6 +648,92 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
     torso.add(chain);
   }
 
+  // Boss costumes
+  if (spec.name === 'BADE TAU') {
+    // Maroon shawl with a gold border wrapped round the shoulders
+    const shawlTex = fabricTexture('#7F1D1D', 'stripe', '#F59E0B');
+    textures.push(shawlTex);
+    const shawlMat = trackMat(new THREE.MeshStandardMaterial({ map: shawlTex, roughness: 0.8, side: THREE.DoubleSide }));
+    const zf = frontZ(0.4) + 0.03;
+    const shawl = new THREE.Mesh(
+      trackGeo(
+        ribbonGeometry(
+          [
+            new THREE.Vector3(-0.2, 0.15, zf - 0.04),
+            new THREE.Vector3(-0.22, 0.45, zf),
+            new THREE.Vector3(-0.28, 0.62, 0.05),
+            new THREE.Vector3(0, 0.66, -0.17),
+            new THREE.Vector3(0.28, 0.62, 0.05),
+            new THREE.Vector3(0.22, 0.45, zf),
+            new THREE.Vector3(0.2, 0.15, zf - 0.04),
+          ],
+          0.2
+        )
+      ),
+      shawlMat
+    );
+    shawl.castShadow = true;
+    torso.add(shawl);
+  } else if (spec.name === 'Chappal Chaudhary') {
+    // Leather bandolier loaded with spare chappals
+    const zf = frontZ(0.3) + 0.025;
+    const band = new THREE.Mesh(
+      trackGeo(ribbonGeometry([new THREE.Vector3(-0.25, 0.56, 0.08), new THREE.Vector3(-0.12, 0.42, zf), new THREE.Vector3(0.08, 0.22, zf), new THREE.Vector3(0.24, 0.04, zf * 0.85)], 0.07)),
+      strapMat
+    );
+    torso.add(band);
+    const soleMat = trackMat(new THREE.MeshStandardMaterial({ color: '#0284C7', roughness: 0.6 }));
+    const soleGeo = trackGeo(new THREE.BoxGeometry(0.06, 0.13, 0.02));
+    [0.44, 0.33, 0.22, 0.11].forEach((y, k) => {
+      const c = new THREE.Mesh(soleGeo, soleMat);
+      c.position.set(-0.15 + k * 0.085, y, frontZ(y) + 0.04);
+      c.rotation.z = 0.6;
+      torso.add(c);
+    });
+  } else if (spec.name === 'Dhol Daku') {
+    // A dhol drum slung on his hip
+    const drumTex = (() => {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 64;
+      const g = c.getContext('2d')!;
+      g.fillStyle = '#B91C1C';
+      g.fillRect(0, 0, 128, 64);
+      g.strokeStyle = '#FDE68A';
+      g.lineWidth = 3;
+      g.beginPath();
+      for (let x = 0; x <= 128; x += 16) {
+        g.moveTo(x, 4);
+        g.lineTo(x + 8, 60);
+        g.lineTo(x + 16, 4);
+      }
+      g.stroke();
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    })();
+    textures.push(drumTex);
+    const drum = new THREE.Group();
+    const body = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.15, 0.15, 0.36, 18, 1, true)), trackMat(new THREE.MeshStandardMaterial({ map: drumTex, roughness: 0.6, side: THREE.DoubleSide })));
+    const skinHead = trackMat(new THREE.MeshStandardMaterial({ color: '#F5E6C8', roughness: 0.8 }));
+    const capA = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.15, 18)), skinHead);
+    capA.position.y = 0.18;
+    capA.rotation.x = -Math.PI / 2;
+    const capB = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.15, 18)), skinHead);
+    capB.position.y = -0.18;
+    capB.rotation.x = Math.PI / 2;
+    drum.add(body, capA, capB);
+    drum.rotation.z = Math.PI / 2;
+    drum.position.set(0.12, 0.08, frontZ(0.08) + 0.12);
+    torso.add(drum);
+    const zf = frontZ(0.35) + 0.02;
+    const strap = new THREE.Mesh(
+      trackGeo(ribbonGeometry([new THREE.Vector3(-0.25, 0.58, 0.05), new THREE.Vector3(-0.1, 0.4, zf), new THREE.Vector3(0.08, 0.2, zf + 0.04)], 0.05)),
+      trackMat(new THREE.MeshStandardMaterial({ color: '#FACC15', roughness: 0.7, side: THREE.DoubleSide }))
+    );
+    torso.add(strap);
+  }
+
   // Neck
   const neck = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.078, 0.1, 0.2, 12)), skinMat);
   neck.position.y = 0.66;
@@ -658,8 +744,7 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
   headGroup.position.set(0, 0.84, 0.02);
   torso.add(headGroup);
 
-  const cranium = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.2, 16, 14)), faceSkinMat);
-  cranium.scale.set(0.94, 1.12, 0.98);
+  const cranium = new THREE.Mesh(trackGeo(headGeometry(0.2)), faceSkinMat);
   cranium.castShadow = true;
   headGroup.add(cranium);
 
@@ -672,90 +757,113 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
     headGroup.add(ear);
   });
 
-  // Bulbous nose
-  const nose = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.052, 10, 8)), skinMat);
-  nose.position.set(0, -0.01, 0.2);
-  nose.scale.set(0.88, 1.12, 1.15);
-  headGroup.add(nose);
-
-  // Expressive Eyes: Goofy cross-eyed / wide-eyed for idiots, angry narrowed for thugs/boss
-  const eyeGeo = trackGeo(new THREE.SphereGeometry(spec.goofyEyes ? 0.048 : 0.036, 10, 8));
-  const pupilGeo = trackGeo(new THREE.SphereGeometry(spec.goofyEyes ? 0.022 : 0.018, 8, 8));
-
-  const lEye = new THREE.Mesh(eyeGeo, eyeWhiteMat);
-  lEye.position.set(-0.072, 0.045, 0.17);
-  const rEye = new THREE.Mesh(eyeGeo, eyeWhiteMat);
-  rEye.position.set(0.072, 0.045, 0.17);
-  headGroup.add(lEye, rEye);
-
-  const lPupil = new THREE.Mesh(pupilGeo, pupilMat);
-  const rPupil = new THREE.Mesh(pupilGeo, pupilMat);
-  if (spec.goofyEyes) {
-    // Classic hilarious cross-eyed / slightly mismatched idiot pupils!
-    lPupil.position.set(-0.052, 0.054, 0.208);
-    rPupil.position.set(0.055, 0.036, 0.208);
-  } else {
-    lPupil.position.set(-0.07, 0.042, 0.198);
-    rPupil.position.set(0.07, 0.042, 0.198);
-  }
-  headGroup.add(lPupil, rPupil);
-
-  // Bushy comical eyebrows (crooked for idiots, thick angry unibrow for thugs & boss!)
-  if (spec.goofyEyes) {
-    const browGeo = trackGeo(new THREE.BoxGeometry(0.085, 0.024, 0.03));
-    const lb = new THREE.Mesh(browGeo, hairMat);
-    lb.position.set(-0.075, 0.115, 0.175);
-    lb.rotation.z = 0.28;
-    const rb = new THREE.Mesh(browGeo, hairMat);
-    rb.position.set(0.075, 0.105, 0.175);
-    rb.rotation.z = 0.12;
-    headGroup.add(lb, rb);
-  } else {
-    const unibrow = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.22, 0.035, 0.04)), hairMat);
-    unibrow.position.set(0, 0.095, 0.185);
-    headGroup.add(unibrow);
+  if (spec.archetype !== 'idiot') {
+    // five o'clock shadow on the jaw (same head shape, slightly larger, lower part only)
+    const stubble = new THREE.Mesh(
+      trackGeo(headGeometry(0.204, Math.PI * 0.56, Math.PI * 0.44)),
+      trackMat(new THREE.MeshStandardMaterial({ color: spec.hairColor, transparent: true, opacity: 0.3, depthWrite: false, roughness: 1 }))
+    );
+    headGroup.add(stubble);
   }
 
-  // Oversized comical mustache!
-  const stacheGeo = trackGeo(new THREE.CapsuleGeometry(0.028, 0.1, 4, 8));
-  const lStache = new THREE.Mesh(stacheGeo, hairMat);
-  const rStache = new THREE.Mesh(stacheGeo, hairMat);
-  if (spec.archetype === 'boss') {
-    // Huge curled handlebar villain mustache
-    lStache.scale.set(1.4, 1.6, 1.2);
-    rStache.scale.set(1.4, 1.6, 1.2);
-    lStache.position.set(-0.09, -0.055, 0.195);
-    rStache.position.set(0.09, -0.055, 0.195);
-    lStache.rotation.z = 1.15;
-    rStache.rotation.z = -1.15;
-  } else if (spec.goofyEyes) {
-    // Hilariously lopsided crooked village mustache
-    lStache.position.set(-0.06, -0.068, 0.185);
-    rStache.position.set(0.068, -0.052, 0.185);
-    lStache.rotation.z = 1.32;
-    rStache.rotation.z = -1.1;
-  } else {
-    lStache.position.set(-0.065, -0.062, 0.19);
-    rStache.position.set(0.065, -0.062, 0.19);
-    lStache.rotation.z = 1.38;
-    rStache.rotation.z = -1.38;
-  }
-  headGroup.add(lStache, rStache);
+  // Bulbous nose with a bridge
+  const nose = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.05, 12, 10)), faceSkinMat);
+  nose.position.set(0, -0.012, 0.212);
+  nose.scale.set(0.95, 1.0, 1.05);
+  const bridge = new THREE.Mesh(trackGeo(new THREE.CapsuleGeometry(0.022, 0.06, 4, 8)), faceSkinMat);
+  bridge.position.set(0, 0.04, 0.198);
+  bridge.rotation.x = -0.3;
+  headGroup.add(nose, bridge);
 
-  // Grinning mouth & goofy buck teeth for village idiots
-  const mouth = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.11, 0.042, 0.03)), mouthMat);
-  mouth.position.set(0, -0.115, 0.172);
+  // Eyes: whites, brown iris, pupil, a sparkle, and eyelids that set the mood
+  const eyeR = spec.goofyEyes ? 0.05 : 0.04;
+  const eyeGeo = trackGeo(new THREE.SphereGeometry(eyeR, 14, 10));
+  const irisGeo = trackGeo(new THREE.SphereGeometry(eyeR * 0.55, 12, 8));
+  const pupilGeo = trackGeo(new THREE.SphereGeometry(eyeR * 0.3, 8, 6));
+  const glintGeo = trackGeo(new THREE.SphereGeometry(eyeR * 0.14, 6, 4));
+  const lidGeo = trackGeo(new THREE.SphereGeometry(eyeR * 1.14, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2));
+  const irisMat = trackMat(new THREE.MeshStandardMaterial({ color: '#4A2C17', roughness: 0.35 }));
+  const glintMat = trackMat(new THREE.MeshBasicMaterial({ color: '#FFFFFF' }));
+  [-1, 1].forEach((side) => {
+    const eye = new THREE.Group();
+    eye.position.set(side * 0.072, 0.045, 0.165);
+    const white = new THREE.Mesh(eyeGeo, eyeWhiteMat);
+    white.scale.set(1, 1, 0.75);
+    eye.add(white);
+    // goofy cousins look slightly in different directions
+    const look = spec.goofyEyes ? (side < 0 ? new THREE.Vector2(0.012, 0.008) : new THREE.Vector2(-0.01, -0.01)) : new THREE.Vector2(0, -0.004);
+    const iris = new THREE.Mesh(irisGeo, irisMat);
+    iris.position.set(look.x, look.y, eyeR * 0.62);
+    iris.scale.set(1, 1, 0.5);
+    const pupil = new THREE.Mesh(pupilGeo, pupilMat);
+    pupil.position.set(look.x, look.y, eyeR * 0.82);
+    pupil.scale.set(1, 1, 0.5);
+    const glint = new THREE.Mesh(glintGeo, glintMat);
+    glint.position.set(look.x + eyeR * 0.2, look.y + eyeR * 0.25, eyeR * 0.9);
+    eye.add(iris, pupil, glint);
+    // upper lid: angry and low for thugs, wide open for idiots
+    const lid = new THREE.Mesh(lidGeo, faceSkinMat);
+    lid.rotation.set(spec.goofyEyes ? -0.55 : 0.35, 0, spec.goofyEyes ? side * 0.15 : -side * 0.38);
+    eye.add(lid);
+    headGroup.add(eye);
+  });
+
+  // Brows: curved, angry V for thugs, raised and crooked for idiots
+  const browMat = hairMat;
+  [-1, 1].forEach((side) => {
+    const pts = spec.goofyEyes
+      ? [
+          new THREE.Vector3(side * 0.125, 0.11 + (side > 0 ? -0.012 : 0), 0.16),
+          new THREE.Vector3(side * 0.078, 0.142 + (side > 0 ? -0.015 : 0), 0.188),
+          new THREE.Vector3(side * 0.032, 0.122 + (side > 0 ? -0.012 : 0), 0.198),
+        ]
+      : [
+          new THREE.Vector3(side * 0.128, 0.122, 0.158),
+          new THREE.Vector3(side * 0.08, 0.112, 0.19),
+          new THREE.Vector3(side * 0.03, 0.084, 0.2),
+        ];
+    const brow = new THREE.Mesh(trackGeo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, spec.archetype === 'boss' ? 0.02 : 0.015, 6)), browMat);
+    headGroup.add(brow);
+  });
+
+  // Shaped moustache: two curved strands from under the nose, handlebar curls for bosses, lopsided for idiots
+  const stacheR = spec.archetype === 'boss' ? 0.026 : 0.02;
+  const capGeoStache = trackGeo(new THREE.SphereGeometry(stacheR, 8, 6));
+  [-1, 1].forEach((side) => {
+    const droop = spec.goofyEyes && side > 0 ? -0.018 : 0;
+    const pts = [
+      new THREE.Vector3(side * 0.006, -0.058, 0.226),
+      new THREE.Vector3(side * 0.05, -0.066 + droop, 0.218),
+      new THREE.Vector3(side * 0.095, -0.08 + droop * 1.5, 0.19),
+    ];
+    if (spec.archetype === 'boss') {
+      pts.push(new THREE.Vector3(side * 0.13, -0.06, 0.165), new THREE.Vector3(side * 0.128, -0.022, 0.16));
+    } else if (!spec.goofyEyes) {
+      pts.push(new THREE.Vector3(side * 0.112, -0.1, 0.17));
+    }
+    const strand = new THREE.Mesh(trackGeo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 14, stacheR, 7)), hairMat);
+    const tip = new THREE.Mesh(capGeoStache, hairMat);
+    tip.position.copy(pts[pts.length - 1]);
+    headGroup.add(strand, tip);
+  });
+
+  // Mouth: a dark grin with a row of teeth; buck teeth for the idiots
+  const mouth = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.05, 14, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2)), mouthMat);
+  mouth.position.set(0, -0.105, 0.19);
+  mouth.scale.set(1.25, 0.6, 0.45);
   headGroup.add(mouth);
-
+  const teethRow = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.085, 0.016, 0.012)), toothMat);
+  teethRow.position.set(0, -0.11, 0.21);
+  headGroup.add(teethRow);
   if (spec.buckTeeth) {
-    const toothGeo = trackGeo(new THREE.BoxGeometry(0.032, 0.044, 0.025));
-    const t1 = new THREE.Mesh(toothGeo, toothMat);
-    t1.position.set(-0.02, -0.112, 0.188);
-    t1.rotation.z = 0.08;
-    const t2 = new THREE.Mesh(toothGeo, toothMat);
-    t2.position.set(0.02, -0.115, 0.188);
-    t2.rotation.z = -0.1;
-    headGroup.add(t1, t2);
+    const toothGeo = trackGeo(new THREE.SphereGeometry(0.02, 8, 6));
+    [-1, 1].forEach((side) => {
+      const t = new THREE.Mesh(toothGeo, toothMat);
+      t.position.set(side * 0.018, -0.125, 0.212);
+      t.scale.set(0.85, 1.35, 0.5);
+      t.rotation.z = side * -0.08;
+      headGroup.add(t);
+    });
   }
 
   // Distinct comical headwear / village hairdos
@@ -998,33 +1106,103 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
       new THREE.MeshBasicMaterial({ color: '#FEF08A' })
     );
 
-    const wheelGeo = trackGeo(new THREE.TorusGeometry(0.28, 0.08, 8, 16));
-    const frontWheel = new THREE.Mesh(wheelGeo, tireMat);
-    frontWheel.position.set(0, 0.34, 0.62);
-    frontWheel.rotation.y = Math.PI / 2;
-    const rearWheel = new THREE.Mesh(wheelGeo, tireMat);
-    rearWheel.position.set(0, 0.34, -0.58);
-    rearWheel.rotation.y = Math.PI / 2;
-    bikeWheels.push(frontWheel, rearWheel);
+    const engineMat = trackMat(new THREE.MeshStandardMaterial({ color: '#3F3F46', roughness: 0.5, metalness: 0.6 }));
+    // Wheels: tyre, chrome rim, hub and spokes (spin with the tyre)
+    const tyreGeo = trackGeo(new THREE.TorusGeometry(0.29, 0.065, 10, 26));
+    const rimGeo = trackGeo(new THREE.TorusGeometry(0.235, 0.014, 6, 24));
+    const hubGeo = trackGeo(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 12));
+    const spokeGeo = trackGeo(new THREE.BoxGeometry(0.008, 0.46, 0.008));
+    const makeWheel = (z: number) => {
+      const tyre = new THREE.Mesh(tyreGeo, tireMat);
+      tyre.position.set(0, 0.34, z);
+      tyre.rotation.y = Math.PI / 2;
+      tyre.castShadow = true;
+      const rim = new THREE.Mesh(rimGeo, chrome);
+      const hub = new THREE.Mesh(hubGeo, chrome);
+      hub.rotation.x = Math.PI / 2;
+      tyre.add(rim, hub);
+      for (let k = 0; k < 6; k++) {
+        const sp = new THREE.Mesh(spokeGeo, chrome);
+        sp.rotation.z = (k * Math.PI) / 6;
+        tyre.add(sp);
+      }
+      bikeWheels!.push(tyre);
+      bikeGroup!.add(tyre);
+      // mudguard arc over the top
+      const guard = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.34, 0.03, 6, 16, Math.PI)), bikeRed);
+      guard.position.set(0, 0.34, z);
+      guard.rotation.y = Math.PI / 2;
+      bikeGroup!.add(guard);
+    };
+    makeWheel(0.62);
+    makeWheel(-0.58);
 
-    const frame = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.26, 0.28, 1.12)), bikeRed);
-    frame.position.set(0, 0.62, 0);
-    frame.castShadow = true;
+    // Frame tubes
+    const tube = (pts: [number, number, number][], r: number, mat: THREE.Material) => {
+      const m = new THREE.Mesh(trackGeo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(...q))), 12, r, 8)), mat);
+      m.castShadow = true;
+      bikeGroup!.add(m);
+    };
+    tube([[0, 1.0, 0.46], [0, 0.66, 0.2], [0, 0.42, -0.05]], 0.032, bikeRed); // down tube
+    tube([[0, 1.0, 0.46], [0, 0.88, 0.05], [0, 0.82, -0.32]], 0.028, bikeRed); // top tube
+    tube([[0, 0.42, -0.05], [0, 0.38, -0.3], [0, 0.34, -0.58]], 0.026, bikeRed); // swing arm
+    for (const x of [-0.06, 0.06]) tube([[x, 1.02, 0.46], [x, 0.7, 0.55], [x, 0.34, 0.62]], 0.022, chrome); // front forks
+    tube([[0.14, 0.44, 0.12], [0.16, 0.4, -0.2], [0.15, 0.42, -0.72]], 0.03, chrome); // exhaust
 
-    const tank = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.32, 0.22, 0.44)), bikeRed);
-    tank.position.set(0, 0.84, 0.24);
-    const seat = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.3, 0.14, 0.54)), tireMat);
-    seat.position.set(0, 0.79, -0.26);
+    // Tank, seat, engine
+    const tank = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.2, 16, 12)), bikeRed);
+    tank.position.set(0, 0.92, 0.18);
+    tank.scale.set(0.82, 0.62, 1.25);
+    tank.castShadow = true;
+    const seat = new THREE.Mesh(trackGeo(new THREE.CapsuleGeometry(0.085, 0.36, 4, 10)), tireMat);
+    seat.rotation.x = Math.PI / 2;
+    seat.position.set(0, 0.88, -0.27);
+    seat.scale.set(1.3, 1, 0.9);
+    const engine = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.2, 0.22, 0.3)), engineMat);
+    engine.position.set(0, 0.5, 0.06);
+    engine.castShadow = true;
 
-    const handle = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.024, 0.024, 0.68, 8)), chrome);
-    handle.rotation.z = Math.PI / 2;
-    handle.position.set(0, 1.05, 0.48);
+    // Handlebar, grips, mirrors, headlight
+    const bar = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.018, 0.018, 0.66, 8)), chrome);
+    bar.rotation.z = Math.PI / 2;
+    bar.position.set(0, 1.08, 0.48);
+    const gripGeo = trackGeo(new THREE.CylinderGeometry(0.026, 0.026, 0.12, 8));
+    for (const x of [-0.3, 0.3]) {
+      const grip = new THREE.Mesh(gripGeo, tireMat);
+      grip.rotation.z = Math.PI / 2;
+      grip.position.set(x, 1.08, 0.48);
+      const mirror = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.04, 10)), chrome);
+      mirror.position.set(x * 0.8, 1.26, 0.45);
+      const stem = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.006, 0.006, 0.18, 4)), chrome);
+      stem.position.set(x * 0.8, 1.17, 0.46);
+      bikeGroup.add(grip, mirror, stem);
+    }
+    const lampBody = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.085, 0.075, 0.1, 14)), chrome);
+    lampBody.rotation.x = Math.PI / 2;
+    lampBody.position.set(0, 0.98, 0.6);
+    const headlight = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.072, 14)), lightMat);
+    headlight.position.set(0, 0.98, 0.652);
 
-    const headlight = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.09, 0.07, 0.12, 10)), lightMat);
-    headlight.rotation.x = Math.PI / 2;
-    headlight.position.set(0, 0.96, 0.64);
+    // Number plate
+    const plateCanvas = document.createElement('canvas');
+    plateCanvas.width = 128;
+    plateCanvas.height = 48;
+    const pg = plateCanvas.getContext('2d')!;
+    pg.fillStyle = '#FEF08A';
+    pg.fillRect(0, 0, 128, 48);
+    pg.fillStyle = '#111';
+    pg.font = 'bold 30px sans-serif';
+    pg.textAlign = 'center';
+    pg.textBaseline = 'middle';
+    pg.fillText('RAJU 1', 64, 26);
+    const plateTex = new THREE.CanvasTexture(plateCanvas);
+    plateTex.colorSpace = THREE.SRGBColorSpace;
+    textures.push(plateTex);
+    const plate = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.22, 0.08)), trackMat(new THREE.MeshBasicMaterial({ map: plateTex, side: THREE.DoubleSide })));
+    plate.position.set(0, 0.62, -0.84);
+    plate.rotation.y = Math.PI;
 
-    bikeGroup.add(frontWheel, rearWheel, frame, tank, seat, handle, headlight);
+    bikeGroup.add(tank, seat, engine, bar, lampBody, headlight, plate);
     root.add(bikeGroup);
   }
 
@@ -1223,6 +1401,7 @@ export function applyThugPose(
   rig.hips.position.set(0, 0.92, 0);
   rig.hips.rotation.set(0, 0, 0);
   rig.torso.rotation.set(0, 0, 0);
+  rig.torso.scale.set(1, 1, 1);
   rig.headGroup.rotation.set(0, 0, 0);
   rig.leftShoulder.rotation.set(-0.35, 0, -0.18);
   rig.leftElbow.rotation.set(-0.65, 0, 0);
@@ -1234,14 +1413,40 @@ export function applyThugPose(
   rig.rightKnee.rotation.set(0.12, 0, 0);
 
   if (action === 'idle') {
-    const bob = Math.sin(time * (isIdiot ? 6.2 : 4.2));
-    const sway = Math.sin(time * (isIdiot ? 3.1 : 2.1));
-    rig.hips.position.set(sway * 0.04, 0.92 + bob * 0.028, 0);
-    rig.hips.rotation.z = sway * 0.04;
-    rig.torso.rotation.z = isIdiot ? sway * 0.08 : -sway * 0.03;
-    rig.headGroup.rotation.z = isIdiot ? Math.sin(time * 5.2) * 0.16 : -sway * 0.04;
-    rig.leftShoulder.rotation.x = -0.55 + bob * 0.12;
-    rig.rightShoulder.rotation.x = -0.65 - bob * 0.12;
+    // Each cousin gets his own rhythm so a crowd never moves in sync
+    const t = time + (rig.root.id % 11) * 0.53;
+    const bob = Math.sin(t * (isIdiot ? 6.2 : 4.4));
+    const sway = Math.sin(t * (isIdiot ? 3.1 : 2.2));
+    rig.torso.scale.set(1, 1 + Math.sin(t * 2.6) * 0.018, 1);
+    if (isIdiot) {
+      // goofy weight shuffle, loose arms, head wobble
+      rig.hips.position.set(sway * 0.05, 0.92 + Math.abs(bob) * 0.03, 0);
+      rig.hips.rotation.z = sway * 0.06;
+      rig.leftKnee.rotation.x = 0.12 + Math.max(0, sway) * 0.35;
+      rig.rightKnee.rotation.x = 0.12 + Math.max(0, -sway) * 0.35;
+      rig.torso.rotation.z = sway * 0.09;
+      rig.headGroup.rotation.z = Math.sin(t * 5.2) * 0.16;
+      rig.headGroup.rotation.y = Math.sin(t * 1.7) * 0.25;
+      rig.leftShoulder.rotation.set(-0.5 + bob * 0.18, 0, -0.25 - sway * 0.1);
+      rig.rightShoulder.rotation.set(-0.6 - bob * 0.18, 0, 0.25 - sway * 0.1);
+      rig.leftElbow.rotation.x = -0.5 + bob * 0.1;
+      rig.rightElbow.rotation.x = -0.6 - bob * 0.1;
+    } else {
+      // street-fighter guard: fists up, bouncing on the balls of the feet
+      const hop = Math.abs(Math.sin(t * 4.4));
+      rig.hips.position.set(sway * 0.025, 0.9 + hop * 0.035, 0);
+      rig.hips.rotation.z = sway * 0.03;
+      rig.leftKnee.rotation.x = 0.22 + hop * 0.1;
+      rig.rightKnee.rotation.x = 0.22 + hop * 0.1;
+      rig.torso.rotation.x = 0.06;
+      rig.torso.rotation.z = -sway * 0.03;
+      rig.headGroup.rotation.x = -0.05 + bob * 0.03;
+      rig.headGroup.rotation.y = Math.sin(t * 1.3) * 0.12;
+      rig.leftShoulder.rotation.set(-1.05 + bob * 0.06, 0, -0.2);
+      rig.leftElbow.rotation.x = -1.75 + bob * 0.05;
+      rig.rightShoulder.rotation.set(-0.95 - bob * 0.06, 0, 0.2);
+      rig.rightElbow.rotation.x = -1.6 - bob * 0.05;
+    }
   } else if (action === 'walk') {
     const stride = Math.sin(time * (isIdiot ? 12.2 : 8.6));
     const hop = Math.abs(Math.sin(time * (isIdiot ? 12.2 : 8.6)));

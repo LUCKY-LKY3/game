@@ -210,3 +210,29 @@ export function ribbonGeometry(path: THREE.Vector3[], width: number, thickness =
   void thickness;
   return geo;
 }
+
+/**
+ * Head shape as one surface: an egg-shaped skull with cheeks and a chin pushed out of the lower front,
+ * so there are no seams between separate face pieces. thetaStart/Length let us cut a partial shell
+ * (e.g. the jaw only, for stubble).
+ */
+export function headGeometry(radius: number, thetaStart = 0, thetaLength = Math.PI): THREE.BufferGeometry {
+  const geo = new THREE.SphereGeometry(radius, 24, 18, 0, Math.PI * 2, thetaStart, thetaLength);
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i) * 0.94;
+    let y = pos.getY(i) * 1.12;
+    let z = pos.getZ(i) * 0.98;
+    const front = Math.max(0, z / radius);
+    const lower = Math.max(0, -y / radius);
+    // cheeks and jaw
+    const cheek = Math.exp(-(((y / radius + 0.35) / 0.35) ** 2));
+    z += radius * 0.16 * front * cheek;
+    x *= 1 + 0.07 * cheek;
+    // slightly squarer chin
+    y -= radius * 0.06 * lower * front;
+    pos.setXYZ(i, x, y, z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}

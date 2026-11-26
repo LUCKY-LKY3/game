@@ -24,7 +24,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.78.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.79.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -85,5 +85,5 @@ Web leaderboard is CONFIGURED in `src/config.ts` (user's Google Form + Sheet). I
 ## Smashable scenery
 Fixed props are slimmer (pillars 0.6x wide/0.74x tall, haystacks/stalls/charpoys/pumps ~0.8x) and `streetStage.ts` exposes `smashProps` (pillars 3 hp, charpoys/hand pumps/chai stalls 2 hp). Hero strikes (`combat.ts` section 1c, `smashPropFx`), thrown cousins bouncing off pillars, and the rickshaw damage them; at 0 hp they shatter into debris, popup + 100 score. `resetProps` restores them. Broken props stop bouncing cousins or splashing.
 
-## Cousin look (rebuild in progress)
-`engine/thugParts.ts` holds the shaped cousin parts: `torsoGeometry(bulge)` (one lathe torso with the pot belly pushed out of the front, no separate belly ball), `limbGeometry` (tapered rounded limbs hanging from their joint), fists, chappal feet, `ribbonGeometry` (draped checked gamcha) and `fabricTexture` (woven plain/check/stripe/madras, picked per cousin by `hashString(name)`). `villageThugs.ts` keeps the same joint groups so `applyThugPose` is unchanged. Release 1 done (bodies, bellies, hands, clothes). Release 2 planned: faces, boss costumes, Raju's bike, livelier idle.
+## Cousin look
+`engine/thugParts.ts` holds the shaped cousin parts: `torsoGeometry(bulge)` (one lathe torso with the pot belly pushed out of the front, no separate belly ball), `limbGeometry` (tapered rounded limbs hanging from their joint), fists, chappal feet, `ribbonGeometry` (draped checked gamcha) and `fabricTexture` (woven plain/check/stripe/madras, picked per cousin by `hashString(name)`). `villageThugs.ts` keeps the same joint groups so `applyThugPose` is unchanged. Release 1 done (bodies, bellies, hands, clothes). Release 2 done: one-piece `headGeometry` heads with stubble, expressive eyes/brows/moustaches/teeth, boss costumes (Bade Tau shawl, Chappal Chaudhary bandolier, Dhol Daku drum), rebuilt Raju bike, livelier idle (breathing, idiot shuffle, thug guard).
