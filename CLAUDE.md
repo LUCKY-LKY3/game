@@ -20,6 +20,7 @@ Two games live in this repo:
 - `?formtest` page that sends a test score to the Google Form in a new tab (diagnose the web leaderboard).
 - `?wave=N` starts Endless Mohalla at wave N (to test modifiers, bosses, new cousins).
 - `?foes=thali_tiwari,chintu` spawns those cousins in zone 1 wave 1 (any key from `VILLAGE_COUSIN_ROSTER`).
+- `?cousinlab` shows every cousin side by side (front + three-quarter) with Fady for comparison. Add `&only=bunty,golu` to pick, `&face` for head close-ups.
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
