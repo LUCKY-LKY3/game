@@ -73,6 +73,8 @@ export interface VillageThugRig {
   faceSkinMat: THREE.MeshStandardMaterial;
   dizzyStarsGroup: THREE.Group;
   dizzyEyesGroup: THREE.Group;
+  /** where the last hit landed: 0 head (snap left), 1 body, 2 legs, 3 head (snap right) */
+  hitKind: number;
   bossRageAura?: THREE.Group;
   bikeGroup?: THREE.Group;
   bikeWheels?: THREE.Mesh[];
@@ -1269,6 +1271,7 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
     faceSkinMat,
     dizzyStarsGroup,
     dizzyEyesGroup,
+    hitKind: 0,
     bossRageAura,
     bikeGroup,
     bikeWheels,
@@ -1474,13 +1477,46 @@ export function applyThugPose(
     rig.headGroup.rotation.z = wiggle * 0.24;
   } else if (action === 'hitstun') {
     const p = Math.min(1, phase);
-    // Snappy head & torso whip-back then smooth recovery
-    const recoil = p < 0.3 ? 1 - Math.pow(1 - p / 0.3, 3) : Math.cos(((p - 0.3) / 0.7) * Math.PI * 0.5);
-    rig.hips.position.z = -0.1 * recoil;
-    rig.torso.rotation.x = -0.46 * recoil;
-    rig.headGroup.rotation.x = -0.52 * recoil;
-    rig.leftShoulder.rotation.set(-0.75, 0, -0.78 * recoil);
-    rig.rightShoulder.rotation.set(-0.75, 0, 0.78 * recoil);
+    // Snappy reaction then smooth recovery; shape depends on where the hit landed
+    const recoil = p < 0.25 ? 1 - Math.pow(1 - p / 0.25, 3) : Math.cos(((p - 0.25) / 0.75) * Math.PI * 0.5);
+    // stagger: two quick steps backward while recovering
+    const step = Math.sin(p * Math.PI * 2) * (1 - p);
+    rig.leftHip.rotation.x = 0.35 * step;
+    rig.rightHip.rotation.x = -0.35 * step;
+    rig.leftKnee.rotation.x = 0.25 + Math.max(0, step) * 0.4;
+    rig.rightKnee.rotation.x = 0.25 + Math.max(0, -step) * 0.4;
+    const k = rig.hitKind;
+    if (k === 1) {
+      // body shot: doubles over, arms clutch the stomach
+      rig.hips.position.z = -0.08 * recoil;
+      rig.hips.position.y = 0.92 - 0.08 * recoil;
+      rig.torso.rotation.x = 0.55 * recoil;
+      rig.headGroup.rotation.x = 0.3 * recoil;
+      rig.leftShoulder.rotation.set(-0.55 * recoil, 0, -0.15);
+      rig.rightShoulder.rotation.set(-0.55 * recoil, 0, 0.15);
+      rig.leftElbow.rotation.x = -1.5;
+      rig.rightElbow.rotation.x = -1.5;
+    } else if (k === 2) {
+      // leg kick: knee buckles, drops and hops on the other leg
+      rig.hips.position.y = 0.92 - 0.16 * recoil;
+      rig.hips.rotation.z = 0.22 * recoil;
+      rig.leftKnee.rotation.x = 0.25 + 1.1 * recoil;
+      rig.leftHip.rotation.x = -0.5 * recoil;
+      rig.torso.rotation.x = 0.2 * recoil;
+      rig.leftShoulder.rotation.set(-0.6, 0, -0.9 * recoil);
+      rig.rightShoulder.rotation.set(-0.6, 0, 0.9 * recoil);
+    } else {
+      // head shot: head snaps back and to the side, upper body twists away
+      const side = k === 3 ? 1 : -1;
+      rig.hips.position.z = -0.1 * recoil;
+      rig.torso.rotation.x = -0.38 * recoil;
+      rig.torso.rotation.y = side * 0.45 * recoil;
+      rig.headGroup.rotation.x = -0.45 * recoil;
+      rig.headGroup.rotation.y = side * 0.6 * recoil;
+      rig.headGroup.rotation.z = side * 0.25 * recoil;
+      rig.leftShoulder.rotation.set(-0.75, 0, -0.78 * recoil);
+      rig.rightShoulder.rotation.set(-0.75, 0, 0.78 * recoil);
+    }
   } else if (action === 'clinched') {
     // Hunched over in a headlock/collar grab, flailing helplessly!
     const flail = Math.sin(time * 22);
@@ -1585,6 +1621,19 @@ export function applyThugPose(
     rig.rightShoulder.rotation.set(-0.4, 0, 0.95 * fall + 0.12);
     rig.leftHip.rotation.x = 0.22 * fall;
     rig.rightHip.rotation.x = -0.15 * fall;
+    if (action === 'knockdown' && phase > 0.72) {
+      // Getting up: push off the ground with the hands, one knee up, then stand
+      const up = 1 - fall;
+      const mid = Math.sin(up * Math.PI);
+      rig.torso.rotation.x = 0.55 * mid;
+      rig.leftShoulder.rotation.set(0.35 * mid - 0.4 * (1 - mid), 0, -0.3);
+      rig.rightShoulder.rotation.set(0.35 * mid - 0.4 * (1 - mid), 0, 0.3);
+      rig.leftElbow.rotation.x = -0.25;
+      rig.rightElbow.rotation.x = -0.25;
+      rig.leftHip.rotation.x = -1.1 * mid;
+      rig.leftKnee.rotation.x = 1.4 * mid + 0.1;
+      rig.rightKnee.rotation.x = 0.6 * mid + 0.1;
+    }
   }
 
   // Strict anatomical anti-clipping clamps for all enemy limbs

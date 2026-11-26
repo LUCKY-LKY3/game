@@ -47,7 +47,9 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
   const effectiveRangeZ = spec.rangeZ * 0.72 + (isBollywoodSlap || isKushtiShockwave ? 0.4 : 0);
   const counterMul = (hero.counterTimer > 0 ? 1.5 : 1) * (hero.index === this.activeHeroIndex && this.gussaOn ? 1.3 : 1);
   const lazyMul = hero.style === 'lazy_giant' && (hero.action === 'lp' || hero.action === 'lp2' || hero.action === 'rp' || hero.action === 'combo_finisher') ? 1.9 : 1;
-  const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul * lazyMul * getMods(this.endlessMode).damageMul);
+  // Long combos lose a bit of punch (down to 60%), like a real fighter tiring
+  const comboScale = Math.max(0.6, 1 - Math.max(0, hero.comboCount - 4) * 0.05);
+  const effectiveDmg = Math.round((spec.damage + bonusDmg) * (0.9 + hero.profile.stats.power * 0.03) * counterMul * lazyMul * comboScale * getMods(this.endlessMode).damageMul);
 
   // 1. Smashable terracotta clay pots
   for (let i = 0; i < this.stage.pots.length; i++) {
@@ -398,7 +400,14 @@ export function damageEnemy(this: StreetBrawlEngine,
     this.score += damage * 3;
   }
 
-  this.spawnParticles(e.x, 1.15, e.z, heavy ? 14 : 7, heavy ? 4.2 : 2.6);
+  // Where did it land? Jabs/hooks hit the head, kicks the body, sweeps and low kicks the legs
+  const act = attacker ? String(attacker.action) : '';
+  const hitKind = /sweep|axe/.test(act) ? 2 : /kick|knee|finisher/.test(act) ? 1 : act === 'rp' ? 3 : act === 'lp2' ? 3 : 0;
+  e.rig.hitKind = hitKind === 0 && Math.random() < 0.35 ? 1 : hitKind;
+  // Sparks at the point of contact, at the right height
+  const contactX = attacker ? e.x + Math.sign(attacker.x - e.x || 1) * 0.32 : e.x;
+  const contactY = e.y + (e.rig.hitKind === 2 ? 0.5 : e.rig.hitKind === 1 ? 1.1 : 1.6);
+  this.spawnParticles(contactX, contactY, e.z, heavy ? 14 : 7, heavy ? 4.2 : 2.6);
   if (attacker) {
     const isKnockdownHit = e.hp <= 0 || launchVy >= 3.2;
     if (e.hp <= 0) this.hitstopTimer = Math.max(this.hitstopTimer, 0.11);
@@ -557,9 +566,12 @@ export function damageEnemy(this: StreetBrawlEngine,
     }
     this.maybeSurrender(e);
     if (launchVy > 2.5) this.maybeFlyChappal(e, Math.sign(knockbackVx || 1));
+    // Already airborne? Gravity wins: re-launches get weaker so juggles can't go on forever
+    if (e.y > 0.25) launchVy = Math.min(launchVy, Math.max(0, 3.4 - e.y * 2));
     e.action = launchVy > 2.5 ? 'knockdown' : 'hitstun';
     e.actionTime = 0;
-    e.actionDuration = launchVy > 2.5 ? 0.72 : guard === 'broken' ? 0.7 : [0.36, 0.28, 0.24][this.difficultyLevel];
+    const comboDecay = attacker && attacker.comboCount > 8 ? 0.75 : 1;
+    e.actionDuration = launchVy > 2.5 ? 0.72 : (guard === 'broken' ? 0.7 : [0.36, 0.28, 0.24][this.difficultyLevel]) * comboDecay;
     e.vx = knockbackVx;
     e.vy = launchVy;
     if (launchVy > 2.5) e.wallBounced = false;

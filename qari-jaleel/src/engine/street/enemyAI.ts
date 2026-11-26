@@ -655,6 +655,29 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     }
   }
 
+  // Bodies don't pass through each other: heroes and cousins push apart (the cousin gives way more)
+  for (const h of this.heroes) {
+    if (h.hp <= 0 || h.y > 0.3 || this.isPowerupAction(h.action) || h.clinchTargetUid !== null || h.ridingBikeTimer > 0) continue;
+    if (h.action === 'grabbed_struggle' || h.action === 'finisher_slam' || h.action === 'high_five') continue;
+    for (const o of this.enemies) {
+      if (!o.alive || o.removed || o.y > 0.3 || o.action === 'clinched' || o.action === 'rear_grab' || o.onBike || o.bowlingActive) continue;
+      const dx = o.x - h.x;
+      const dz = (o.z - h.z) * 1.6;
+      const d = Math.hypot(dx, dz);
+      const min = o.spec.archetype === 'boss' ? 1.05 : 0.8;
+      if (d < min) {
+        const push = (min - d) * Math.min(1, dt * 12);
+        const nx = d > 0.001 ? dx / d : h.facing;
+        const nz = d > 0.001 ? dz / d : 0;
+        const heroShare = o.spec.archetype === 'boss' ? 0.6 : 0.25;
+        o.x += nx * push * (1 - heroShare);
+        o.z = THREE.MathUtils.clamp(o.z + (nz * push * (1 - heroShare)) / 1.6, LANE_MIN_Z, LANE_MAX_Z);
+        h.x -= nx * push * heroShare;
+        h.z = THREE.MathUtils.clamp(h.z - (nz * push * heroShare) / 1.6, LANE_MIN_Z, LANE_MAX_Z);
+      }
+    }
+  }
+
   // Soft separation so cousins never stack on top of each other (keeps the crowd readable)
   const live = this.enemies.filter((o) => o.alive && !o.removed && o.y <= 0.05 && Math.abs(o.vx) < 2 && o.action !== 'rear_grab');
   for (let a = 0; a < live.length; a++) {
@@ -761,6 +784,7 @@ export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
           soundEngine.playHit(e.spec.archetype === 'boss');
           const resistKnockdown = ironLungi && Math.random() < 0.3;
           const knockDown = e.spec.archetype === 'boss' && !resistKnockdown;
+          hero.rig.hitKind = [0, 1, 3][Math.floor(Math.random() * 3)];
           hero.action = knockDown ? 'knockdown' : 'hitstun';
           hero.actionTime = 0;
           hero.actionDuration = knockDown ? 0.92 : 0.3;

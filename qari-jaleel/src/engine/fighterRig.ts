@@ -167,6 +167,8 @@ export interface ArticulatedFighterRig {
   celebrateKind: number;
   /** the routine goes comically wrong in its second half */
   celebrateGag: boolean;
+  /** hit reaction: 0 head snap left, 1 body, 3 head snap right */
+  hitKind: number;
   /** Immy's Born To Run: true = keeps heart boxers on, false = bare with a censor prop */
   modest: boolean;
   stripLegs: { mat: THREE.MeshPhysicalMaterial; color: THREE.Color; map: THREE.Texture | null; bump: THREE.Texture | null; skinMap: THREE.Texture | null; on: boolean };
@@ -2448,6 +2450,7 @@ export function createFighterRig(
     coverKind: 0,
     celebrateKind: 0,
     celebrateGag: false,
+    hitKind: 0,
     modest: false,
     stripLegs: { mat: pantsMat, color: pantsMat.color.clone(), map: pantsMat.map, bump: pantsMat.bumpMap, skinMap: limbSkinMat.map, on: false },
     dispose,
@@ -4327,9 +4330,23 @@ export function applyFighterPose(
       const snapBack = p < 0.3 ? 1 - Math.pow(1 - p / 0.3, 3) : 1 - Math.pow((p - 0.3) / 0.7, 1.8);
       hipsY = 0.9 - snapBack * 0.05;
       hipsZ = -0.14 * snapBack;
-      torsoRotX = -0.44 * snapBack;
-      headRotX = -0.52 * snapBack;
-      headRotZ = Math.sin(phase * Math.PI * 2) * 0.14 * snapBack;
+      // stagger a step back
+      const stagger = Math.sin(p * Math.PI * 2) * (1 - p);
+      lHipX = 0.3 * stagger;
+      rHipX = -0.3 * stagger;
+      if (rig.hitKind === 1 && action === 'hitstun') {
+        // winded by a body shot: folds forward
+        torsoRotX = 0.5 * snapBack;
+        headRotX = 0.3 * snapBack;
+        hipsY = 0.9 - snapBack * 0.1;
+      } else {
+        const side = rig.hitKind === 3 ? 1 : -1;
+        torsoRotX = -0.4 * snapBack;
+        torsoRotY = side * 0.4 * snapBack;
+        headRotX = -0.45 * snapBack;
+        headRotY = side * 0.55 * snapBack;
+        headRotZ = side * 0.22 * snapBack;
+      }
       lShX = -0.32;
       lShZ = -0.72 * snapBack - 0.14;
       lElX = -0.4;
