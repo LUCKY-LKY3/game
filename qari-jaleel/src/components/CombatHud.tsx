@@ -20,6 +20,7 @@ import { ArenaCanvasHandle } from './ArenaCanvas';
 import { VirtualThumbstick } from './VirtualThumbstick';
 import { BUTTON_SCALE, useSettings } from '../utils/settings';
 import { beatPhase } from '../utils/beat';
+import { nickOf } from '../data/jokes';
 
 const BOON_SHORT_LABELS: Record<VillageBoonId, { label: string; color: string }> = {
   extra_mirchi: { label: 'EXTRA MIRCHI', color: '#EF4444' },
@@ -398,20 +399,6 @@ export function CombatHud({
         </div>
       )}
 
-      {/* Auto-Rickshaw Incoming Lane Warning */}
-      {brawl?.rickshawWarning && (
-        <div className="pointer-events-none fixed inset-x-0 top-20 z-30 flex justify-center sm:top-24">
-          <div className="animate-pulse border-2 border-[#FACC15] bg-[#14532D]/95 px-6 py-2 text-center shadow-[0_0_24px_rgba(250,204,21,0.5)]">
-            <div className="font-display text-xl font-black tracking-wider text-[#FACC15] uppercase sm:text-2xl">
-              HONK HONK! AUTO-RICKSHAW INCOMING!
-            </div>
-            <div className="text-[10px] font-bold tracking-[0.18em] text-[#FEF9C3] uppercase">
-              Dodge off the center lane or let it flatten the cousins!
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Street Brawl Tag-Switch / Pickup Toasts */}
       {brawl && (brawl.switchBanner || brawl.pickupToast) && (
         <div className="pointer-events-none fixed inset-x-0 top-28 z-20 flex flex-col items-center gap-1.5 sm:top-32">
@@ -622,37 +609,30 @@ export function CombatHud({
       {/* TOP COMBAT HUD (Compact, zero-pill, high contrast, no backdrop-filter) */}
       <div className="hud-safe mx-auto w-full max-w-6xl">
         {brawl ? (
-          <div className="hud-top hud-safe grid grid-cols-[1.15fr_auto_1fr] items-start gap-2 sm:gap-4">
-            {/* LEFT: TAG-TEAM HERO 1 & HERO 2 SQUAD BARS */}
-            <div className="flex flex-col gap-1.5">
-              {([0, 1] as const).map((idx) => {
+          <div className="hud-top hud-safe grid grid-cols-[1fr_auto_1fr] items-start gap-2">
+            {/* LEFT: active hero bar + slim partner row */}
+            <div className="flex max-w-[17rem] flex-col gap-1">
+              {([brawl.activeHeroIndex, brawl.activeHeroIndex === 0 ? 1 : 0] as const).map((idx) => {
                 const hero = idx === 0 ? hud.p1 : hud.p2;
                 const isActive = brawl.activeHeroIndex === idx;
                 const hpPct = Math.max(0, Math.min(100, (hero.hp / hero.maxHp) * 100));
-                const recPct = Math.max(
-                  0,
-                  Math.min(100 - hpPct, ((hero.recoverableHp ?? 0) / hero.maxHp) * 100)
-                );
-                const trailPct = Math.max(
-                  hpPct + recPct,
-                  Math.min(100, (hero.trailHp / hero.maxHp) * 100)
-                );
+                const recPct = Math.max(0, Math.min(100 - hpPct, ((hero.recoverableHp ?? 0) / hero.maxHp) * 100));
+                const trailPct = Math.max(hpPct + recPct, Math.min(100, (hero.trailHp / hero.maxHp) * 100));
                 const weapon = idx === 0 ? brawl.hero1Weapon : brawl.hero2Weapon;
-                const styleLabel = idx === 0 ? brawl.hero1StyleLabel : brawl.hero2StyleLabel;
                 const weaponLabel = weapon
                   ? weapon.kind === 'chair'
                     ? `CHAIR x${weapon.durability}`
                     : weapon.kind === 'stool'
-                      ? 'STOOL · THROW'
+                      ? 'STOOL'
                       : weapon.kind === 'coconut'
-                        ? 'COCONUT · THROW'
+                        ? 'COCONUT'
                         : `LATHI x${weapon.durability}`
                   : null;
-
                 const canTagIn = !isActive && hero.hp > 0 && brawl.switchCooldownPct <= 0.01;
                 const cdRadius = 18;
                 const cdCirc = 2 * Math.PI * cdRadius;
                 const cdDash = cdCirc * (1 - brawl.switchCooldownPct);
+                const size = isActive ? 'h-8 w-8' : 'h-6 w-6';
 
                 return (
                   <button
@@ -664,151 +644,70 @@ export function CombatHud({
                         arenaRef.current?.triggerTouchAction('switch');
                       }
                     }}
-                    className={`pointer-events-auto flex items-center gap-2 px-2 py-1.5 text-left transition-all active:scale-[0.97] ${
+                    className={`pointer-events-auto flex items-center gap-1.5 px-1 py-0.5 text-left transition-all active:scale-[0.97] ${
                       isActive
-                        ? 'border-2 border-[#FACC15] bg-[#1C1710]/96 shadow-[0_0_16px_rgba(250,204,21,0.34)]'
+                        ? 'border border-[#FACC15] bg-[#1C1710]/90'
                         : hero.hp <= 0
-                          ? 'border border-[#F8F4EC]/10 bg-[#141210]/60 opacity-50'
+                          ? 'w-[78%] bg-[#141210]/55 opacity-50'
                           : canTagIn
-                            ? 'border border-[#38BDF8]/55 bg-[#12161B]/86 opacity-85 hover:border-[#7DD3FC] hover:opacity-100'
-                            : 'border border-[#38BDF8]/25 bg-[#141210]/76 opacity-75'
+                            ? 'w-[78%] border border-[#38BDF8]/55 bg-[#12161B]/80'
+                            : 'w-[78%] bg-[#141210]/65 opacity-80'
                     }`}
                   >
-                    <div
-                      className={`relative h-10 w-10 shrink-0 overflow-hidden border bg-[#221E1A] sm:h-11 sm:w-11 ${
-                        isActive ? 'border-2 border-[#FACC15]' : 'border-[#38BDF8]/60'
-                      }`}
-                    >
-                      <img
-                        src={hero.portraitUrl}
-                        alt={hero.name}
-                        referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover"
-                      />
-                      {/* Partner Portrait TAG SWITCH Radial Cooldown Ring */}
-                      {!isActive && hero.hp > 0 && (
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#141210]/35">
-                          {brawl.switchCooldownPct > 0.01 ? (
-                            <svg
-                              viewBox="0 0 44 44"
-                              className="h-full w-full -rotate-90"
-                              aria-hidden="true"
-                            >
-                              <circle
-                                cx="22"
-                                cy="22"
-                                r={cdRadius}
-                                fill="rgba(20,18,16,0.55)"
-                                stroke="rgba(56,189,248,0.22)"
-                                strokeWidth="3.5"
-                              />
-                              <circle
-                                cx="22"
-                                cy="22"
-                                r={cdRadius}
-                                fill="none"
-                                stroke="#38BDF8"
-                                strokeWidth="3.5"
-                                strokeDasharray={cdCirc}
-                                strokeDashoffset={cdDash}
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          ) : (
-                            <span className="flex items-center gap-0.5 bg-[#0284C7]/90 px-1 py-0.5 text-[7px] font-black tracking-wide text-white uppercase shadow">
-                              <ArrowLeftRight className="h-2.5 w-2.5" />
-                              TAG
-                            </span>
-                          )}
-                        </div>
+                    <div className={`relative ${size} shrink-0 overflow-hidden border bg-[#221E1A] ${isActive ? 'border-[#FACC15]' : 'border-[#38BDF8]/60'}`}>
+                      <img src={hero.portraitUrl} alt={hero.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                      {!isActive && hero.hp > 0 && brawl.switchCooldownPct > 0.01 && (
+                        <svg viewBox="0 0 44 44" className="pointer-events-none absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
+                          <circle cx="22" cy="22" r={cdRadius} fill="rgba(20,18,16,0.55)" stroke="rgba(56,189,248,0.22)" strokeWidth="4" />
+                          <circle cx="22" cy="22" r={cdRadius} fill="none" stroke="#38BDF8" strokeWidth="4" strokeDasharray={cdCirc} strokeDashoffset={cdDash} strokeLinecap="round" />
+                        </svg>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1.5">
-                        <div className="flex min-w-0 items-center gap-1.5">
-                          <span
-                            className={`px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ${
-                              isActive
-                                ? 'bg-[#FACC15] text-[#141210]'
-                                : canTagIn
-                                  ? 'bg-[#38BDF8]/85 text-[#141210]'
-                                  : 'bg-[#38BDF8]/20 text-[#38BDF8]'
-                            }`}
-                          >
-                            {isActive ? '▶ P1 · YOU' : canTagIn ? 'AI · TAG' : 'AI'}
-                          </span>
-                          <span className="truncate font-display text-base font-extrabold leading-none text-[#F8F4EC] sm:text-lg">
-                            {hero.name}
-                          </span>
-                          {styleLabel && (
-                            <span className="hidden truncate text-[9px] font-bold tracking-wide text-[#B6AA9A] uppercase sm:inline">
-                              · {styleLabel}
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`truncate font-display leading-none font-extrabold ${isActive ? 'text-sm text-[#F8F4EC]' : 'text-[10px] text-[#B6E3F8]'}`}>
+                          {nickOf(hero.name)}
+                          {!isActive && (
+                            <span className="ml-1 font-sans text-[8px] font-black tracking-wide text-[#38BDF8] uppercase">
+                              {canTagIn ? '⇄ TAG' : 'AI'}
                             </span>
                           )}
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1">
                           {weaponLabel && (
-                            <span className="border border-[#F59E0B]/60 bg-[#2A2016] px-1.5 py-0.5 font-mono-num text-[9px] font-bold text-[#FCD34D] uppercase">
-                              {weaponLabel}
-                            </span>
+                            <span className="bg-[#2A2016] px-1 font-mono-num text-[8px] font-bold text-[#FCD34D] uppercase">{weaponLabel}</span>
                           )}
-                          <span className="font-mono-num text-[11px] font-semibold text-[#F8F4EC]">
-                            {hero.hp > 0 ? `${hero.hp}` : 'K.O.'}
-                          </span>
-                        </div>
+                          <span className="font-mono-num text-[9px] font-semibold text-[#F8F4EC]">{hero.hp > 0 ? hero.hp : 'K.O.'}</span>
+                        </span>
                       </div>
-
-                      {/* Health Bar with Glowing Recoverable Green HP Segment */}
-                      <div className="relative mt-1 h-2.5 w-full overflow-hidden border border-[#F8F4EC]/15 bg-[#141210]">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-[#DC2626] transition-[width] duration-150"
-                          style={{ width: `${trailPct}%` }}
-                        />
+                      <div className={`relative mt-0.5 w-full overflow-hidden bg-[#141210] ${isActive ? 'h-2' : 'h-1'}`}>
+                        <div className="absolute inset-y-0 left-0 bg-[#DC2626] transition-[width] duration-150" style={{ width: `${trailPct}%` }} />
                         {recPct > 0.2 && (
-                          <div
-                            className="absolute inset-y-0 bg-[#4ADE80] animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.85)]"
-                            style={{ left: `${hpPct}%`, width: `${recPct}%` }}
-                          />
+                          <div className="absolute inset-y-0 animate-pulse bg-[#4ADE80]" style={{ left: `${hpPct}%`, width: `${recPct}%` }} />
                         )}
                         <div
-                          className={`absolute inset-y-0 left-0 ${
-                            isActive
-                              ? 'bg-gradient-to-r from-[#D97706] to-[#F59E0B]'
-                              : 'bg-gradient-to-r from-[#0284C7] to-[#38BDF8]'
-                          }`}
+                          className={`absolute inset-y-0 left-0 ${isActive ? 'bg-gradient-to-r from-[#D97706] to-[#F59E0B]' : 'bg-gradient-to-r from-[#0284C7] to-[#38BDF8]'}`}
                           style={{ width: `${hpPct}%` }}
                         />
                       </div>
-
-                      {/* Powerup bar */}
-                      <div className="mt-1 flex items-center justify-between gap-2">
-                        <div className="h-1 flex-1 overflow-hidden bg-[#26211D]">
-                          <div
-                            className={`h-full ${
-                              hero.rage >= 100 ? 'bg-[#FDE047]' : 'bg-[#F59E0B]/70'
-                            }`}
-                            style={{ width: `${hero.rage}%` }}
-                          />
+                      {isActive && (
+                        <div className="mt-0.5 flex items-center gap-1">
+                          <div className="h-1 flex-1 overflow-hidden bg-[#26211D]">
+                            <div className={`h-full ${hero.rage >= 100 ? 'bg-[#FDE047]' : 'bg-[#F59E0B]/70'}`} style={{ width: `${hero.rage}%` }} />
+                          </div>
+                          {hero.rage >= 100 && <span className="text-[8px] font-black text-[#FDE047]">POWER!</span>}
                         </div>
-                        <span className="font-mono-num text-[9px] font-bold text-[#F59E0B] whitespace-nowrap">
-                          {hero.rage >= 100 ? 'POWER READY' : `${hero.rage}%`}
-                        </span>
-                      </div>
+                      )}
                     </div>
                   </button>
                 );
               })}
-              {/* Active Village Boons Strip */}
               {brawl.activeBoons.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                <div className="flex flex-wrap items-center gap-0.5">
                   {brawl.activeBoons.map((boonId) => {
                     const meta = BOON_SHORT_LABELS[boonId];
                     return (
-                      <span
-                        key={boonId}
-                        style={{ borderColor: meta.color, color: meta.color }}
-                        className="border bg-[#141210]/92 px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase"
-                      >
+                      <span key={boonId} style={{ color: meta.color }} title={meta.label} className="bg-[#141210]/80 px-1 text-[8px] font-black uppercase">
                         ★ {meta.label}
                       </span>
                     );
@@ -817,30 +716,22 @@ export function CombatHud({
               )}
             </div>
 
-            {/* CENTER: ZONE / WAVE / SCORE / UTILITY BUTTONS */}
-            <div className="flex flex-col items-center">
-              <div className="border border-[#F59E0B]/40 bg-[#141210]/92 px-3 py-1 text-center sm:px-4 sm:py-1.5">
-                <div className="font-mono-num text-[10px] font-bold tracking-[0.18em] text-[#F59E0B] uppercase whitespace-nowrap">
-                  {brawl.isEndless
-                    ? `Wave ${brawl.endlessWave}${brawl.endlessBestWave > 0 ? ` · Best ${brawl.endlessBestWave}` : ''}`
-                    : `Zone ${brawl.zone}/${brawl.totalZones} · ${brawl.zoneName}`}
+            {/* CENTER: one-line wave/zone + score, utility buttons beside it */}
+            <div className="flex items-start gap-1">
+              <div className="bg-[#141210]/85 px-2 py-0.5 text-center">
+                <div className="font-mono-num text-[8px] font-bold tracking-[0.12em] text-[#F59E0B] uppercase whitespace-nowrap">
+                  {brawl.isEndless ? `Wave ${brawl.endlessWave}` : `Zone ${brawl.zone}/${brawl.totalZones}`}
+                  {' · '}
+                  {brawl.goArrowVisible ? 'GO >>' : `${brawl.enemiesRemaining} left`}
                 </div>
-                <div className="font-mono-num text-xl font-black leading-tight text-[#F8F4EC] sm:text-2xl">
-                  {brawl.score.toLocaleString()}
-                </div>
-                <div className="text-[10px] font-medium text-[#B6AA9A] whitespace-nowrap">
-                  {brawl.goArrowVisible
-                    ? 'Advance Right >>'
-                    : `${brawl.enemiesRemaining} Left`}
-                </div>
+                <div className="font-mono-num text-base leading-tight font-black text-[#F8F4EC]">{brawl.score.toLocaleString()}</div>
               </div>
-
-              <div className="pointer-events-auto mt-1.5 flex items-center gap-1">
+              <div className="pointer-events-auto flex gap-0.5">
                 <button
                   type="button"
                   onClick={onOpenPause}
                   aria-label="Pause match"
-                  className="flex h-8 w-8 items-center justify-center border border-[#F8F4EC]/15 bg-[#141210]/88 text-[#F8F4EC] hover:border-[#F59E0B] hover:text-[#F59E0B] transition-colors"
+                  className="flex h-7 w-7 items-center justify-center border border-[#F8F4EC]/15 bg-[#141210]/88 text-[#F8F4EC] hover:border-[#F59E0B] hover:text-[#F59E0B] transition-colors"
                 >
                   <Pause className="h-3.5 w-3.5" />
                 </button>
@@ -848,7 +739,7 @@ export function CombatHud({
                   type="button"
                   onClick={onToggleMute}
                   aria-label={muted ? 'Unmute audio' : 'Mute audio'}
-                  className="flex h-8 w-8 items-center justify-center border border-[#F8F4EC]/15 bg-[#141210]/88 text-[#F8F4EC] hover:border-[#F59E0B] hover:text-[#F59E0B] transition-colors"
+                  className="flex h-7 w-7 items-center justify-center border border-[#F8F4EC]/15 bg-[#141210]/88 text-[#F8F4EC] hover:border-[#F59E0B] hover:text-[#F59E0B] transition-colors"
                 >
                   {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
                 </button>
@@ -857,7 +748,7 @@ export function CombatHud({
                   onClick={onToggleTouchControls}
                   aria-label="Toggle touch arcade pad"
                   title="Toggle on-screen touch controls"
-                  className={`flex h-8 w-8 items-center justify-center border transition-colors ${
+                  className={`flex h-7 w-7 items-center justify-center border transition-colors ${
                     showTouchControls
                       ? 'border-[#F59E0B] bg-[#F59E0B] text-[#141210]'
                       : 'border-[#F8F4EC]/15 bg-[#141210]/88 text-[#F8F4EC] hover:border-[#F59E0B]'
@@ -872,33 +763,27 @@ export function CombatHud({
             <div className="flex flex-col items-end">
               {brawl.targetEnemy && (
                 <div
-                  className={`w-full max-w-xs border px-3 py-1.5 text-right ${
+                  className={`w-full max-w-[14rem] border px-1.5 py-0.5 text-right ${
                     brawl.targetEnemy.isBoss && brawl.bossPhase2Active
-                      ? 'border-2 border-[#FDE047] bg-[#2D140B]/96 shadow-[0_0_22px_rgba(250,204,21,0.45)]'
+                      ? 'border-[#FDE047] bg-[#2D140B]/90'
                       : brawl.targetEnemy.isBoss
                         ? 'border-[#F59E0B] bg-[#261212]/94'
                         : 'border-[#DC2626]/55 bg-[#141210]/90'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono-num text-[10px] font-bold text-[#F87171]">
-                      {brawl.targetEnemy.hp}/{brawl.targetEnemy.maxHp}
+                    <span className="font-mono-num text-[9px] font-bold text-[#F87171]">
+                      {brawl.targetEnemy.hp}
                     </span>
-                    <div className="truncate font-display text-lg font-black leading-none text-[#F8F4EC] sm:text-xl">
+                    <div className="truncate font-display text-sm font-black leading-none text-[#F8F4EC]">
                       {brawl.targetEnemy.isBoss ? 'BOSS · ' : ''}
                       {brawl.targetEnemy.name}
                     </div>
                   </div>
-                  <div className="mt-0.5 truncate text-[10px] font-semibold text-[#B6AA9A]">
-                    {brawl.targetEnemy.isBoss && brawl.bossPhase2Active ? (
-                      <span className="font-black tracking-wider text-[#FDE047] uppercase">
-                        Moustache Rage · Jump Shockwaves!
-                      </span>
-                    ) : (
-                      brawl.targetEnemy.subtitle
-                    )}
-                  </div>
-                  <div className="relative mt-1 h-2.5 w-full overflow-hidden border border-[#F8F4EC]/20 bg-[#141210]">
+                  {brawl.targetEnemy.isBoss && brawl.bossPhase2Active && (
+                    <div className="truncate text-[8px] font-black tracking-wider text-[#FDE047] uppercase">Rage · jump the shockwaves!</div>
+                  )}
+                  <div className="relative mt-0.5 h-1.5 w-full overflow-hidden bg-[#141210]">
                     <div
                       className={`absolute inset-y-0 right-0 transition-[width] duration-150 ${
                         brawl.targetEnemy.isBoss && brawl.bossPhase2Active
@@ -919,7 +804,7 @@ export function CombatHud({
               )}
 
               {activeHero.combo >= 2 && (
-                <div className="mt-2 font-display text-2xl font-black text-[#F59E0B] drop-shadow">
+                <div className="mt-1 font-display text-base font-black text-[#F59E0B] drop-shadow">
                   {activeHero.combo} HIT COMBO!
                 </div>
               )}
@@ -929,7 +814,7 @@ export function CombatHud({
                     <div className="h-full bg-gradient-to-r from-[#F59E0B] to-[#F472B6]" style={{ width: `${Math.round(brawl.styleFill * 100)}%` }} />
                   </div>
                   <span
-                    className={`font-display text-2xl leading-none font-black drop-shadow ${
+                    className={`font-display text-xl leading-none font-black drop-shadow ${
                       brawl.styleGrade === 'S' ? 'text-[#F472B6]' : brawl.styleGrade === 'A' ? 'text-[#FDE047]' : brawl.styleGrade === 'D' ? 'text-[#B6AA9A]' : 'text-[#F8F4EC]'
                     }`}
                     style={{ textShadow: '2px 2px 0 #141210' }}

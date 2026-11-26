@@ -125,17 +125,17 @@
 
 /* Short landscape phones: shrink the HUD and touch pad so fighters stay visible and nothing is cut off */
 @media (max-height: 520px) {
-  .hud-top { zoom: 0.72; }
+  .hud-top { zoom: 0.86; }
   .touch-cluster { zoom: 0.84; margin-bottom: max(4px, env(safe-area-inset-bottom)); }
 }
 /* Very short screens (small phones, browser bars showing) */
 @media (max-height: 400px) {
-  .hud-top { zoom: 0.62; }
+  .hud-top { zoom: 0.8; }
   .touch-cluster { zoom: 0.72; }
   .comic-popup { font-size: 0.85rem; }
 }
 @media (max-height: 340px) {
-  .hud-top { zoom: 0.54; }
+  .hud-top { zoom: 0.72; }
   .touch-cluster { zoom: 0.62; }
 }
 /* Notches and rounded corners */

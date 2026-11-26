@@ -25,7 +25,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.83.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.84.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
@@ -48,7 +48,7 @@ Artifact pages cannot load anything from the internet except Google Fonts, so ke
 - `engine/powerupDirector.ts`: 3D props for each fighter's power move (chair, car, cue, fan girls...).
 - `engine/fighterRig.ts`: body rig, outfits, poses. Each power move has a `case 'powerup_<name>'` pose.
 - `engine/stylizedHead.ts`: procedural head sculpt (nose, brow, eyes, beard, hair). Face specs in `engine/faceSculptor.ts`.
-- `components/CombatHud.tsx`: HUD, touch pad, speech bubbles, comic countdown clock (`hud.comedyTimer`).
+- `components/CombatHud.tsx`: HUD, touch pad, speech bubbles, comic countdown clock (`hud.comedyTimer`). Street/Endless top HUD is compact (v1.0.84): active hero bar (nickname, hp, thin power bar) with a slim partner row under it, one-line wave/score box with pause/mute/pad buttons beside it, slim enemy bar (no subtitle). No rickshaw warning banner (user asked to remove it). Phone zoom for `.hud-top` in `index.css`.
 
 ## Fighters and their power moves
 Note: Immy (profile id `rebel_shadow`) is a MAN (a sleazy smooth-talking charmer), use he/him and never "her".
