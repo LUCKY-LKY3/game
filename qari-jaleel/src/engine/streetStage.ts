@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { BrawlWeaponKind, StageConfig } from '../types/game';
+import { buildRajuBike } from './villageThugs';
 import { createVillageSheep, VillageSheepHandle } from './villageSheep';
 
 export interface StreetClayPot {
@@ -1687,52 +1688,12 @@ export function buildStreetStage(
   // ── RIDEABLE 3D RAJU SPLENDOR MOTORBIKE PROP ───────────────────────────────
   const splendorGroup = new THREE.Group();
   splendorGroup.visible = false;
-  const bikeBodyMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: '#18181B', roughness: 0.3, metalness: 0.65 })
-  );
-  const bikeStripeMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: '#DC2626', roughness: 0.35, metalness: 0.45 })
-  );
-  const bikeChromeMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: '#E2E8F0', roughness: 0.2, metalness: 0.9 })
-  );
-  const bikeTireMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: '#09090B', roughness: 0.9, metalness: 0.05 })
-  );
 
-  // Local +X is front of bike!
-  const bFrame = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(1.48, 0.42, 0.36)), bikeBodyMat);
-  bFrame.position.set(0, 0.56, 0);
-  bFrame.castShadow = true;
-  const bTank = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.62, 0.28, 0.42)), bikeStripeMat);
-  bTank.position.set(0.28, 0.84, 0);
-  const bSeat = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.76, 0.16, 0.38)), bikeTireMat);
-  bSeat.position.set(-0.34, 0.82, 0);
-  const bFork = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.05, 0.05, 0.82, 8)), bikeChromeMat);
-  bFork.position.set(0.66, 0.64, 0);
-  bFork.rotation.z = -0.32;
-  const bHandlebar = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.03, 0.03, 0.68, 8)), bikeChromeMat);
-  bHandlebar.rotation.x = Math.PI / 2;
-  bHandlebar.position.set(0.56, 1.02, 0);
-  const bHeadlight = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.11, 0.11, 0.14, 12)), autoLight);
-  bHeadlight.rotation.z = Math.PI / 2;
-  bHeadlight.position.set(0.78, 0.9, 0);
-  const bExhaust = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.055, 0.07, 0.85, 8)), bikeChromeMat);
-  bExhaust.rotation.z = Math.PI / 2 - 0.08;
-  bExhaust.position.set(-0.42, 0.34, 0.24);
-
-  const splendorWheelGeo = trackGeo(new THREE.TorusGeometry(0.28, 0.085, 10, 18));
-  const splendorWheels: THREE.Mesh[] = [];
-  [0.72, -0.68].forEach((wx) => {
-    const w = new THREE.Mesh(splendorWheelGeo, bikeTireMat);
-    w.position.set(wx, 0.34, 0);
-    w.castShadow = true;
-    const hub = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.14, 0.14, 0.09, 10)), bikeChromeMat);
-    hub.rotation.x = Math.PI / 2;
-    w.add(hub);
-    splendorWheels.push(w);
-    splendorGroup.add(w);
-  });
+  // Same red Splendor model Raju rides (built facing +Z, turned so +X is the front here)
+  const rajuBike = buildRajuBike(trackGeo, trackMat, trackTex);
+  rajuBike.group.rotation.y = Math.PI / 2;
+  splendorGroup.add(rajuBike.group);
+  const splendorWheels: THREE.Mesh[] = rajuBike.wheels;
 
   const mountRing = new THREE.Mesh(
     trackGeo(new THREE.RingGeometry(0.95, 1.24, 28)),
@@ -1748,7 +1709,7 @@ export function buildStreetStage(
   );
   mountRing.rotation.x = -Math.PI / 2;
   mountRing.position.y = 0.04;
-  splendorGroup.add(bFrame, bTank, bSeat, bFork, bHandlebar, bHeadlight, bExhaust, mountRing);
+  splendorGroup.add(mountRing);
   group.add(splendorGroup);
 
   const splendorBike: StreetSplendorBike = {
@@ -2627,7 +2588,7 @@ export function buildStreetStage(
       } else {
         splendorBike.group.position.y = 0;
         for (let w = 0; w < splendorBike.wheels.length; w++) {
-          splendorBike.wheels[w].rotation.z -= dt * 22;
+          splendorBike.wheels[w].rotation.x += dt * 22;
         }
       }
     } else {

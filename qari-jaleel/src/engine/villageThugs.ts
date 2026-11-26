@@ -1092,118 +1092,12 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
   let bikeGroup: THREE.Group | undefined;
   let bikeWheels: THREE.Mesh[] | undefined;
   if (spec.archetype === 'biker') {
-    bikeGroup = new THREE.Group();
-    bikeWheels = [];
-    const bikeRed = trackMat(
-      new THREE.MeshStandardMaterial({ color: '#DC2626', roughness: 0.28, metalness: 0.55 })
-    );
-    const chrome = trackMat(
-      new THREE.MeshStandardMaterial({ color: '#E2E8F0', roughness: 0.18, metalness: 0.9 })
-    );
-    const tireMat = trackMat(
-      new THREE.MeshStandardMaterial({ color: '#18181B', roughness: 0.88, metalness: 0.05 })
-    );
-    const lightMat = trackMat(
-      new THREE.MeshBasicMaterial({ color: '#FEF08A' })
-    );
-
-    const engineMat = trackMat(new THREE.MeshStandardMaterial({ color: '#3F3F46', roughness: 0.5, metalness: 0.6 }));
-    // Wheels: tyre, chrome rim, hub and spokes (spin with the tyre)
-    const tyreGeo = trackGeo(new THREE.TorusGeometry(0.29, 0.065, 10, 26));
-    const rimGeo = trackGeo(new THREE.TorusGeometry(0.235, 0.014, 6, 24));
-    const hubGeo = trackGeo(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 12));
-    const spokeGeo = trackGeo(new THREE.BoxGeometry(0.008, 0.46, 0.008));
-    const makeWheel = (z: number) => {
-      const tyre = new THREE.Mesh(tyreGeo, tireMat);
-      tyre.position.set(0, 0.34, z);
-      tyre.rotation.y = Math.PI / 2;
-      tyre.castShadow = true;
-      const rim = new THREE.Mesh(rimGeo, chrome);
-      const hub = new THREE.Mesh(hubGeo, chrome);
-      hub.rotation.x = Math.PI / 2;
-      tyre.add(rim, hub);
-      for (let k = 0; k < 6; k++) {
-        const sp = new THREE.Mesh(spokeGeo, chrome);
-        sp.rotation.z = (k * Math.PI) / 6;
-        tyre.add(sp);
-      }
-      bikeWheels!.push(tyre);
-      bikeGroup!.add(tyre);
-      // mudguard arc over the top
-      const guard = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.34, 0.03, 6, 16, Math.PI)), bikeRed);
-      guard.position.set(0, 0.34, z);
-      guard.rotation.y = Math.PI / 2;
-      bikeGroup!.add(guard);
-    };
-    makeWheel(0.62);
-    makeWheel(-0.58);
-
-    // Frame tubes
-    const tube = (pts: [number, number, number][], r: number, mat: THREE.Material) => {
-      const m = new THREE.Mesh(trackGeo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(...q))), 12, r, 8)), mat);
-      m.castShadow = true;
-      bikeGroup!.add(m);
-    };
-    tube([[0, 1.0, 0.46], [0, 0.66, 0.2], [0, 0.42, -0.05]], 0.032, bikeRed); // down tube
-    tube([[0, 1.0, 0.46], [0, 0.88, 0.05], [0, 0.82, -0.32]], 0.028, bikeRed); // top tube
-    tube([[0, 0.42, -0.05], [0, 0.38, -0.3], [0, 0.34, -0.58]], 0.026, bikeRed); // swing arm
-    for (const x of [-0.06, 0.06]) tube([[x, 1.02, 0.46], [x, 0.7, 0.55], [x, 0.34, 0.62]], 0.022, chrome); // front forks
-    tube([[0.14, 0.44, 0.12], [0.16, 0.4, -0.2], [0.15, 0.42, -0.72]], 0.03, chrome); // exhaust
-
-    // Tank, seat, engine
-    const tank = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.2, 16, 12)), bikeRed);
-    tank.position.set(0, 0.92, 0.18);
-    tank.scale.set(0.82, 0.62, 1.25);
-    tank.castShadow = true;
-    const seat = new THREE.Mesh(trackGeo(new THREE.CapsuleGeometry(0.085, 0.36, 4, 10)), tireMat);
-    seat.rotation.x = Math.PI / 2;
-    seat.position.set(0, 0.88, -0.27);
-    seat.scale.set(1.3, 1, 0.9);
-    const engine = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.2, 0.22, 0.3)), engineMat);
-    engine.position.set(0, 0.5, 0.06);
-    engine.castShadow = true;
-
-    // Handlebar, grips, mirrors, headlight
-    const bar = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.018, 0.018, 0.66, 8)), chrome);
-    bar.rotation.z = Math.PI / 2;
-    bar.position.set(0, 1.08, 0.48);
-    const gripGeo = trackGeo(new THREE.CylinderGeometry(0.026, 0.026, 0.12, 8));
-    for (const x of [-0.3, 0.3]) {
-      const grip = new THREE.Mesh(gripGeo, tireMat);
-      grip.rotation.z = Math.PI / 2;
-      grip.position.set(x, 1.08, 0.48);
-      const mirror = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.04, 10)), chrome);
-      mirror.position.set(x * 0.8, 1.26, 0.45);
-      const stem = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.006, 0.006, 0.18, 4)), chrome);
-      stem.position.set(x * 0.8, 1.17, 0.46);
-      bikeGroup.add(grip, mirror, stem);
-    }
-    const lampBody = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.085, 0.075, 0.1, 14)), chrome);
-    lampBody.rotation.x = Math.PI / 2;
-    lampBody.position.set(0, 0.98, 0.6);
-    const headlight = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.072, 14)), lightMat);
-    headlight.position.set(0, 0.98, 0.652);
-
-    // Number plate
-    const plateCanvas = document.createElement('canvas');
-    plateCanvas.width = 128;
-    plateCanvas.height = 48;
-    const pg = plateCanvas.getContext('2d')!;
-    pg.fillStyle = '#FEF08A';
-    pg.fillRect(0, 0, 128, 48);
-    pg.fillStyle = '#111';
-    pg.font = 'bold 30px sans-serif';
-    pg.textAlign = 'center';
-    pg.textBaseline = 'middle';
-    pg.fillText('RAJU 1', 64, 26);
-    const plateTex = new THREE.CanvasTexture(plateCanvas);
-    plateTex.colorSpace = THREE.SRGBColorSpace;
-    textures.push(plateTex);
-    const plate = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.22, 0.08)), trackMat(new THREE.MeshBasicMaterial({ map: plateTex, side: THREE.DoubleSide })));
-    plate.position.set(0, 0.62, -0.84);
-    plate.rotation.y = Math.PI;
-
-    bikeGroup.add(tank, seat, engine, bar, lampBody, headlight, plate);
+    const bike = buildRajuBike(trackGeo, trackMat, (t) => {
+      textures.push(t);
+      return t;
+    });
+    bikeGroup = bike.group;
+    bikeWheels = bike.wheels;
     root.add(bikeGroup);
   }
 
@@ -1631,4 +1525,125 @@ export function applyThugPose(
   rig.rightHip.rotation.z = 0.05;
   rig.leftKnee.rotation.x = THREE.MathUtils.clamp(rig.leftKnee.rotation.x, 0.08, 1.95);
   rig.rightKnee.rotation.x = THREE.MathUtils.clamp(rig.rightKnee.rotation.x, 0.08, 1.95);
+}
+
+/** Raju's red Splendor motorbike (front is +Z). Shared by Raju and the parked/rideable street bike. */
+export function buildRajuBike(
+  trackGeo: <T extends THREE.BufferGeometry>(g: T) => T,
+  trackMat: <T extends THREE.Material>(m: T) => T,
+  trackTex: <T extends THREE.Texture>(t: T) => T
+): { group: THREE.Group; wheels: THREE.Mesh[] } {
+  const bikeGroup = new THREE.Group();
+  const bikeWheels: THREE.Mesh[] = [];
+  const bikeRed = trackMat(
+    new THREE.MeshStandardMaterial({ color: '#DC2626', roughness: 0.28, metalness: 0.55 })
+  );
+  const chrome = trackMat(
+    new THREE.MeshStandardMaterial({ color: '#E2E8F0', roughness: 0.18, metalness: 0.9 })
+  );
+  const tireMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: '#18181B', roughness: 0.88, metalness: 0.05 })
+  );
+  const lightMat = trackMat(
+    new THREE.MeshBasicMaterial({ color: '#FEF08A' })
+  );
+
+  const engineMat = trackMat(new THREE.MeshStandardMaterial({ color: '#3F3F46', roughness: 0.5, metalness: 0.6 }));
+  // Wheels: tyre, chrome rim, hub and spokes (spin with the tyre)
+  const tyreGeo = trackGeo(new THREE.TorusGeometry(0.29, 0.065, 10, 26));
+  const rimGeo = trackGeo(new THREE.TorusGeometry(0.235, 0.014, 6, 24));
+  const hubGeo = trackGeo(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 12));
+  const spokeGeo = trackGeo(new THREE.BoxGeometry(0.008, 0.46, 0.008));
+  const makeWheel = (z: number) => {
+    const tyre = new THREE.Mesh(tyreGeo, tireMat);
+    tyre.position.set(0, 0.34, z);
+    tyre.rotation.y = Math.PI / 2;
+    tyre.castShadow = true;
+    const rim = new THREE.Mesh(rimGeo, chrome);
+    const hub = new THREE.Mesh(hubGeo, chrome);
+    hub.rotation.x = Math.PI / 2;
+    tyre.add(rim, hub);
+    for (let k = 0; k < 6; k++) {
+      const sp = new THREE.Mesh(spokeGeo, chrome);
+      sp.rotation.z = (k * Math.PI) / 6;
+      tyre.add(sp);
+    }
+    bikeWheels!.push(tyre);
+    bikeGroup!.add(tyre);
+    // mudguard arc over the top
+    const guard = new THREE.Mesh(trackGeo(new THREE.TorusGeometry(0.34, 0.03, 6, 16, Math.PI)), bikeRed);
+    guard.position.set(0, 0.34, z);
+    guard.rotation.y = Math.PI / 2;
+    bikeGroup!.add(guard);
+  };
+  makeWheel(0.62);
+  makeWheel(-0.58);
+
+  // Frame tubes
+  const tube = (pts: [number, number, number][], r: number, mat: THREE.Material) => {
+    const m = new THREE.Mesh(trackGeo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(...q))), 12, r, 8)), mat);
+    m.castShadow = true;
+    bikeGroup!.add(m);
+  };
+  tube([[0, 1.0, 0.46], [0, 0.66, 0.2], [0, 0.42, -0.05]], 0.032, bikeRed); // down tube
+  tube([[0, 1.0, 0.46], [0, 0.88, 0.05], [0, 0.82, -0.32]], 0.028, bikeRed); // top tube
+  tube([[0, 0.42, -0.05], [0, 0.38, -0.3], [0, 0.34, -0.58]], 0.026, bikeRed); // swing arm
+  for (const x of [-0.06, 0.06]) tube([[x, 1.02, 0.46], [x, 0.7, 0.55], [x, 0.34, 0.62]], 0.022, chrome); // front forks
+  tube([[0.14, 0.44, 0.12], [0.16, 0.4, -0.2], [0.15, 0.42, -0.72]], 0.03, chrome); // exhaust
+
+  // Tank, seat, engine
+  const tank = new THREE.Mesh(trackGeo(new THREE.SphereGeometry(0.2, 16, 12)), bikeRed);
+  tank.position.set(0, 0.92, 0.18);
+  tank.scale.set(0.82, 0.62, 1.25);
+  tank.castShadow = true;
+  const seat = new THREE.Mesh(trackGeo(new THREE.CapsuleGeometry(0.085, 0.36, 4, 10)), tireMat);
+  seat.rotation.x = Math.PI / 2;
+  seat.position.set(0, 0.88, -0.27);
+  seat.scale.set(1.3, 1, 0.9);
+  const engine = new THREE.Mesh(trackGeo(new THREE.BoxGeometry(0.2, 0.22, 0.3)), engineMat);
+  engine.position.set(0, 0.5, 0.06);
+  engine.castShadow = true;
+
+  // Handlebar, grips, mirrors, headlight
+  const bar = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.018, 0.018, 0.66, 8)), chrome);
+  bar.rotation.z = Math.PI / 2;
+  bar.position.set(0, 1.08, 0.48);
+  const gripGeo = trackGeo(new THREE.CylinderGeometry(0.026, 0.026, 0.12, 8));
+  for (const x of [-0.3, 0.3]) {
+    const grip = new THREE.Mesh(gripGeo, tireMat);
+    grip.rotation.z = Math.PI / 2;
+    grip.position.set(x, 1.08, 0.48);
+    const mirror = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.04, 10)), chrome);
+    mirror.position.set(x * 0.8, 1.26, 0.45);
+    const stem = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.006, 0.006, 0.18, 4)), chrome);
+    stem.position.set(x * 0.8, 1.17, 0.46);
+    bikeGroup.add(grip, mirror, stem);
+  }
+  const lampBody = new THREE.Mesh(trackGeo(new THREE.CylinderGeometry(0.085, 0.075, 0.1, 14)), chrome);
+  lampBody.rotation.x = Math.PI / 2;
+  lampBody.position.set(0, 0.98, 0.6);
+  const headlight = new THREE.Mesh(trackGeo(new THREE.CircleGeometry(0.072, 14)), lightMat);
+  headlight.position.set(0, 0.98, 0.652);
+
+  // Number plate
+  const plateCanvas = document.createElement('canvas');
+  plateCanvas.width = 128;
+  plateCanvas.height = 48;
+  const pg = plateCanvas.getContext('2d')!;
+  pg.fillStyle = '#FEF08A';
+  pg.fillRect(0, 0, 128, 48);
+  pg.fillStyle = '#111';
+  pg.font = 'bold 30px sans-serif';
+  pg.textAlign = 'center';
+  pg.textBaseline = 'middle';
+  pg.fillText('RAJU 1', 64, 26);
+  const plateTex = new THREE.CanvasTexture(plateCanvas);
+  plateTex.colorSpace = THREE.SRGBColorSpace;
+  trackTex(plateTex);
+  const plate = new THREE.Mesh(trackGeo(new THREE.PlaneGeometry(0.22, 0.08)), trackMat(new THREE.MeshBasicMaterial({ map: plateTex, side: THREE.DoubleSide })));
+  plate.position.set(0, 0.62, -0.84);
+  plate.rotation.y = Math.PI;
+
+  bikeGroup.add(tank, seat, engine, bar, lampBody, headlight, plate);
+  return { group: bikeGroup, wheels: bikeWheels };
 }
