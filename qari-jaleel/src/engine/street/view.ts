@@ -463,8 +463,19 @@ export function spawnParticles(this: StreetBrawlEngine, x: number, y: number, z:
 
 export function spawnComicPopup(this: StreetBrawlEngine, wx: number, wy: number, wz: number, text: string, color: string) {
   this._projVec.set(wx, wy, wz).project(this.camera);
-  const xPct = THREE.MathUtils.clamp((this._projVec.x * 0.5 + 0.5) * 100, 14, 86);
-  const yPct = THREE.MathUtils.clamp((-this._projVec.y * 0.5 + 0.5) * 100, 18, 70);
+  // Keep the whole word on screen and below the health bars / portraits at the top
+  const halfW = Math.min(30, text.length * 0.7 + 2);
+  const xPct = THREE.MathUtils.clamp((this._projVec.x * 0.5 + 0.5) * 100, Math.max(14, halfW), Math.min(86, 100 - halfW));
+  let yPct = THREE.MathUtils.clamp((-this._projVec.y * 0.5 + 0.5) * 100, 27, 72);
+  // Stack instead of piling on top of another live popup
+  for (let tries = 0; tries < 4; tries++) {
+    const clash = this.popups.some(
+      (o) => o.text !== text && o.life > COMIC_POPUP_DURATION * 0.3 && Math.abs(o.yPct - yPct) < 6 && Math.abs(o.xPct - xPct) < 18
+    );
+    if (!clash) break;
+    yPct = yPct + 7 > 72 ? yPct - 7 * (tries + 1) : yPct + 7;
+    yPct = THREE.MathUtils.clamp(yPct, 27, 72);
+  }
 
   // Replace an existing near-fresh identical callout so big multi-hit sweeps never spam overlapping text
   for (let i = this.popups.length - 1; i >= 0; i--) {

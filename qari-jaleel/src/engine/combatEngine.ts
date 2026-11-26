@@ -15,6 +15,7 @@ import { ArticulatedFighterRig, applyFighterPose } from './fighterRig';
 import { getPowerupKindForFighter, PowerupDirector, PowerupKind } from './powerupDirector';
 import { resolveFighterStyle } from '../data/roster';
 import { soundEngine } from './sound';
+import { getSettings } from '../utils/settings';
 
 interface MoveSpec {
   duration: number;
@@ -1045,8 +1046,8 @@ export class AkharaCombatEngine {
       saf_hug: 3.0,
       jav_story: 3.5,
       jam_snooker: 3.7,
-      chet_ford: 3.1,
-      immy_girls: 3.8,
+      chet_ford: 5.8,
+      immy_girls: 7.0,
     };
     const actionMap: Record<Exclude<PowerupKind, 'generic'>, CombatAction> = {
       fady_smoke: 'powerup_fady',
@@ -1054,10 +1055,18 @@ export class AkharaCombatEngine {
       jav_story: 'powerup_jav',
       jam_snooker: 'powerup_jam',
       chet_ford: 'powerup_chet',
-      immy_girls: 'powerup_immy',
+      immy_girls: 'powerup_immy_run',
     };
 
     const duration = durationMap[kind];
+    if (kind === 'immy_girls') {
+      attacker.rig.coverKind = Math.floor(Math.random() * 4); // pizza box, steel thali, apple or pixel mosaic
+      attacker.rig.modest = getSettings().immyModest;
+      this.setSpeechBubble(attacker, 'Excuse me. It is getting hot in here.', 1.6);
+      soundEngine.playCheerPop();
+    } else if (kind === 'chet_ford') {
+      this.setSpeechBubble(attacker, 'Gentlemen, a once-in-a-lifetime opportunity.', 1.8);
+    }
     attacker.invulnTimer = duration + 0.2;
     attacker.vx = 0;
     attacker.vy = 0;
@@ -1367,30 +1376,32 @@ export class AkharaCombatEngine {
       }
 
       case 'chet_ford': {
-        // Steps back & whistles as a 3D Red Ford car blasts across the screen and drives over opponent!
-        if (phase < 0.24) {
-          const safeX = THREE.MathUtils.clamp(
-            s.startX - facing * 1.1,
-            -ARENA_X_LIMIT,
-            ARENA_X_LIMIT
-          );
-          attacker.x = THREE.MathUtils.damp(attacker.x, safeX, 7, dt);
-          attacker.z = THREE.MathUtils.damp(attacker.z, -0.95, 7, dt);
-          if (once(1)) {
-            soundEngine.playCarHorn();
-            this.setSpeechBubble(attacker, 'Watch out—Red Ford coming through!', 1.5);
-          }
+        // The pitch, "Don't smoke in my car", then the red Ford runs the rival over.
+        const safeX = THREE.MathUtils.clamp(s.startX - facing * 1.1, -ARENA_X_LIMIT, ARENA_X_LIMIT);
+        if (phase < 0.5) {
+          attacker.x = THREE.MathUtils.damp(attacker.x, safeX, 4, dt);
+          attacker.z = THREE.MathUtils.damp(attacker.z, -0.95, 4, dt);
         }
-        const { carX, carActive } = this.powerupDirector.updateChetFord(
-          phase,
-          s.startX,
-          defender.z,
-          facing
-        );
+        if (phase > 0.2 && once(1)) this.setSpeechBubble(defender, 'What is it?', 1.3);
+        if (phase > 0.3 && once(4)) {
+          this.setSpeechBubble(attacker, 'Zero risk. Twelve percent returns.', 1.5);
+          this.pushCallout(attacker, '+12%!');
+        }
+        if (phase > 0.4 && once(8)) this.setSpeechBubble(defender, 'Mind if I light up?', 1.2);
+        if (phase > 0.47 && once(16)) {
+          soundEngine.playCarHorn();
+          this.pushCallout(attacker, "DON'T SMOKE IN MY CAR!");
+          this.setSpeechBubble(attacker, "Don't smoke in my car.", 1.6);
+        }
+        if (phase > 0.62 && once(32)) soundEngine.playCarHorn();
+        const { carX, carActive } = this.powerupDirector.updateChetFord(phase, s.startX, defender.z, facing, {
+          from: 0.5,
+          to: 0.96,
+        });
         if (carActive && Math.random() < 0.55) {
           this.spawnParticles(carX - facing * 1.35, 0.14, defender.z, 2, '#B85D38', 2.4, 0.9);
         }
-        if (carActive && Math.abs(carX - defender.x) < 1.25 && once(2)) {
+        if (carActive && Math.abs(carX - defender.x) < 1.6 && once(2)) {
           soundEngine.playCarCrash();
           this.hitstopTimer = 0.1;
           this.dealPowerupHit(attacker, defender, 34, {
@@ -1399,60 +1410,62 @@ export class AkharaCombatEngine {
             knockdown: true,
             sparkColor: '#EF4444',
             heavy: true,
-            callout: 'RED FORD RUNOVER!',
+            callout: 'COUSIN PLC -100%!',
           });
         }
+        if (phase > 0.97 && once(64)) this.setSpeechBubble(attacker, 'Past performance is not a guarantee.', 1.7);
         break;
       }
 
       case 'immy_girls': {
-        // 3 random girls sprint on screen, hug Immy with hearts, then rush and punch the opponent!
-        if (phase > 0.22 && once(1)) {
+        // Born To Run: Immy strips (always covered), runs a figure-eight, the rival panics and faints.
+        const prop = ['pizza box', 'thali', 'apple', 'pixels'][attacker.rig.coverKind] ?? 'pizza box';
+        if (phase > 0.1 && once(1)) {
           soundEngine.playCheerPop();
-          this.setSpeechBubble(attacker, 'OMG Immy!! ❤️', 1.3);
+          this.spawnParticles(attacker.x, 1.2, attacker.z, 22, '#F472B6', 4, 1);
+          this.pushCallout(attacker, 'CLOTHES: GONE!');
+          this.setSpeechBubble(defender, 'BHAI, WHAT ARE YOU DOING?!', 1.4);
         }
-        if (phase > 0.54 && once(2)) {
-          this.setSpeechBubble(attacker, 'Girls—get him!!', 1.2);
+        if (phase > 0.17 && once(2)) {
+          this.setSpeechBubble(
+            attacker,
+            attacker.rig.coverKind === 3 ? 'Technical difficulties. Please stand by!' : `Don't look at the ${prop}!`,
+            1.5
+          );
         }
-        if (phase > 0.65 && once(4)) {
-          soundEngine.playHit(false);
-          this.dealPowerupHit(attacker, defender, 10, {
-            knockbackX: 0.7,
-            launchY: 0,
-            sparkColor: '#EC4899',
-            callout: 'SQUAD PUNCH!',
-          });
+        if (phase > 0.34 && once(4)) this.setSpeechBubble(defender, 'MY EYES! MY EYES!', 1.3);
+        if (phase > 0.5 && once(8)) this.setSpeechBubble(defender, 'PUT SOMETHING ON!!', 1.3);
+        if (phase > 0.66 && once(16)) this.setSpeechBubble(defender, "I'M TELLING AUNTY!", 1.3);
+        if (phase > 0.8 && once(32)) this.setSpeechBubble(attacker, 'Is it... is it breezy?', 1.4);
+        if (phase >= 0.1 && phase < 0.9) {
+          const u = (phase - 0.1) / 0.8;
+          const ang = u * Math.PI * 3;
+          const nx = THREE.MathUtils.clamp(s.startX + Math.sin(ang) * 3.6, -ARENA_X_LIMIT, ARENA_X_LIMIT);
+          const nz = THREE.MathUtils.clamp(Math.sin(ang * 2) * 1.2, -ARENA_Z_LIMIT, ARENA_Z_LIMIT);
+          if (Math.abs(nx - attacker.x) > 0.001) attacker.facing = nx > attacker.x ? 1 : -1;
+          attacker.x = nx;
+          attacker.z = nz;
+          // the rival backs away in horror
+          const away = defender.x >= attacker.x ? 1 : -1;
+          if (Math.abs(defender.x - attacker.x) < 2.6) {
+            defender.x = THREE.MathUtils.clamp(defender.x + away * 3.2 * dt, -ARENA_X_LIMIT, ARENA_X_LIMIT);
+            defender.facing = away === 1 ? -1 : 1;
+          }
         }
-        if (phase > 0.74 && once(8)) {
-          soundEngine.playHit(false);
-          this.dealPowerupHit(attacker, defender, 10, {
-            knockbackX: 0.8,
-            launchY: 0,
-            sparkColor: '#14B8A6',
-            callout: 'DOUBLE HIT!',
-          });
-        }
-        if (phase > 0.83 && once(16)) {
+        if (phase > 0.9 && once(64)) {
           soundEngine.playHit(true);
           this.hitstopTimer = 0.1;
-          this.dealPowerupHit(attacker, defender, 13, {
-            knockbackX: 5.2,
-            launchY: 4.9,
+          attacker.facing = defender.x >= attacker.x ? 1 : -1;
+          this.dealPowerupHit(attacker, defender, 33, {
+            knockbackX: 1.2,
+            launchY: 2.4,
             knockdown: true,
-            sparkColor: '#A855F7',
+            sparkColor: '#F472B6',
             heavy: true,
-            callout: 'FAN SQUAD K.O.!',
+            callout: 'FAINTED!',
           });
+          this.setSpeechBubble(attacker, "Sorry. I'm usually more modest.", 1.6);
         }
-        this.powerupDirector.updateImmyGirls(
-          phase,
-          attacker.x,
-          attacker.z,
-          defender.x,
-          defender.z,
-          facing,
-          this.elapsed
-        );
         break;
       }
 
