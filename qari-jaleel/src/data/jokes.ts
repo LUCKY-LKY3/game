@@ -56,32 +56,35 @@ export const HERO_QUIPS: Record<'dodge' | 'streak' | 'lowhp' | 'bossdown' | 'fla
   tag: ['Your turn, bhai!', 'Tag, you are it!', 'Hold my chai!'],
 };
 
+/** Tacked onto Jav's generic quips so he never says anything politely */
+export const JAV_GAALIS: string[] = ['Khotey!', 'Ullu da pattha!', 'Kutteya!', 'Saaleya!', 'Chawal!', 'Kanjar!', 'Gadheya!', 'Bewakoof!'];
+
 export function pick<T>(list: T[]): T {
   return list[Math.floor(Math.random() * list.length)];
 }
 
 /** Each fighter's own random chatter during fights (keyed by profile id). Bleeps and mild innuendo only. */
 export const FIGHTER_LINES: Record<string, string[]> = {
-  // Fady: constant Punjabi
+  // Fady: a silver-tongued orator. Never swears. Ever.
   qari_jaleel: [
-    'Oye, mera dil karda hai lassi da!',
-    'Ki gal aa, paaji, tusi darr gaye?',
-    'Sat sri akaal, cousin! Hun maar kha!',
-    'Oye chakk de! Ajj main full josh vich haan!',
-    'Tenu pata main kaun haan? Fady paaji!',
-    'Hor ki haal ae? Mukka khana ae?',
-    'Oye balle balle!',
-    'Chak de phatte!',
-    'Ki haal aa, paaji?',
-    'Oye hoye, ki karda pea?',
-    'Kamaal kar ditta, yaar!',
-    'Roti kha lai pehlan, fer ladai!',
-    'Tusi great ho, par main greater!',
-    'Ajj mood vich aan, oye!',
-    'Shava shava, bhaiyo!',
-    'Ohh teri, eh ki ho gaya!',
-    'Chal oye, kam shuru kar!',
-    'Lassi peeni aa, fight baad vich!',
+    'Gentlemen, I implore you, reconsider this folly.',
+    'Violence is the last refuge of the incompetent. Alas.',
+    'Permit me a brief rebuttal. With my fists.',
+    'How exquisitely clumsy of you, dear cousin.',
+    'One does so detest unpleasantness before chai.',
+    'I put it to you, sir, that you are losing.',
+    'Your technique is, regrettably, pedestrian.',
+    'Allow me to elucidate. Briefly. Forcefully.',
+    'A most unfortunate decision on your part.',
+    'Do mind your posture as you fall.',
+    'I find your argument unpersuasive. And your jaw.',
+    'Ladies and gentlemen of the mohalla, observe.',
+    'Splendid effort. Entirely futile, but splendid.',
+    'Pray, do take a seat. On the ground.',
+    'Such vulgarity is beneath us all.',
+    'I rest my case. On your face.',
+    'Eloquence and elbows, my dear fellow.',
+    'Might I trouble you to fall over?',
   ],
   // Saf: love everybody
   rebel_aviator: [
@@ -102,26 +105,28 @@ export const FIGHTER_LINES: Record<string, string[]> = {
     'I forgive you before I punch you!',
     'Love is the real power, bhai!',
   ],
-  // Jav: swears, but it is all bleeped
+  // Jav: Punjabi gaaliyan nonstop, rude to everyone (no mum/sister insults)
   rebel_tactician: [
-    'Cricket is coming to Olympics!',
-    'Cricket is coming to the Olympics, you #£&@! Finally!',
-    'Forget the #£&@ fight, cricket is coming to Olympics!',
-    'Oh, #£&@ off, I just sat down!',
-    'This is so #£&@ annoying, bro.',
-    'Holy #£&@, who ordered all these?!',
-    'I swear on my #£&@ pillow, I will end you!',
-    'Wake me when it is #£&@ over!',
-    'That tickled, you ##£&!',
-    'What the #£&@ is this?!',
-    'Not another one, ##£&!',
-    'Who woke me up, you #£&@?!',
-    "I'm too sleepy for this ##£&!",
-    'Oh for #£&@\'s sake, more of them?!',
-    'Move, you #£&@ cousin!',
-    '#£&@ me, that was loud!',
-    'Five more minutes, you ##£&!',
-    "That's it, I'm #£&@ annoyed now!",
+    'Cricket is coming to Olympics, khotey!',
+    'Oye khotey da puttar, I just sat down!',
+    'Ullu da pattha! Who woke me up?!',
+    'Chal dafa ho, kutteya!',
+    'Kanjar cousin, move your face!',
+    'Oye saaleya, five more minutes!',
+    'Tera kakh na rahe, chawal!',
+    'Lakh di laanat tere te, gadheya!',
+    'Hatt oye, bewakoof da jawaai!',
+    'Is this the best the mohalla has? Khotey saare!',
+    'Bandar di shakal, kutte di akal!',
+    'Oye ganjeya, your head is blinding me!',
+    'Chawal maarda pea, chup kar!',
+    'Pehlan nahake aa, badbudaar!',
+    'Ki chawal ae? Fight like a man, gadheya!',
+    'Main sutta piya si, haramkhor!',
+    'Forget the fight, cricket in Olympics, ullu!',
+    'Teri shakal te chappal maaran, khotey!',
+    'Tu kutta, tera cousin kutta, saare kutte!',
+    'Oye chawal, I punch slower than you think. Still hurts!',
   ],
   // Jam: wants a lift home, plus dad jokes
   rebel_enforcer: [
@@ -200,9 +205,9 @@ export const CROWD_SCREAMS: string[] = ['EEEEK!', 'AAAH!', 'OMG!!', 'KYAAA!', 'W
 
 /** Lines about the tag partner ({p} = partner nickname). Said by the active fighter, keyed by their id. */
 export const PARTNER_LINES: Record<string, string[]> = {
-  qari_jaleel: ['Oye {p}, tusi kidda ho, paaji?', '{p}, chal oye, ajj asin jittna ae!', '{p}, lassi baad vich, pehlan fight!'],
+  qari_jaleel: ['{p}, my esteemed colleague, your assistance, please.', '{p}, together we shall prevail. Splendidly.', 'A word of thanks, {p}. Truly.'],
   rebel_aviator: ['I love you, {p}! No homo, just bro-love!', '{p}, you are my favourite person ever!', 'Hug me after this, {p}!'],
-  rebel_tactician: ['{p}, you #£&@, watch my back!', 'Cover me, {p}, I am too sleepy!', '{p}, you are a good #£&@, you know that?'],
+  rebel_tactician: ['{p}, oye khotey, watch my back!', 'Cover me, {p}, ullu, I am sleepy!', '{p}, you useless kanjar, I love you.'],
   rebel_enforcer: ['{p}, bro, can you drop me home after this?', '{p}, I know a joke about you. It is long.', "{p}, my uncle's cousin knows your cousin!"],
   rebel_striker: ['{p}, I would invest in you any day.', '{p}, our partnership has great returns.', 'Diversify, {p}! Do not stand there!'],
   rebel_shadow: ['{p}, relax, I will handle the charming.', "{p}, you're welcome for my presence.", 'Stay close, {p}, I make everyone look good.'],

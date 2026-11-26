@@ -1176,7 +1176,7 @@ export class AkharaCombatEngine {
           attacker.z = THREE.MathUtils.damp(attacker.z, s.startZ, 10, dt);
           if (phase > 0.14 && once(1)) {
             soundEngine.playSmokePuff();
-            this.setSpeechBubble(attacker, 'Hold on... smoke break.', 1.4);
+            this.setSpeechBubble(attacker, 'Do excuse me. A brief intermission.', 1.4);
           }
           if (phase > 0.34 && once(2)) {
             soundEngine.playSmokePuff();
@@ -1300,10 +1300,10 @@ export class AkharaCombatEngine {
             if (defender.action !== 'ko') {
               this.startAction(defender, 'listening', 2.4);
             }
-            this.setSpeechBubble(attacker, 'Bro listen, crazy story from last week...', 1.4);
+            this.setSpeechBubble(attacker, 'Oye khotey, listen to this story...', 1.4);
           }
           if (phase > 0.44 && once(2)) {
-            this.setSpeechBubble(attacker, 'So anyway long story short—', 1.1);
+            this.setSpeechBubble(attacker, 'Long story short, ullu—', 1.1);
           }
         } else if (phase < 0.82) {
           // Wind up slap!
@@ -1635,8 +1635,8 @@ export class AkharaCombatEngine {
     if (this.phase === 'FIGHTING' && this.speechBubbleTimer === 0) {
       this.chatterTimer -= clampedDt;
       if (this.chatterTimer <= 0) {
-        this.chatterTimer = 8 + Math.random() * 7;
         const f = Math.random() < 0.5 ? this.p1 : this.p2;
+        this.chatterTimer = f.profile.id === 'rebel_tactician' ? 4 + Math.random() * 3 : 8 + Math.random() * 7;
         const lines = FIGHTER_LINES[f.profile.id];
         if (lines && !String(f.action).includes('powerup')) {
           const foe = f === this.p1 ? this.p2 : this.p1;

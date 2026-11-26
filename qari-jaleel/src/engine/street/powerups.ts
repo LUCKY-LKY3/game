@@ -30,11 +30,11 @@ export function startHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime) {
       hero.action = 'powerup_fady';
       hero.actionDuration = 6.2;
       hero.invulnTimer = 6.4;
-      hero.callout = "I'LL BE 2 MINS BRO!";
+      hero.callout = "I SHALL BE BUT TWO MINUTES!";
       this.speechBubble = {
         side: hero.index === 0 ? 1 : 2,
         speaker: hero.profile.name,
-        text: 'Two mins bro.',
+        text: 'Pardon me. Two minutes, if you would be so kind.',
       };
       this.speechTimer = 1.5;
       this.comedyTimer = null;
@@ -154,12 +154,12 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
     }
     if (phase > 0.5 && (hero.powerupHitsMask & 8) === 0) {
       hero.powerupHitsMask |= 8;
-      this.speechBubble = { side, speaker: hero.profile.name, text: 'Nearly there bro. Two more mins.' };
+      this.speechBubble = { side, speaker: hero.profile.name, text: 'Patience, gentlemen. Two more minutes. Precisely.' };
       this.speechTimer = 1.6;
     }
     if (phase > 0.7 && (hero.powerupHitsMask & 16) === 0) {
       hero.powerupHitsMask |= 16;
-      this.speechBubble = { side, speaker: hero.profile.name, text: 'Right. Where were we?' };
+      this.speechBubble = { side, speaker: hero.profile.name, text: 'Now then. Where were we? Ah yes. Your defeat.' };
       this.speechTimer = 1.1;
     }
     if (phase > 0.86 && (hero.powerupHitsMask & 2) === 0) {
@@ -261,11 +261,11 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
     once(1, 0.08, () => this.spawnComicPopup(hero.x, 2.5, hero.z, 'YAAAWN!', '#FDE047'));
     once(2, 0.15, () => say(otherSide, 'Cousin', 'Bhai... look how BIG he is.', 1.7));
     once(4, 0.25, () => say(otherSide, 'Cousin 2', 'His arm is bigger than my whole body!', 1.8));
-    once(8, 0.34, () => say(side, name, 'Five more minutes, bro.', 1.4));
+    once(8, 0.34, () => say(side, name, 'Five more minutes, khotey.', 1.4));
     once(16, 0.4, () => say(otherSide, 'Cousin', 'Should we... wake him up?', 1.4));
     once(32, 0.47, () => {
       this.shakeIntensity = Math.max(this.shakeIntensity, 0.2);
-      say(side, name, 'Fine. One punch.', 1.4);
+      say(side, name, 'Ullu de patthe! Fine. One punch.', 1.4);
     });
     once(64, 0.54, () => {
       this.shakeIntensity = Math.max(this.shakeIntensity, 0.3);
@@ -279,7 +279,7 @@ export function stepHeroPowerup(this: StreetBrawlEngine, hero: HeroRuntime, dt: 
       this.dealPowerupAoeDamage(hero, tx, tz, 6.5, 90, true, 'LAZY PUNCH!');
     });
     once(256, 0.76, () => say(otherSide, 'Cousin', '...He did that while yawning.', 1.8));
-    once(512, 0.86, () => say(side, name, 'Wake me when it is lunch.', 1.6));
+    once(512, 0.86, () => say(side, name, 'Wake me at lunch, kutteya.', 1.6));
     once(1024, 0.92, () => this.spawnComicPopup(hero.x + hero.facing * 0.4, 2.6, hero.z, 'Zzz...', '#93C5FD'));
   } else if (hero.powerupKind === 'jam_snooker') {
     this.powerupDirector.updateJamSnooker(phase, hero.x, hero.y, hero.z, hero.facing);

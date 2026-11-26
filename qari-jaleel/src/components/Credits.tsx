@@ -42,10 +42,10 @@ const SECTIONS: { title: string; rows: [string, string][] }[] = [
   {
     title: 'Cast & Crew',
     rows: [
-      ['Fady', 'Punjabi Consultant. Ki Haal Aa?'],
+      ['Fady', 'Head of Elocution and Fine Manners'],
       ['Saf', 'Head Of Hugs'],
       ['Jav', 'Animation (Was Asleep, Still Got Credit)'],
-      ['Jav', 'Language Coach: ##£& (Bleeped)'],
+      ['Jav', 'Punjabi Gaali Consultant (HR Complaint Pending)'],
       ['Jam', 'Voice Direction. "Can Someone Drop Me Home?"'],
       ['Chet', 'Finance. Charged A 12% Management Fee'],
       ['Immy', "Charm Coach. Please Don't Ask"],

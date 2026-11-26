@@ -2,7 +2,7 @@
 import { getMods } from '../../utils/upgrades';
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
-import { COUSIN_TAUNTS, CROWD_SCREAMS, FIGHTER_LINES, IMMY_CHATUP, nickOf, PARTNER_LINES, HERO_QUIPS, pick, SPECIFIC_TAUNTS } from '../../data/jokes';
+import { COUSIN_TAUNTS, CROWD_SCREAMS, FIGHTER_LINES, IMMY_CHATUP, JAV_GAALIS, nickOf, PARTNER_LINES, HERO_QUIPS, pick, SPECIFIC_TAUNTS } from '../../data/jokes';
 import type { EnemyRuntime } from './types';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
@@ -28,7 +28,9 @@ const glowSnack = new THREE.MeshBasicMaterial({ color: '#FACC15', transparent: t
 export function sayQuip(this: StreetBrawlEngine, kind: keyof typeof HERO_QUIPS, chance = 1) {
   if (this.speechTimer > 0 || Math.random() > chance) return;
   const hero = this.getActiveHero();
-  this.speechBubble = { side: this.activeHeroIndex === 0 ? 1 : 2, speaker: hero.profile.name, text: pick(HERO_QUIPS[kind]) };
+  let text = pick(HERO_QUIPS[kind]);
+  if (hero.profile.id === 'rebel_tactician') text = `${text} ${pick(JAV_GAALIS)}`;
+  this.speechBubble = { side: this.activeHeroIndex === 0 ? 1 : 2, speaker: hero.profile.name, text };
   this.speechTimer = 2.2;
 }
 
@@ -126,8 +128,9 @@ export function updateEndlessExtras(this: StreetBrawlEngine, dt: number) {
   if (this.phase === 'FIGHTING') {
     this.chatTimer -= dt;
     if (this.chatTimer <= 0) {
-      this.chatTimer = 9 + Math.random() * 7;
       const hero = this.getActiveHero();
+      // Jav cannot keep his mouth shut
+      this.chatTimer = hero.profile.id === 'rebel_tactician' ? 4 + Math.random() * 3 : 9 + Math.random() * 7;
       const partner = this.getPartnerHero();
       const partnerLines = PARTNER_LINES[hero.profile.id];
       const lines = FIGHTER_LINES[hero.profile.id];
