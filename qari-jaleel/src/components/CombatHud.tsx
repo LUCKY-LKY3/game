@@ -517,26 +517,26 @@ export function CombatHud({
 
       {/* Rideable Raju Splendor Motorbike Mount Prompt & Rampage Timer */}
       {brawl && brawl.nearSplendorBike && brawl.ridingBikeTimer <= 0 && (
-        <div className="pointer-events-auto fixed inset-x-0 bottom-28 z-30 flex justify-center px-4 sm:bottom-20">
+        <div className="pointer-events-none fixed inset-x-0 top-[30%] z-30 flex justify-center px-4">
           <button
             type="button"
             onClick={() => {
               triggerHaptic(40);
               arenaRef.current?.triggerTouchAction('throw');
             }}
-            className="flex items-center gap-2 border-2 border-[#FACC15] bg-[#141210]/95 px-5 py-2 text-xs font-black tracking-[0.14em] text-[#FACC15] uppercase shadow-[0_0_22px_rgba(250,204,21,0.55)] animate-pulse active:scale-95"
+            className="pointer-events-auto flex items-center gap-2 rounded-full border-2 border-[#FACC15] bg-[#141210]/90 px-4 py-1.5 text-[11px] font-black tracking-[0.12em] text-[#FACC15] uppercase shadow-[0_0_18px_rgba(250,204,21,0.5)] animate-pulse active:scale-95"
           >
             <Bike className="h-4.5 w-4.5" />
             <span>
-              HOP ON SPLENDOR BIKE! (PRESS R / TAP · {brawl.splendorBikeRemaining}s)
+              HOP ON BIKE! TAP / R · {brawl.splendorBikeRemaining}s
             </span>
           </button>
         </div>
       )}
 
       {brawl && brawl.ridingBikeTimer > 0 && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-28 z-25 flex justify-center px-4 sm:bottom-20">
-          <div className="flex items-center gap-2 border-2 border-[#FACC15] bg-[#141210]/95 px-5 py-1.5 text-xs font-black tracking-[0.16em] text-[#FACC15] uppercase shadow-lg">
+        <div className="pointer-events-none fixed inset-x-0 top-[30%] z-25 flex justify-center px-4">
+          <div className="flex items-center gap-2 rounded-full border-2 border-[#FACC15] bg-[#141210]/85 px-4 py-1 text-xs font-black tracking-[0.16em] text-[#FACC15] uppercase shadow-lg">
             <Bike className="h-4 w-4" />
             <span>SPLENDOR RAMPAGE! {brawl.ridingBikeTimer.toFixed(1)}s LEFT · JUMP TO BAIL</span>
           </div>
