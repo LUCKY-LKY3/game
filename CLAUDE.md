@@ -22,6 +22,8 @@ Two games live in this repo:
 - `?foes=mama_ji,bowler_bablu,dhaal_dinesh` (new cousins) or `?foes=thali_tiwari,chintu` spawns those cousins in zone 1 wave 1 (any key from `VILLAGE_COUSIN_ROSTER`).
 - `?cousinlab` shows every cousin side by side (front + three-quarter) with Fady for comparison. Add `&only=bunty,golu` to pick, `&face` for head close-ups.
 - `?botdebug` exposes the Street/Endless engine as `window.__brawl` for Playwright bot playtests (read hero hp, style, enemies).
+- `?lineup` trailer shot: the six brothers walk down the street toward the camera (`components/LineupLab.tsx`, time from `performance.now()`).
+- Trailer: `qari-jaleel/scripts/trailer/capture3.js` (frame-steps the game at 30 fps by faking `performance.now`/rAF, scripted inputs, burned-in captions; needs the dist server) and `cards3.js` (opener, crawl, reviews, outro). Assemble frames with ffmpeg plus the user's track. Output goes to `trailer/` (git-ignored). Latest: `trailer/mafia-bhaiyas-trailer-hungry-ones.mp4` (38 s).
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning

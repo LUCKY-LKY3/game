@@ -2,6 +2,7 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import { HeadLab } from './components/HeadLab';
 import { CousinLab } from './components/CousinLab';
+import { LineupLab } from './components/LineupLab';
 import { EndlessScoreEntry } from './components/Leaderboard';
 import { WEB_BOARD } from './config';
 import { registerServiceWorker } from './utils/pwa';
@@ -34,4 +35,4 @@ const formTest = params.has('formtest') ? (
     </form>
   </div>
 ) : null;
-createRoot(document.getElementById('root')!).render(lbTest ?? formTest ?? (showLab ? <HeadLab /> : params.has('cousinlab') ? <CousinLab /> : <App />));
+createRoot(document.getElementById('root')!).render(lbTest ?? formTest ?? (showLab ? <HeadLab /> : params.has('cousinlab') ? <CousinLab /> : params.has('lineup') ? <LineupLab /> : <App />));
