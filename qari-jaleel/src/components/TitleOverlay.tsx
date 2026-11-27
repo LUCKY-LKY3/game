@@ -220,20 +220,20 @@ export function TitleOverlay({
             <button
               type="button"
               onClick={() => onSelectMode('practice_yard')}
-              className="flex items-center justify-center gap-2 border border-[#38BDF8]/45 bg-[#0B1F2A]/90 px-3 py-2.5 text-xs font-bold text-[#BAE6FD] hover:border-[#38BDF8] hover:text-[#F8F4EC] transition-colors whitespace-nowrap landscape:col-span-2"
+              className="flex items-center justify-center gap-2 border border-[#38BDF8]/45 bg-[#0B1F2A]/90 px-3 py-2.5 text-xs font-bold text-[#BAE6FD] hover:border-[#38BDF8] hover:text-[#F8F4EC] transition-colors whitespace-nowrap"
             >
               <Dumbbell className="h-3.5 w-3.5 shrink-0" />
-              Practice Yard · learn the moves
+              Practice Yard
             </button>
 
             <button
               type="button"
               onClick={() => onSelectMode('daily_dhamaal')}
-              className="flex items-center justify-center gap-2 border border-[#F472B6]/50 bg-[#2A0F1E]/90 px-3 py-2.5 text-xs font-bold text-[#FBCFE8] hover:border-[#F472B6] hover:text-[#F8F4EC] transition-colors whitespace-nowrap landscape:col-span-2"
+              className="flex items-center justify-center gap-2 border border-[#F472B6]/50 bg-[#2A0F1E]/90 px-3 py-2.5 text-xs font-bold text-[#FBCFE8] hover:border-[#F472B6] hover:text-[#F8F4EC] transition-colors whitespace-nowrap"
+              title={`Daily Dhamaal: ${DAILY_INFO[todaysMod()].blurb}${dailyBest() > 0 ? ` Best today: ${dailyBest().toLocaleString()}` : ''}`}
             >
               <Flame className="h-3.5 w-3.5 shrink-0" />
-              Daily Dhamaal · {DAILY_INFO[todaysMod()].title}
-              {dailyBest() > 0 && <span className="text-[10px] text-[#F9A8D4]">· best {dailyBest().toLocaleString()}</span>}
+              Daily: {DAILY_INFO[todaysMod()].title}
             </button>
 
           </div>

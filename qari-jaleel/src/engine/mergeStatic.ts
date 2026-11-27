@@ -15,6 +15,8 @@ export function mergeStatic(root: THREE.Object3D, keep: Set<THREE.Object3D>, tra
     for (let q: THREE.Object3D | null = o; q && q !== root; q = q.parent) if (keep.has(q) || !q.visible) return;
     const m = o as THREE.Mesh;
     if (Array.isArray(m.material)) return;
+    // vertex-coloured meshes (beards, hair) and morphing meshes keep their own draw call
+    if ((m.material as THREE.Material & { vertexColors?: boolean }).vertexColors || m.geometry.morphAttributes.position) return;
     let g = m.geometry.clone();
     g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
     if (g.index) g = g.toNonIndexed();

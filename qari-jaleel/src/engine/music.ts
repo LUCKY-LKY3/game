@@ -56,6 +56,15 @@ class MusicEngine {
   private mode: MusicMode = 'normal';
   private muted = false;
   private volume = 0.55;
+  /**
+   * Preferred path: stream the track through an <audio> element (about 2 MB of memory instead of
+   * ~64 MB for a fully decoded buffer). Falls back to the decoded buffer if the element can't play.
+   */
+  private el: HTMLAudioElement | null = null;
+  private elGain: GainNode | null = null;
+  private elRate = 1;
+  private elTriedAt = 0;
+  private useBuffer = false;
 
   /** Called with the sound engine's AudioContext */
   private attach(ctx: AudioContext) {
@@ -74,6 +83,48 @@ class MusicEngine {
     if (typeof window !== 'undefined' && window.location.search.includes('musicdebug')) {
       (window as unknown as { __music: MusicEngine }).__music = this;
     }
+    if (!this.setupElement()) this.load();
+  }
+
+  private setupElement(): boolean {
+    const ctx = this.ctx;
+    if (!ctx || !this.master || typeof Audio === 'undefined' || this.useBuffer) return false;
+    try {
+      const el = new Audio();
+      el.src = songUrl;
+      el.loop = true;
+      el.preload = 'auto';
+      // let the tempo change also shift pitch slightly, like the buffer version did
+      const anyEl = el as HTMLAudioElement & { preservesPitch?: boolean; webkitPreservesPitch?: boolean };
+      anyEl.preservesPitch = false;
+      anyEl.webkitPreservesPitch = false;
+      const node = ctx.createMediaElementSource(el);
+      const g = ctx.createGain();
+      g.gain.value = 0.0001;
+      node.connect(g);
+      g.connect(this.master);
+      el.addEventListener('error', () => this.elementFailed());
+      this.el = el;
+      this.elGain = g;
+      return true;
+    } catch {
+      this.useBuffer = true;
+      return false;
+    }
+  }
+
+  private elementFailed() {
+    if (this.useBuffer) return;
+    console.warn('music: streaming failed, decoding the track instead');
+    this.useBuffer = true;
+    try {
+      this.el?.pause();
+      this.elGain?.disconnect();
+    } catch {
+      // ignore
+    }
+    this.el = null;
+    this.elGain = null;
     this.load();
   }
 
@@ -124,6 +175,11 @@ class MusicEngine {
     return this.timer !== null;
   }
 
+  /** 'stream' (light) or 'buffer' (fallback), for ?musicdebug */
+  public get path() {
+    return this.el ? 'stream' : this.buf ? 'buffer' : 'loading';
+  }
+
   public start(ctx: AudioContext) {
     this.attach(ctx);
     if (this.timer !== null || typeof window === 'undefined') return;
@@ -135,6 +191,11 @@ class MusicEngine {
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
+    }
+    if (this.el) {
+      this.el.pause();
+      this.elTriedAt = 0;
+      if (this.elGain && this.ctx) this.elGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
     }
     if (this.src) {
       try {
@@ -150,13 +211,31 @@ class MusicEngine {
   /** Start the track if needed and glide to the tempo/level of the current mode */
   private sync() {
     const ctx = this.ctx;
-    if (!ctx || !this.master || !this.buf) return;
+    if (!ctx || !this.master) return;
     if (ctx.state !== 'running') {
       ctx.resume().catch(() => {});
       return;
     }
     const plan = PLANS[this.mode];
     const now = ctx.currentTime;
+    if (this.el && this.elGain) {
+      const el = this.el;
+      if (el.paused) {
+        if (this.elTriedAt === 0) {
+          this.elTriedAt = now;
+          el.currentTime = 0;
+        }
+        el.play().catch(() => {});
+        // Still silent after 5 s of trying: the sandbox won't stream it, decode instead
+        if (now - this.elTriedAt > 5) this.elementFailed();
+        return;
+      }
+      this.elRate += (plan.rate - this.elRate) * 0.3; // glide tempo between modes
+      el.playbackRate = this.elRate;
+      this.elGain.gain.setTargetAtTime(plan.level, now, 0.45);
+      return;
+    }
+    if (!this.buf) return;
     if (!this.src) {
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, now);

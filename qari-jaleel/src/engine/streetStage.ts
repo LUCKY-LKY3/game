@@ -779,11 +779,14 @@ export function buildStreetStage(
     })()
   );
   const flagColors = ['#EF4444', '#FACC15', '#22C55E', '#38BDF8', '#F97316', '#EC4899'];
-  const flagMats = flagColors.map((c) =>
-    trackMat(new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }))
-  );
+  // All pennants are one instanced mesh (one draw call) with a colour per flag
+  const flagMat = trackMat(new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide }));
+  const pennantMesh = new THREE.InstancedMesh(pennantGeo, flagMat, 10 * 11);
+  pennantMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  pennantMesh.frustumCulled = false;
+  const flagColor = new THREE.Color();
   const buntingRopeMat = trackMat(new THREE.LineBasicMaterial({ color: '#3B2A1E' }));
-  const pennants: { m: THREE.Mesh; ph: number }[] = [];
+  const pennants: { x: number; y: number; z: number; ph: number }[] = [];
   for (let st = 0; st < 10; st++) {
     const x0 = -13 + st * 7.2;
     const x1 = x0 + 7.2;
@@ -794,13 +797,14 @@ export function buildStreetStage(
     }
     buntingGroup.add(new THREE.Line(trackGeo(new THREE.BufferGeometry().setFromPoints(pts)), buntingRopeMat));
     for (let k = 1; k < 12; k++) {
-      const pn = new THREE.Mesh(pennantGeo, flagMats[(k + st) % flagMats.length]);
-      pn.position.copy(pts[k]);
-      buntingGroup.add(pn);
-      pennants.push({ m: pn, ph: k * 0.6 + st });
+      pennantMesh.setColorAt(pennants.length, flagColor.set(flagColors[(k + st) % flagColors.length]));
+      pennants.push({ x: pts[k].x, y: pts[k].y, z: pts[k].z, ph: k * 0.6 + st });
     }
   }
+  if (pennantMesh.instanceColor) pennantMesh.instanceColor.needsUpdate = true;
+  buntingGroup.add(pennantMesh);
   group.add(buntingGroup);
+  const pennantDummy = new THREE.Object3D();
 
   // ── AMBIENT VILLAGE LIFE: drifting clouds, pigeon flocks, strolling villagers, dusk fireflies ──
   const cloudGroup = new THREE.Group();
@@ -2295,9 +2299,12 @@ export function buildStreetStage(
 
     for (let i = 0; i < pennants.length; i++) {
       const pn = pennants[i];
-      pn.m.rotation.z = Math.sin(time * 2.6 + pn.ph) * 0.14;
-      pn.m.rotation.y = Math.sin(time * 1.9 + pn.ph) * 0.35;
+      pennantDummy.position.set(pn.x, pn.y, pn.z);
+      pennantDummy.rotation.set(0, Math.sin(time * 1.9 + pn.ph) * 0.35, Math.sin(time * 2.6 + pn.ph) * 0.14);
+      pennantDummy.updateMatrix();
+      pennantMesh.setMatrixAt(i, pennantDummy.matrix);
     }
+    pennantMesh.instanceMatrix.needsUpdate = true;
     // Drifting clouds, pigeon flocks, strolling villagers, dusk fireflies
     cloudGroup.position.x = cameraX * 0.7;
     cloudMat.color.setRGB(
@@ -2635,6 +2642,7 @@ export function buildStreetStage(
 
   const dispose = () => {
     sheep.dispose();
+    pennantMesh.dispose();
     scene.remove(group);
     geometries.forEach((g) => g.dispose());
     materials.forEach((m) => m.dispose());

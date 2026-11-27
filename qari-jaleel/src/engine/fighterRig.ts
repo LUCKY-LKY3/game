@@ -7,6 +7,7 @@ import {
   getCharacterFaceSculptSpec,
 } from './faceSculptor';
 import { buildStylizedHead } from './stylizedHead';
+import { mergeStatic } from './mergeStatic';
 
 export interface CharacterBodySpec {
   heightScale: number;
@@ -2410,6 +2411,29 @@ export function createFighterRig(
     mosaic.visible = false;
     hips.add(mosaic);
     coverProps.push(mosaic);
+  }
+
+  // Performance: merge each joint's own static parts into one mesh per material. Anything that
+  // animates or switches on/off by itself (flaps, outfit swaps, props, trails, shadows) stays separate.
+  {
+    const joints: THREE.Object3D[] = [
+      root, bodyRoot, hips, torso, headGroup,
+      leftArm.shoulder, leftArm.elbow, rightArm.shoulder, rightArm.elbow,
+      leftLeg.hip, leftLeg.knee, rightLeg.hip, rightLeg.knee,
+    ];
+    const keep = new Set<THREE.Object3D>([
+      ...joints, leftLeg.footMarker, rightLeg.footMarker, leftFootShadow, rightFootShadow, shadowDisc, rageRing,
+      dizzyFaceGroup, strikeTrailGroup, ...shirtParts, ...bareParts, ...sparkles, ...boxerParts, ...coverProps,
+    ]);
+    if (kurtaFlaps) {
+      keep.add(kurtaFlaps.frontFlap);
+      keep.add(kurtaFlaps.backFlap);
+    }
+    for (const j of joints) {
+      keep.delete(j);
+      mergeStatic(j, keep, (g) => void trackGeo(g));
+      keep.add(j);
+    }
   }
 
   return {
