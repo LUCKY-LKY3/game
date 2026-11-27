@@ -5039,6 +5039,17 @@ export function applyFighterPose(
     flaps.backFlap.rotation.set(Math.max(0.04, flaps.backRotX - flutter), 0, 0);
   }
 
+  // Anticipation and follow-through on basic strikes: rock back before the swing, then twist through it
+  if (action === 'lp' || action === 'lp2' || action === 'rp' || action === 'kick' || action === 'combo_finisher') {
+    const wind = Math.max(0, 1 - phase / 0.2);
+    const follow = Math.sin(Math.min(1, Math.max(0, (phase - 0.18) / 0.55)) * Math.PI);
+    const side = action === 'lp' || action === 'lp2' ? -1 : 1;
+    rig.torso.rotation.x -= wind * 0.16;
+    rig.torso.rotation.y += side * facing * follow * 0.2;
+    rig.hips.rotation.y -= side * facing * follow * 0.1;
+    rig.headGroup.rotation.y -= side * facing * follow * 0.08;
+  }
+
   // ── CRISP GROUNDED PER-FOOT CONTACT SHADOWS DIRECTLY BENEATH EACH SANDAL/BOOT ──
   rig.root.updateMatrixWorld(true);
   const updateFootAo = (marker: THREE.Object3D, disc: THREE.Mesh) => {

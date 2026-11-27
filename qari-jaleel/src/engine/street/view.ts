@@ -1,4 +1,5 @@
 // Street brawl engine: view methods (bound onto StreetBrawlEngine).
+import { getSettings } from '../../utils/settings';
 import * as THREE from 'three';
 import { BrawlTargetEnemyHud, HudSnapshot } from '../../types/game';
 import { FIGHTING_STYLES } from '../../data/roster';
@@ -259,15 +260,26 @@ export function updateCamera(this: StreetBrawlEngine, dt: number) {
   this.cameraX += this.cameraVelX * dt;
   this.cameraLeadZ = THREE.MathUtils.damp(this.cameraLeadZ, desiredZLead, 6.0, dt);
 
+  const cfg = getSettings();
+  const shakeMul = cfg.shake === 'off' ? 0 : cfg.shake === 'low' ? 0.45 : 1;
   let sx = 0;
   let sy = 0;
   if (this.shakeIntensity > 0.005) {
-    sx = (Math.random() - 0.5) * this.shakeIntensity;
-    sy = (Math.random() - 0.5) * this.shakeIntensity;
+    sx = (Math.random() - 0.5) * this.shakeIntensity * shakeMul;
+    sy = (Math.random() - 0.5) * this.shakeIntensity * shakeMul;
     this.shakeIntensity *= Math.exp(-12 * dt);
   } else {
     this.shakeIntensity = 0;
   }
+
+  // Camera distance option (normal play only) and a small push-in on big hits
+  const zoomOn = this.bossIntroTimer <= 0 && this.slowMoTimer <= 0 && this.finisherZoomTimer <= 0;
+  const distMul = zoomOn ? (cfg.camera === 'close' ? 0.84 : cfg.camera === 'wide' ? 1.2 : 1) : 1;
+  camY *= distMul;
+  camZ *= distMul;
+  camZ -= this.camPunch * shakeMul;
+  this.camPunch *= Math.exp(-7 * dt);
+  if (this.camPunch < 0.01) this.camPunch = 0;
 
   const portraitBoost = this.camera.aspect < 0.9 ? 3.4 : 0;
   const targetCamPosX = this.cameraX + sx;
@@ -491,7 +503,7 @@ export function spawnComicPopup(this: StreetBrawlEngine, wx: number, wy: number,
   // Tidy screen: small hit noises and crowd shouts give way when something more important is already showing
   const fresh = this.popups.filter((o) => o.life > COMIC_POPUP_DURATION * 0.45);
   if (LOW_PRIORITY_POPUPS.has(text) && fresh.length >= 1) return;
-  if (fresh.length >= 3 && text !== '!') return; // the attack warning always shows
+  if (fresh.length >= 3 && text !== '!' && text !== '⚠!') return; // the attack warning always shows
   this._projVec.set(wx, wy, wz).project(this.camera);
   // Keep the whole word on screen and below the health bars / portraits at the top
   const halfW = Math.min(30, text.length * 0.7 + 2);

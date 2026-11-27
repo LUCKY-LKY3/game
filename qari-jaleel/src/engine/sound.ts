@@ -86,10 +86,11 @@ class AkharaSoundEngine {
   }
 
   /** Snappy punch or kick impact */
-  public playHit(heavy: boolean) {
+  public playHit(heavy: boolean, kind = 0) {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
+    this.hitLayers(ctx, now, heavy, kind);
 
     // Low body thud
     const osc = ctx.createOscillator();
@@ -122,6 +123,67 @@ class AkharaSoundEngine {
     noise.start(now);
   }
 
+  /** Extra layers on a hit: cloth rustle, a crack for head shots, a deep thump and grunt for body shots, a slap for legs */
+  private hitLayers(ctx: AudioContext, now: number, heavy: boolean, kind: number) {
+    const burst = (dur: number, type: BiquadFilterType, freq: number, q: number, vol: number) => {
+      const n = ctx.createBufferSource();
+      n.buffer = this.noiseBuffer(ctx, dur);
+      const fl = ctx.createBiquadFilter();
+      fl.type = type;
+      fl.frequency.value = freq;
+      fl.Q.value = q;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(vol, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      n.connect(fl);
+      fl.connect(g);
+      g.connect(ctx.destination);
+      n.start(now);
+    };
+    // cloth rustle on every hit
+    burst(0.14, 'lowpass', 900 + Math.random() * 500, 0.7, 0.1);
+    if (kind === 0 || kind === 3) {
+      burst(0.05, 'highpass', 2600, 0.8, heavy ? 0.22 : 0.16); // sharp crack
+    } else if (kind === 1) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(95 * (0.9 + Math.random() * 0.25), now);
+      o.frequency.exponentialRampToValueAtTime(38, now + 0.18);
+      g.gain.setValueAtTime(heavy ? 0.4 : 0.26, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(now);
+      o.stop(now + 0.22);
+      if (Math.random() < (heavy ? 0.6 : 0.35)) this.grunt(ctx, now + 0.02, heavy);
+    } else if (kind === 2) {
+      burst(0.09, 'bandpass', 700, 1.1, 0.24); // slap on the leg
+    }
+  }
+
+  /** Short voiced "oof" */
+  private grunt(ctx: AudioContext, t: number, heavy: boolean) {
+    const o = ctx.createOscillator();
+    const fl = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    o.type = 'sawtooth';
+    const base = (heavy ? 120 : 160) * (0.85 + Math.random() * 0.4);
+    o.frequency.setValueAtTime(base * 1.25, t);
+    o.frequency.exponentialRampToValueAtTime(base * 0.75, t + 0.16);
+    fl.type = 'bandpass';
+    fl.frequency.value = 520;
+    fl.Q.value = 1.4;
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.linearRampToValueAtTime(0.09, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
+    o.connect(fl);
+    fl.connect(g);
+    g.connect(ctx.destination);
+    o.start(t);
+    o.stop(t + 0.19);
+  }
+
   /** Guard block wooden clack */
   public playBlock() {
     const ctx = this.ensureContext();
@@ -131,8 +193,9 @@ class AkharaSoundEngine {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(240, now + 0.065);
+    const bv = 0.85 + Math.random() * 0.35;
+    osc.frequency.setValueAtTime(520 * bv, now);
+    osc.frequency.exponentialRampToValueAtTime(240 * bv, now + 0.065);
     gain.gain.setValueAtTime(0.24, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
     osc.connect(gain);

@@ -27,7 +27,7 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.101. Setting `gameSpeed` (0.7/0.85/1, default 0.85) scales dt in both engines (Settings: Game speed).
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.102. v1.0.102 added settings shake/camera/damageNumbers/vibration/warnShape, layered hit sounds (`sound.ts` hitLayers/grunt), camPunch push-in, domino knock-on and mate hesitation, hurt cousins back off, skid/footstep dust, parry micro slow-mo (`parrySlow`), strike anticipation/follow-through (end of `applyFighterPose`). Setting `gameSpeed` (0.7/0.85/1, default 0.85) scales dt in both engines (Settings: Game speed).
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).

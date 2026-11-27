@@ -1,4 +1,5 @@
 // Street brawl engine: enemyAI methods (bound onto StreetBrawlEngine).
+import { getSettings } from '../../utils/settings';
 import * as THREE from 'three';
 import { soundEngine } from '../sound';
 import { HeroRuntime, EnemyRuntime } from './types';
@@ -19,7 +20,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     if (e.alive && e.action === 'windup') {
       if (!e.telegraphed) {
         e.telegraphed = true;
-        this.spawnComicPopup(e.x, 2.35, e.z, '!', '#EF4444');
+        this.spawnComicPopup(e.x, 2.35, e.z, getSettings().warnShape ? '⚠!' : '!', '#EF4444');
       }
     } else {
       e.telegraphed = false;
@@ -61,6 +62,28 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
         this.spawnParticles(e.x, 1.25, e.z, 5, 2.2);
         if (e.hp <= 0) {
           this.damageEnemy(e, this.heroes[e.burnOwnerIdx], 1, true, 0, 3.2, 'MIRCHI KO!');
+        }
+      }
+    }
+
+    // Domino: a cousin flying through the air knocks over any standing cousin he hits
+    {
+      const flying = e.alive && e.y > 0.25 && Math.hypot(e.vx, e.vz) > 3.2;
+      const ex = e as EnemyRuntime & { dominoed?: Set<number> };
+      if (!flying) {
+        if (ex.dominoed && e.y <= 0.05) ex.dominoed = undefined;
+      } else {
+        for (const o of this.enemies) {
+          if (o === e || !o.alive || o.removed || o.y > 0.3 || o.spec.archetype === 'boss' || o.onBike) continue;
+          if (o.action === 'knockdown' || o.action === 'ko' || o.action === 'bowled' || o.bowlingActive) continue;
+          if (ex.dominoed?.has(o.uid)) continue;
+          if (Math.abs(o.x - e.x) <= 0.95 && Math.abs(o.z - e.z) <= 0.7) {
+            (ex.dominoed ??= new Set()).add(o.uid);
+            const dir = Math.sign(e.vx || 1);
+            this.damageEnemy(o, active, 7, true, dir * 3.4, 3.4, 'DOMINO!');
+            this.hitstopTimer = Math.max(this.hitstopTimer, 0.05);
+            break;
+          }
         }
       }
     }
@@ -524,6 +547,13 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
     const isHeavyEnemy = e.spec.speed <= 1.95 || e.spec.archetype === 'boss';
     const strikeReachX = (e.spec.hasClub ? 1.82 : isHeavyEnemy ? 1.52 : 1.38) + (this.difficultyLevel >= 1 ? 0.3 : 0);
 
+    // Badly hurt cousins sometimes back off for a breather
+    if (e.aiState !== 'retreat' && e.aiState !== 'telegraph_pause' && e.spec.archetype !== 'boss' && e.hp < e.maxHp * 0.3 && Math.random() < dt * 0.5) {
+      e.aiState = 'retreat';
+      e.stateTimer = 1.3;
+      e.aiCooldown = Math.max(e.aiCooldown, 1.4);
+    }
+
     if (e.aiState === 'retreat') {
       const backX = targetHero.x - e.facing * (isFastEnemy ? 3.5 : 2.8);
       const backZ = THREE.MathUtils.clamp(
@@ -757,6 +787,7 @@ export function checkEnemyAttackHit(this: StreetBrawlEngine, e: EnemyRuntime) {
         this.spawnParticles(hero.x + hero.facing * 0.5, 1.25, hero.z, 18, 4.4);
         this.spawnComicPopup(hero.x, 1.95, hero.z, 'PARRY!', '#FDE047');
         this.hitstopTimer = Math.max(this.hitstopTimer, 0.055);
+        this.parrySlow = 0.28;
         this.shakeIntensity = Math.max(this.shakeIntensity, 0.16);
         triggerHaptic(50);
         break;

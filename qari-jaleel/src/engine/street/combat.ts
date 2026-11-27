@@ -148,7 +148,10 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
       const heavy = spec.heavy || weapon?.kind === 'chair' || isBollywoodSlap || lazyMul > 1;
       if (isBollywoodSlap) soundEngine.playSlap();
       else if (weapon?.kind === 'lathi') soundEngine.playWoodWhack();
-      else soundEngine.playHit(heavy);
+      else {
+        const act0 = String(hero.action);
+        soundEngine.playHit(heavy, /sweep|axe/.test(act0) ? 2 : /kick|knee|finisher/.test(act0) ? 1 : 0);
+      }
 
       const pushDir = isBackElbow
         ? (hero.facing === 1 ? -1 : 1)
@@ -421,12 +424,24 @@ export function damageEnemy(this: StreetBrawlEngine,
     if (isKnockdownHit) {
       triggerHaptic([42, 24, 64]);
       this.shakeIntensity = Math.max(this.shakeIntensity, 0.36);
+      this.camPunch = Math.max(this.camPunch, 0.7);
+      // Mates who see him go down hesitate for a moment
+      for (const o of this.enemies) {
+        if (o === e || !o.alive || o.removed || o.spec.archetype === 'boss') continue;
+        if (Math.abs(o.x - e.x) > 3.4 || Math.abs(o.z - e.z) > 2.5) continue;
+        o.aiCooldown = Math.max(o.aiCooldown, 0.7 + Math.random() * 0.5);
+        if (o.aiState === 'approach' || o.aiState === 'telegraph_pause') o.aiState = 'circle';
+      }
     } else if (heavy) {
       triggerHaptic(36);
       this.shakeIntensity = Math.max(this.shakeIntensity, 0.21);
+      this.camPunch = Math.max(this.camPunch, 0.32);
     } else {
       triggerHaptic(18);
     }
+  }
+  if (getSettings().damageNumbers && damage > 0 && !popupText) {
+    this.spawnComicPopup(e.x + (Math.random() - 0.5) * 0.5, 2.2, e.z, String(Math.round(damage)), '#F8F4EC');
   }
   if (popupText) {
     this.spawnComicPopup(

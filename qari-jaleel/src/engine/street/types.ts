@@ -75,6 +75,7 @@ export interface HeroRuntime {
   isSprinting: boolean;
   sprintDir: -1 | 0 | 1;
   sprintDustTimer: number;
+  footTimer: number;
   aerialAttackUsed: boolean;
   isJumpSlamming: boolean;
   wasBlocking: boolean;

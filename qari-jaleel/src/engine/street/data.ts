@@ -1,5 +1,6 @@
 // Static combat tables: hero move specs, zones, boons, constants.
 import { CombatAction, VillageBoonCard } from '../../types/game';
+import { getSettings } from '../../utils/settings';
 import { HeroMoveSpec, StreetZoneConfig } from './types';
 
 export const COMIC_POPUP_DURATION = 0.55;
@@ -295,6 +296,7 @@ export const LANE_MIN_Z = -4.05;
 export const LANE_MAX_Z = 3.1;
 
 export function triggerHaptic(pattern: number | number[]) {
+  if (!getSettings().vibration) return;
   if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
     try {
       navigator.vibrate(pattern);

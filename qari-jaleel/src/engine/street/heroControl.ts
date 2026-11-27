@@ -598,6 +598,20 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
     return cur + Math.sign(diff) * maxDelta;
   };
 
+  // Weight: skid dust when you reverse or stop from a run, small puffs for footsteps
+  hero.footTimer -= dt;
+  if (hero.footTimer <= 0 && hero.y <= 0.05) {
+    const reversing = Math.abs(hero.vx) > 3.2 && targetVx !== 0 && Math.sign(targetVx) !== Math.sign(hero.vx);
+    const stopping = Math.abs(hero.vx) > 4.4 && targetVx === 0;
+    if (reversing || stopping) {
+      hero.footTimer = 0.25;
+      this.spawnParticles(hero.x - Math.sign(hero.vx) * 0.25, 0.08, hero.z, 5, 2.2);
+    } else if (Math.hypot(hero.vx, hero.vz) > 1.6) {
+      hero.footTimer = 0.34;
+      this.spawnParticles(hero.x - hero.facing * 0.2, 0.05, hero.z, 1, 0.9);
+    }
+  }
+
   hero.vx = stepAxis(hero.vx, targetVx, maxSpeedX);
   hero.vz = stepAxis(hero.vz, targetVz, maxSpeedZ);
 

@@ -20,10 +20,20 @@ export interface GameSettings {
   difficulty: 'novice' | 'pehelwan' | 'grandmaster';
   /** Whole-game speed: 1 = original, lower is slower (default 0.85) */
   gameSpeed: number;
+  /** Camera shake strength */
+  shake: 'off' | 'low' | 'normal';
+  /** Street camera distance */
+  camera: 'close' | 'normal' | 'wide';
+  /** Show damage numbers on hits */
+  damageNumbers: boolean;
+  /** Phone vibration on hits */
+  vibration: boolean;
+  /** Attack warning shows a warning triangle as well as the red ! */
+  warnShape: boolean;
 }
 
 const KEY = 'mafia-bhaiyas-settings-v1';
-const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, beatBonus: true, immyModest: false, leftHanded: false, difficulty: 'pehelwan', gameSpeed: 0.85 };
+const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, beatBonus: true, immyModest: false, leftHanded: false, difficulty: 'pehelwan', gameSpeed: 0.85, shake: 'normal', camera: 'normal', damageNumbers: false, vibration: true, warnShape: false };
 
 let current: GameSettings = load();
 const listeners = new Set<() => void>();

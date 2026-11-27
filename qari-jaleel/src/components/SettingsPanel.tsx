@@ -92,6 +92,52 @@ export function SettingsPanel() {
         </div>
       </Row>
 
+      <Row label="Screen shake">
+        <div className="flex gap-1.5">
+          {([['off','Off'], ['low','Low'], ['normal','Normal']] as const).map(([v, l]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => updateSettings({ shake: v })}
+              className={`h-9 border px-2.5 text-xs font-black transition-colors ${
+                s.shake === v
+                  ? 'border-[#F59E0B] bg-[#F59E0B] text-[#141210]'
+                  : 'border-[#F8F4EC]/20 bg-[#26211D] text-[#F8F4EC] hover:border-[#F59E0B]'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </Row>
+      <Row label="Camera">
+        <div className="flex gap-1.5">
+          {([['close','Close'], ['normal','Normal'], ['wide','Wide']] as const).map(([v, l]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => updateSettings({ camera: v })}
+              className={`h-9 border px-2.5 text-xs font-black transition-colors ${
+                s.camera === v
+                  ? 'border-[#F59E0B] bg-[#F59E0B] text-[#141210]'
+                  : 'border-[#F8F4EC]/20 bg-[#26211D] text-[#F8F4EC] hover:border-[#F59E0B]'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </Row>
+      <Row label="Damage numbers">
+        <Toggle on={s.damageNumbers} onLabel="On" offLabel="Off" onClick={() => updateSettings({ damageNumbers: !s.damageNumbers })} />
+      </Row>
+      <Row label="Vibration">
+        <Toggle on={s.vibration} onLabel="On" offLabel="Off" onClick={() => updateSettings({ vibration: !s.vibration })} />
+      </Row>
+      <Row label="Warning triangle on attacks">
+        <Toggle on={s.warnShape} onLabel="On" offLabel="Off" onClick={() => updateSettings({ warnShape: !s.warnShape })} />
+      </Row>
+
       <Row label="Auto-aim strikes">
         <Toggle on={s.autoAim} onLabel="On" offLabel="Off" onClick={() => updateSettings({ autoAim: !s.autoAim })} />
       </Row>

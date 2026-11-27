@@ -134,6 +134,8 @@ export class StreetBrawlEngine {
   phaseTimer = 0;
   hitstopTimer = 0;
   shakeIntensity = 0;
+  camPunch = 0;
+  parrySlow = 0;
 
   heroes: [HeroRuntime, HeroRuntime];
   activeHeroIndex: 0 | 1 = 0;
@@ -621,6 +623,7 @@ export class StreetBrawlEngine {
       isSprinting: false,
       sprintDir: 0,
       sprintDustTimer: 0,
+      footTimer: 0,
       aerialAttackUsed: false,
       isJumpSlamming: false,
       wasBlocking: false,
@@ -920,6 +923,10 @@ export class StreetBrawlEngine {
     if (this.slowMoTimer > 0) {
       this.slowMoTimer = Math.max(0, this.slowMoTimer - realDt);
       timeScale = 0.25;
+    }
+    if (this.parrySlow > 0) {
+      this.parrySlow = Math.max(0, this.parrySlow - realDt);
+      timeScale = Math.min(timeScale, 0.4);
     }
     if (this.finisherZoomTimer > 0) {
       this.finisherZoomTimer = Math.max(0, this.finisherZoomTimer - realDt);
