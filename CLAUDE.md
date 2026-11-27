@@ -27,13 +27,13 @@ Two games live in this repo:
 - `?headlab` shows all six heads. Add `&body` for full bodies, `&body&mid` for torsos, `&only=0,2` to pick fighters (0 Qari, 1 Saf, 2 Dara/Jav, 3 Jam, 4 Chet, 5 Immy).
 
 ## Versioning
-The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.99.
+The version shows bottom-right on the title screen (from `qari-jaleel/package.json`, injected as `__APP_VERSION__`). On EVERY release: run `npm version patch --no-git-tag-version` in `qari-jaleel/` before `npx vite build`, then commit with the push, and tell the user the version. Current: 1.0.100.
 
 ## Phone link (Artifact)
 URL: https://claude.ai/artifact/7fV9u8NTgFrW2x1TYb4mH9 (private, update in place, same file path each time).
 1. `npx vite build` in `qari-jaleel/`.
 2. `python3 qari-jaleel/scripts/make-artifact.py` builds a publish folder in `/tmp/qj-artifact` and prints the new JS filename.
-3. Artifact publish with `file_path=/tmp/qj-artifact/index.html`, `root=/tmp/qj-artifact`, `files={"assets/<new>.js": "assets/<new>.js", "assets/<old>.js": null}`. Find the old JS name with Artifact `list` scope `files`. Images were uploaded already, only resend them if they change (they are in `/tmp/qj-artifact/src/assets/images`).
+3. Copy `/tmp/qj-artifact/index.html` and the new JS into a scratchpad folder (publish refuses roots outside the workdir/scratchpad), then Artifact publish with that folder as `root`, `files={"assets/<new>.js": "assets/<new>.js", "assets/<old>.js": null}`. Find the old JS name with Artifact `list` scope `files`. Images were uploaded already, only resend them if they change (they are in `/tmp/qj-artifact/src/assets/images`).
 Artifact pages cannot load anything from the internet except Google Fonts, so keep everything bundled.
 
 ## Code map (`qari-jaleel/src/`)
