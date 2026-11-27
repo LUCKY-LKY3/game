@@ -1,3 +1,4 @@
+import { getSettings } from '../utils/settings';
 import * as THREE from 'three';
 import { BrawlScorecard, Difficulty, FighterProfile, HudSnapshot, MatchPhase, MatchStats, PlayerInputState, SpeechBubbleState, VillageBoonCard, VillageBoonId } from '../types/game';
 import { resolveFighterStyle } from '../data/roster';
@@ -924,7 +925,7 @@ export class StreetBrawlEngine {
       this.finisherZoomTimer = Math.max(0, this.finisherZoomTimer - realDt);
     }
 
-    const dt = realDt * timeScale;
+    const dt = realDt * timeScale * (getSettings().gameSpeed ?? 1);
     this.elapsed += dt;
 
     // Decay HUD banners & comic popups

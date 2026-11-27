@@ -18,10 +18,12 @@ export interface GameSettings {
   leftHanded: boolean;
   /** Street Brawl + Arcade cousin difficulty (Endless is always Normal so scores stay fair) */
   difficulty: 'novice' | 'pehelwan' | 'grandmaster';
+  /** Whole-game speed: 1 = original, lower is slower (default 0.85) */
+  gameSpeed: number;
 }
 
 const KEY = 'mafia-bhaiyas-settings-v1';
-const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, beatBonus: true, immyModest: false, leftHanded: false, difficulty: 'pehelwan' };
+const DEFAULTS: GameSettings = { musicVolume: 0.55, musicMuted: false, buttonSize: 'M', autoAim: true, beatBonus: true, immyModest: false, leftHanded: false, difficulty: 'pehelwan', gameSpeed: 0.85 };
 
 let current: GameSettings = load();
 const listeners = new Set<() => void>();

@@ -1789,7 +1789,7 @@ export class AkharaCombatEngine {
     if (this.slowMoTimer > 0) {
       this.slowMoTimer = Math.max(0, this.slowMoTimer - clampedDt);
     }
-    const dt = clampedDt * timeScale;
+    const dt = clampedDt * timeScale * (getSettings().gameSpeed ?? 1);
 
     if (this.phase === 'ATTRACT') {
       // Lively background sparring showcase on Title Screen

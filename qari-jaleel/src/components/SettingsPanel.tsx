@@ -73,6 +73,25 @@ export function SettingsPanel() {
         </div>
       </Row>
 
+      <Row label="Game speed">
+        <div className="flex gap-1.5">
+          {([0.7, 0.85, 1] as const).map((v, i) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => updateSettings({ gameSpeed: v })}
+              className={`h-9 border px-2.5 text-xs font-black transition-colors ${
+                Math.abs((s.gameSpeed ?? 0.85) - v) < 0.01
+                  ? 'border-[#F59E0B] bg-[#F59E0B] text-[#141210]'
+                  : 'border-[#F8F4EC]/20 bg-[#26211D] text-[#F8F4EC] hover:border-[#F59E0B]'
+              }`}
+            >
+              {['Chill', 'Relaxed', 'Original'][i]}
+            </button>
+          ))}
+        </div>
+      </Row>
+
       <Row label="Auto-aim strikes">
         <Toggle on={s.autoAim} onLabel="On" offLabel="Off" onClick={() => updateSettings({ autoAim: !s.autoAim })} />
       </Row>
