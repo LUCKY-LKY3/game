@@ -5,7 +5,7 @@ import { soundEngine } from '../sound';
 import { getSettings } from '../../utils/settings';
 import { BufferedMoveKind, HeroRuntime, EnemyRuntime } from './types';
 import { HERO_MOVES, LANE_MIN_Z, LANE_MAX_Z, triggerHaptic } from './data';
-import { DODGE_COST, energyCost, regenEnergy, TIRED_AT, TIRED_SLOW } from '../energy';
+import { DODGE_COST, energyCost, EXHAUST_DECAY_PER_SEC, EXHAUST_MAX, regenEnergy, TIRED_AT, TIRED_SLOW } from '../energy';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, inp: PlayerInputState, dt: number) {
@@ -20,7 +20,15 @@ export function updateHeroWithInput(this: StreetBrawlEngine, hero: HeroRuntime, 
   hero.invulnTimer = Math.max(0, hero.invulnTimer - dt);
   hero.dodgeFatigue = Math.max(0, hero.dodgeFatigue - dt);
   hero.energyIdle += dt;
-  hero.energy = regenEnergy(hero.energy, hero.energyIdle, hero.action === 'idle' || hero.action === 'block', dt);
+  hero.exhaust = Math.max(0, hero.exhaust - EXHAUST_DECAY_PER_SEC * dt);
+  hero.energy = regenEnergy(hero.energy, hero.energyIdle, hero.action === 'idle' || hero.action === 'block', dt, hero.exhaust);
+  if (hero.emptied && hero.energy > 30) hero.emptied = false;
+  if (!hero.emptied && hero.energy <= 0.5) {
+    // Bar fully used: each time, recovery gets slower for a while
+    hero.emptied = true;
+    hero.exhaust = Math.min(EXHAUST_MAX, Math.floor(hero.exhaust) + 1);
+    if (hero.index === this.activeHeroIndex) this.spawnComicPopup(hero.x, 2.6, hero.z, hero.exhaust >= 2 ? 'TOTALLY GASSED!' : 'EXHAUSTED!', '#EF4444');
+  }
   if (hero.tiredShown && hero.energy > 45) hero.tiredShown = false;
   hero.superArmorTimer = Math.max(0, hero.superArmorTimer - dt);
   hero.counterTimer = Math.max(0, hero.counterTimer - dt);
@@ -1028,6 +1036,7 @@ export function startHeroMove(this: StreetBrawlEngine, hero: HeroRuntime, move: 
   // Too big to flinch: lazy giant swings cannot be interrupted
   if (lazyPunch) hero.superArmorTimer = Math.max(hero.superArmorTimer, hero.actionDuration * 0.9);
   hero.hitIdsThisSwing.clear();
+  if (move === 'combo_finisher') this.announceSignature(hero);
   // Auto-aim: strikes turn toward a close enemy standing behind you and slide a little toward its lane
   if (getSettings().autoAim && (move === 'lp' || move === 'lp2' || move === 'rp' || move === 'kick')) {
     const near = this.findNearestLivingEnemy(hero.x, hero.z);

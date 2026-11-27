@@ -85,7 +85,7 @@ function BeatRing({ flash }: { flash: boolean }) {
   );
 }
 
-const TUTORIAL_KEY = 'mafia-bhaiyas-tutorial-v1';
+const TUTORIAL_KEY = 'mafia-bhaiyas-tutorial-v2';
 
 /** One-time tip card shown over the first fight. Tap to dismiss. */
 function TutorialHint() {
@@ -113,11 +113,11 @@ function TutorialHint() {
   if (!open) return null;
   const tips: [string, string][] = [
     ['Stick', 'move · flick to dash'],
-    ['Punch / Kick', 'chain taps for combos'],
-    ['Shield', 'tap = dodge, hold = guard'],
-    ['Dodge a swing', 'then hit back for x1.5'],
+    ['Mix it up', 'cousins block jab spam: use HEAVY, KICK, GRAB'],
+    ['Energy', 'green bar: mashing tires you, ease off to refill'],
+    ['Red !', 'tap SHIELD to dodge, hold it to parry'],
     ['Swap', 'tag your partner in mid-combo'],
-    ['Power', 'fires when the ring is full'],
+    ['New here?', 'try the Practice Yard from the menu'],
   ];
   return (
     <button
@@ -721,6 +721,11 @@ export function CombatHud({
                       {isActive && (
                         <div className="mt-0.5 flex items-center gap-1" title="Energy: every swing and dodge costs some; ease off to refill">
                           <div className="flex-1 h-1 overflow-hidden bg-[#141210]/80"><div className={`h-full transition-[width] duration-100 ${(hero.energy ?? 100) < 20 ? 'animate-pulse bg-[#EF4444]' : (hero.energy ?? 100) < 45 ? 'bg-[#FACC15]' : 'bg-[#4ADE80]'}`} style={{ width: `${hero.energy ?? 100}%` }} /></div>
+                          {(hero.exhaust ?? 0) > 0 && (
+                            <span className="text-[8px] font-black text-[#F87171]" title="Bar emptied: recovery is slower for a while">
+                              {'▼'.repeat(hero.exhaust ?? 0)}
+                            </span>
+                          )}
                           {(hero.energy ?? 100) < 20 && <span className="text-[8px] font-black text-[#F87171]">TIRED</span>}
                         </div>
                       )}

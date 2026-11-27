@@ -334,7 +334,7 @@ export function stepGags(this: StreetBrawlEngine, dt: number) {
   // The chai wallah strolls through: everyone stops for chai, heroes sip and heal a little
   g.chaiTimer -= dt;
   if (!g.chai && g.chaiTimer <= 0 && !bossOut) {
-    g.chaiTimer = 55 + Math.random() * 30;
+    g.chaiTimer = this.dailyMod === 'chai_rush' ? 14 + Math.random() * 6 : 55 + Math.random() * 30;
     const rig = createVillageThugRig(CHAI_WALLAH);
     const kettle = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.22, 12), new THREE.MeshStandardMaterial({ color: '#D1D5DB', metalness: 0.8, roughness: 0.25 }));
     kettle.position.set(0, -0.42, 0.08);

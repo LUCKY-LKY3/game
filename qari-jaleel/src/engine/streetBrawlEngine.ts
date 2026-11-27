@@ -25,6 +25,8 @@ import * as challenges from './street/challenges';
 import * as bossDrama from './street/bossDrama';
 import * as practice from './street/practice';
 import * as gags from './street/gags';
+import * as signatures from './street/signatures';
+import { DAILY_INFO, DailyMod } from './street/daily';
 
 /**
  * True Double Dragon Tag-Team Village Street Brawl Engine:
@@ -91,6 +93,8 @@ export class StreetBrawlEngine {
   startPractice = practice.startPractice;
   spawnPickupAt = endlessExtras.spawnPickupAt;
   maybeFlyChappal = gags.maybeFlyChappal;
+  announceSignature = signatures.announceSignature;
+  signatureFinisherFx = signatures.signatureFinisherFx;
   maybeSurrender = gags.maybeSurrender;
   gagOnHit = gags.gagOnHit;
   stepEnemyGag = gags.stepEnemyGag;
@@ -175,6 +179,7 @@ export class StreetBrawlEngine {
   challengeKey = '';
   fallenCousins: { key: string; x: number; z: number; t: number }[] = [];
   practiceMode = false;
+  dailyMod: DailyMod | null = null;
   practiceLesson = 0;
   practiceHave = 0;
   practiceDone = false;
@@ -643,6 +648,9 @@ export class StreetBrawlEngine {
       energy: 100,
       energyIdle: 1,
       tiredShown: false,
+      exhaust: 0,
+      emptied: false,
+      signatureDone: false,
       stepInLeft: 0,
       powerupKind: getPowerupKindForFighter(profile.id),
       powerupOriginX: x,
@@ -832,6 +840,22 @@ export class StreetBrawlEngine {
       this.spawnEndlessWave(this.endlessWave);
     } else if (this.practiceMode) {
       this.startPractice();
+    } else if (this.dailyMod) {
+      // Daily Dhamaal: same twist for everyone today, always on Normal
+      this.difficultyLevel = 1;
+      this.difficultyScale = 1.1;
+      this.enemyDmgScale = this.dailyMod === 'glass' ? 2.4 : 1.2;
+      this.announcement = 'DAILY DHAMAAL';
+      this.subAnnouncement = DAILY_INFO[this.dailyMod].title.toUpperCase() + ' · ' + DAILY_INFO[this.dailyMod].blurb.toUpperCase();
+      if (this.dailyMod === 'lathi') {
+        for (const h of this.heroes) {
+          h.heldWeapon = { kind: 'lathi', durability: 40, maxDurability: 40 };
+          this.syncHeroWeaponVisuals(h);
+        }
+      }
+      if (this.dailyMod === 'chai_rush') this.gags.chaiTimer = 8;
+      if (this.dailyMod === 'sheep_army') this.sheepChargeTimer = 6;
+      this.spawnWave(STREET_ZONES[0].wave1, STREET_ZONES[0]);
     } else {
       this.announcement = 'ZONE 1 · CHAI CHOWK';
       this.subAnnouncement = 'CLEAN OUT THE VILLAGE LANE';
@@ -1035,7 +1059,7 @@ export class StreetBrawlEngine {
     // The sheep does stupid things: pop-ups, and now and then it headbutts a cousin
     this.sheepChargeTimer -= dt;
     if (this.sheepChargeTimer <= 0 && this.phase === 'FIGHTING') {
-      this.sheepChargeTimer = 22 + Math.random() * 18;
+      this.sheepChargeTimer = this.dailyMod === 'sheep_army' ? 6 + Math.random() * 4 : 22 + Math.random() * 18;
       const sp = this.stage.sheep.getPosition();
       const victim = this.enemies.find((e) => e.alive && e.spec.archetype !== 'boss' && Math.hypot(e.x - sp.x, e.z - sp.z) < 7);
       if (victim) {
@@ -1053,7 +1077,7 @@ export class StreetBrawlEngine {
       if (ev.bonk) {
         const hit = this.enemies.find((e) => e.alive && Math.hypot(e.x - ev.x, e.z - ev.z) < 1.6);
         if (hit) {
-          this.damageEnemy(hit, null, 12, true, (hit.x >= ev.x ? 1 : -1) * 3.5, 4.2, 'SHEEP ATTACK!');
+          this.damageEnemy(hit, null, this.dailyMod === 'sheep_army' ? 26 : 12, true, (hit.x >= ev.x ? 1 : -1) * 3.5, 4.2, 'SHEEP ATTACK!');
           this.shakeIntensity = Math.max(this.shakeIntensity, 0.2);
         }
       }

@@ -17,10 +17,10 @@ export type PortraitFilterStyle = 'gouache' | 'arcade_ink' | 'mela_poster' | 'na
 
 export type StageId = 'banyan_akhara' | 'chai_chowk' | 'mela_dusk';
 
-export type GameMode = 'street_brawl' | 'endless_mohalla' | 'practice_yard' | 'arcade' | 'versus_2p' | 'quick_ai';
+export type GameMode = 'street_brawl' | 'endless_mohalla' | 'practice_yard' | 'daily_dhamaal' | 'arcade' | 'versus_2p' | 'quick_ai';
 
 export function isStreetBrawlMode(mode: GameMode): boolean {
-  return mode === 'street_brawl' || mode === 'endless_mohalla' || mode === 'practice_yard';
+  return mode === 'street_brawl' || mode === 'endless_mohalla' || mode === 'practice_yard' || mode === 'daily_dhamaal';
 }
 
 export type Difficulty = 'novice' | 'pehelwan' | 'grandmaster';
@@ -174,6 +174,8 @@ export interface FighterHudState {
   rage: number; // 0..100
   /** stamina 0..100 */
   energy?: number;
+  /** 0..3: how many times the bar was emptied recently (slower recovery) */
+  exhaust?: number;
   combo: number;
   roundsWon: number;
   action: CombatAction;
@@ -252,6 +254,8 @@ export interface BrawlScorecard {
   onBeatHits?: number;
   bestStyle?: string;
   challengesDone?: number;
+  dailyTitle?: string;
+  dailyBest?: number;
   newTitles?: string[];
   flawlessWaves?: number;
   pickupsTaken?: number;

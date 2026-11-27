@@ -454,7 +454,7 @@ export function MatchOverModal({
               </div>
 
               <div>
-                <div className="text-xs text-[#B6AA9A]">Total Score</div>
+                <div className="text-xs text-[#B6AA9A]">{scorecard?.dailyTitle ? `Daily · ${scorecard.dailyTitle} · best ${(scorecard.dailyBest ?? 0).toLocaleString()}` : 'Total Score'}</div>
                 <div className="font-mono-num mt-1 flex items-baseline gap-2 text-2xl font-bold text-[#F59E0B]">
                   <span>{hud.brawl.score.toLocaleString()}</span>
                   {scorecard?.isNewBestScore && (

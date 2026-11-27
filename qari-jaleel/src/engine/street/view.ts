@@ -294,6 +294,7 @@ export function getHudSnapshot(this: StreetBrawlEngine): HudSnapshot {
     recoverableHp: Math.ceil(h.recoverableHp),
     rage: Math.round(h.rage),
     energy: Math.round(h.energy),
+    exhaust: Math.ceil(h.exhaust - 0.01),
     combo: h.comboCount,
     roundsWon: 0,
     action: h.action,

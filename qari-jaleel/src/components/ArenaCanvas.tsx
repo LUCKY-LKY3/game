@@ -17,6 +17,7 @@ import { buildStreetStage } from '../engine/streetStage';
 import { AkharaCombatEngine, createEmptyInput } from '../engine/combatEngine';
 import { StreetBrawlEngine } from '../engine/streetBrawlEngine';
 import { soundEngine } from '../engine/sound';
+import { todaysMod } from '../engine/street/daily';
 import { getStageById } from '../data/roster';
 
 export interface ArenaCanvasHandle {
@@ -345,8 +346,12 @@ export const ArenaCanvas = forwardRef<ArenaCanvasHandle, ArenaCanvasProps>(funct
       if (mode === 'practice_yard') {
         engine.practiceMode = true;
         engine.restartMatch();
+      } else if (mode === 'daily_dhamaal') {
+        engine.dailyMod = todaysMod();
+        engine.restartMatch();
       }
       if (window.location.search.includes('botdebug')) (window as unknown as { __brawl: unknown }).__brawl = engine; // debug: bot playtests
+      if (window.location.search.includes('botdebug')) (window as unknown as { __renderer: unknown }).__renderer = renderer;
     } else {
       const villageStage = buildVillageStage(scene, stageId, maxAniso);
       stageDispose = villageStage.dispose;

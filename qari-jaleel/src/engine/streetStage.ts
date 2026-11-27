@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeStatic } from './mergeStatic';
 import { BrawlWeaponKind, StageConfig } from '../types/game';
 import { buildRajuBike } from './villageThugs';
 import { createVillageSheep, VillageSheepHandle } from './villageSheep';
@@ -426,6 +427,7 @@ export function buildStreetStage(
   const trunkGeo = trackGeo(new THREE.CylinderGeometry(0.36, 0.56, 4.8, 10));
 
   const garlandGroups: { group: THREE.Group; phase: number }[] = [];
+  const staticGroups: THREE.Group[] = [];
   const duskFestivalMats: THREE.MeshStandardMaterial[] = [];
 
   for (let idx = 0; idx < 11; idx++) {
@@ -479,6 +481,7 @@ export function buildStreetStage(
       sacredWrap.position.y = 1.65;
       banyan.add(sacredWrap);
       group.add(banyan);
+      staticGroups.push(banyan);
     } else if (isTreeSlot) {
       // Secondary Village Banyan / Neem Tree
       const tree = new THREE.Group();
@@ -502,6 +505,7 @@ export function buildStreetStage(
         tree.add(crown);
       }
       group.add(tree);
+      staticGroups.push(tree);
     } else {
       // Indian Village Mud-Brick Shopfront / Chai & Spice Stall with Balcony
       const h = 4.6 + (idx % 3) * 0.7;
@@ -567,6 +571,7 @@ export function buildStreetStage(
       building.add(sign);
 
       group.add(building);
+      staticGroups.push(building);
     }
 
     // Wooden street lamp pole + warm swinging lantern pushed to north sidewalk edge (-5.25)
@@ -2635,6 +2640,13 @@ export function buildStreetStage(
     materials.forEach((m) => m.dispose());
     textures.forEach((t) => t.dispose());
   };
+
+  // Bake the static scenery (shopfronts, trees, parallax layers) to cut draw calls on phones
+  const animated = new Set<THREE.Object3D>([...garlandGroups.map((x) => x.group), ...lanterns.map((x) => x.mesh), ...kites.map((x) => x.group)]);
+  const trackG = (g: THREE.BufferGeometry) => void trackGeo(g);
+  for (const sg of staticGroups) mergeStatic(sg, animated, trackG);
+  mergeStatic(farParallaxGroup, animated, trackG);
+  mergeStatic(fgParallaxGroup, animated, trackG);
 
   return {
     group,

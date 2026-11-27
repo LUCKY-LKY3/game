@@ -31,7 +31,17 @@ export function energyCost(move: string, scale = 1): number {
 }
 
 /** Refill after a short breather: faster standing still than while moving */
-export function regenEnergy(energy: number, idleFor: number, resting: boolean, dt: number): number {
+export function regenEnergy(energy: number, idleFor: number, resting: boolean, dt: number, exhaust = 0): number {
   if (idleFor < 0.7) return energy;
-  return Math.min(100, energy + (resting ? 26 : 16) * dt);
+  return Math.min(100, energy + (resting ? 26 : 16) * exhaustRegenMult(exhaust) * dt);
 }
+
+/**
+ * Exhaustion: every time the bar is emptied it counts up (max 3), and recovery gets slower
+ * (x0.75, x0.55, x0.4). It wears off slowly (one level per 30 s).
+ */
+export function exhaustRegenMult(exhaust: number): number {
+  return Math.max(0.4, 1 - 0.22 * exhaust);
+}
+export const EXHAUST_DECAY_PER_SEC = 1 / 30;
+export const EXHAUST_MAX = 3;

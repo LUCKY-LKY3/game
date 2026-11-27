@@ -9,6 +9,7 @@ import { useChai } from '../utils/upgrades';
 import { usePwaInstall, useUpdateAvailable } from '../utils/pwa';
 import { GameMode } from '../types/game';
 import { loadArcadeRecords } from '../utils/storage';
+import { DAILY_INFO, dailyBest, todaysMod } from '../engine/street/daily';
 import logoUrl from '../assets/images/mafia-bhaiyas-logo.png?inline';
 
 interface TitleOverlayProps {
@@ -223,6 +224,16 @@ export function TitleOverlay({
             >
               <Dumbbell className="h-3.5 w-3.5 shrink-0" />
               Practice Yard · learn the moves
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onSelectMode('daily_dhamaal')}
+              className="flex items-center justify-center gap-2 border border-[#F472B6]/50 bg-[#2A0F1E]/90 px-3 py-2.5 text-xs font-bold text-[#FBCFE8] hover:border-[#F472B6] hover:text-[#F8F4EC] transition-colors whitespace-nowrap landscape:col-span-2"
+            >
+              <Flame className="h-3.5 w-3.5 shrink-0" />
+              Daily Dhamaal · {DAILY_INFO[todaysMod()].title}
+              {dailyBest() > 0 && <span className="text-[10px] text-[#F9A8D4]">· best {dailyBest().toLocaleString()}</span>}
             </button>
 
           </div>

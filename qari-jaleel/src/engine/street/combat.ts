@@ -46,7 +46,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
   // Hit boxes match what you see: ~0.82x the old reach, and a tighter lane depth
   const effectiveRangeX = spec.rangeX * 0.82 + bonusRange * 0.8;
   const effectiveRangeZ = spec.rangeZ * 0.72 + (isBollywoodSlap || isKushtiShockwave ? 0.4 : 0);
-  const counterMul = (hero.counterTimer > 0 ? 1.5 : 1) * (hero.index === this.activeHeroIndex && this.gussaOn ? 1.3 : 1);
+  const counterMul = (hero.counterTimer > 0 ? 1.5 : 1) * (hero.index === this.activeHeroIndex && this.gussaOn ? 1.3 : 1) * (this.dailyMod === 'glass' ? 2 : 1);
   const lazyMul = hero.style === 'lazy_giant' && (hero.action === 'lp' || hero.action === 'lp2' || hero.action === 'rp' || hero.action === 'combo_finisher') ? 1.9 : 1;
   // Long combos lose a bit of punch (down to 60%), like a real fighter tiring
   const comboScale = Math.max(0.6, 1 - Math.max(0, hero.comboCount - 4) * 0.05) * (hero.energy < TIRED_AT ? TIRED_DMG : 1);
@@ -205,6 +205,7 @@ export function evaluateHeroAttackHits(this: StreetBrawlEngine, hero: HeroRuntim
       }
 
       this.damageEnemy(e, hero, effectiveDmg, heavy, kb, launchY, popup);
+      if (hero.action === 'combo_finisher') this.signatureFinisherFx(hero, e);
       if (hero.style === 'lazy_giant' && Math.random() < 0.45) {
         // Everyone nearby is in awe of how big he is
         const onlooker = this.enemies.find((o) => o.alive && o.uid !== e.uid && Math.abs(o.x - hero.x) < 6.5);
@@ -365,6 +366,7 @@ export function damageEnemy(this: StreetBrawlEngine,
     damage = Math.round(damage * 1.35);
     if (!popupText) popupText = 'GUARD BREAK!';
   }
+  if (e.markTimer > 0) damage = Math.round(damage * 1.25);
   e.hp = Math.max(0, e.hp - damage);
   e.hitFlash = 1.0;
   this.lastHitEnemyUid = e.uid;

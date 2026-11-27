@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { chappalFoot, fabricTexture, fistGroup, hashString, headGeometry, limbGeometry, makeFistGeos, makeFootGeos, ribbonGeometry, torsoGeometry } from './thugParts';
 import { applyWarmRimHighlight } from './fighterRig';
+import { mergeStatic } from './mergeStatic';
 
 export type ThugArchetype = 'idiot' | 'thug' | 'ranged' | 'biker' | 'boss';
 
@@ -1245,6 +1246,17 @@ export function createVillageThugRig(spec: VillageThugSpec): VillageThugRig {
     flameShell.position.y = 1.15;
     bossRageAura.add(groundRing, flameShell);
     root.add(bossRageAura);
+  }
+
+  // Performance: merge each joint's own static parts into one mesh per material (joints still animate)
+  const joints: THREE.Object3D[] = [root, hips, torso, headGroup, leftArm.shoulder, leftArm.elbow, rightArm.shoulder, rightArm.elbow, leftLeg.hip, leftLeg.knee, rightLeg.hip, rightLeg.knee];
+  const keep = new Set<THREE.Object3D>([...joints, dizzyStarsGroup, dizzyEyesGroup, shadowDisc]);
+  if (bossRageAura) keep.add(bossRageAura);
+  if (bikeGroup) keep.add(bikeGroup);
+  for (const j of joints) {
+    keep.delete(j);
+    mergeStatic(j, keep, (g) => void trackGeo(g));
+    keep.add(j);
   }
 
   const dispose = () => {

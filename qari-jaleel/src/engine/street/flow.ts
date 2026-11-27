@@ -10,6 +10,7 @@ import { StreetZoneConfig, HeroRuntime, EnemyRuntime } from './types';
 import { VILLAGE_BOON_POOL, STREET_ZONES } from './data';
 import { STYLE_GRADES } from './style';
 import { JAV_GAALIS } from '../../data/jokes';
+import { DAILY_INFO, dailyBest, saveDaily } from './daily';
 import type { StreetBrawlEngine } from '../streetBrawlEngine';
 
 /** Endless wave plan: who comes, in what order, the twist (if any), plus banner text. Boss every 5th wave. */
@@ -95,6 +96,11 @@ export function spawnEndlessWave(this: StreetBrawlEngine, waveNum: number) {
 }
 
 export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZoneConfig, waveScale = 1, armed = false, dmgScale?: number) {
+  // Daily Dhamaal twists on who turns up
+  const isBossKey = (k: string) => VILLAGE_COUSIN_ROSTER[k]?.archetype === 'boss';
+  if (this.dailyMod === 'double' && keys.length > 1) keys = keys.flatMap((k) => (isBossKey(k) ? [k] : [k, k]));
+  if (this.dailyMod === 'giants' && keys.length > 1) keys = keys.filter((k, i) => i % 2 === 0 || isBossKey(k));
+  if (this.dailyMod === 'lathi') armed = true;
   keys.forEach((key, idx) => {
     const base = VILLAGE_COUSIN_ROSTER[key] ?? VILLAGE_COUSIN_ROSTER.bunty;
     const uid = this.nextEnemyUid++;
@@ -105,14 +111,15 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       damage: Math.max(4, Math.round(base.damage * this.enemyDmgScale * (dmgScale ?? Math.min(1.5, waveScale)))),
       hasClub: armed || base.hasClub,
     };
+    if (this.dailyMod === 'chai_rush') spec.speed *= 1.25;
     // Elite gold-turban cousins from Zone 2 / Endless wave 6: tougher, worth double
     const lateRun = this.endlessMode ? this.endlessWave >= 6 : this.currentZoneIdx >= 1;
     if (
       !this.practiceMode &&
-      lateRun &&
+      (lateRun || this.dailyMod === 'giants') &&
       (spec.archetype === 'idiot' || spec.archetype === 'thug') &&
       !spec.trait &&
-      Math.random() < [0.08, 0.16, 0.25][this.difficultyLevel]
+      (this.dailyMod === 'giants' || Math.random() < [0.08, 0.16, 0.25][this.difficultyLevel])
     ) {
       spec.elite = true;
       spec.name = `Elite ${spec.name}`;
@@ -173,6 +180,7 @@ export function spawnWave(this: StreetBrawlEngine, keys: string[], zone: StreetZ
       blockedHits: 0,
       banter: 0,
       rollTimer: 0,
+      markTimer: 0,
       gag: 'none',
       gagTimer: 0,
       gagX: 0,
@@ -364,6 +372,8 @@ export function computeScorecard(this: StreetBrawlEngine, victory: boolean): Bra
     isNewBestScore = saved.isNewBestScore;
     isNewBestWave = saved.isNewBestWave;
     this.endlessBestWave = saved.records.endlessBestWave;
+  } else if (this.dailyMod) {
+    isNewBestScore = saveDaily(this.score);
   } else {
     const saved = saveStreetBrawlRecord({
       score: this.score,
@@ -409,6 +419,8 @@ export function computeScorecard(this: StreetBrawlEngine, victory: boolean): Bra
     onBeatHits: this.onBeatHits,
     bestStyle: STYLE_GRADES[this.bestStyle],
     challengesDone: this.challengesDone,
+    dailyTitle: this.dailyMod ? DAILY_INFO[this.dailyMod].title : undefined,
+    dailyBest: this.dailyMod ? dailyBest() : undefined,
     pickupsTaken: this.pickupsTaken,
     finishersLanded: this.finishersLanded,
     score: this.score,

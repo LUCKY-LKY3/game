@@ -104,6 +104,11 @@ export interface HeroRuntime {
   energy: number;
   energyIdle: number;
   tiredShown: boolean;
+  /** times the energy bar was emptied recently (slows recovery) */
+  exhaust: number;
+  emptied: boolean;
+  /** fighter's own combo-finisher effect already fired this swing */
+  signatureDone: boolean;
   /** distance still to cover by the short step-in at the start of a strike */
   stepInLeft: number;
   aiThinkTimer: number;
@@ -159,6 +164,8 @@ export interface EnemyRuntime {
   banter: number;
   /** ground roll after a big knockdown landing (seconds left) */
   rollTimer: number;
+  /** Chet's STOCK CRASH: takes +25% damage while > 0 */
+  markTimer: number;
   /** comedy gag in progress (see street/gags.ts) */
   gag: 'none' | 'chappal' | 'surrender' | 'argue' | 'samosa' | 'chai';
   gagTimer: number;

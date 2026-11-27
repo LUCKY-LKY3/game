@@ -15,7 +15,8 @@ import { ArticulatedFighterRig, applyFighterPose } from './fighterRig';
 import { getPowerupKindForFighter, PowerupDirector, PowerupKind } from './powerupDirector';
 import { resolveFighterStyle } from '../data/roster';
 import { soundEngine } from './sound';
-import { DODGE_COST, energyCost, regenEnergy, TIRED_AT, TIRED_DMG, TIRED_SLOW } from './energy';
+import { SIGNATURE_NAMES } from './street/signatures';
+import { DODGE_COST, energyCost, EXHAUST_DECAY_PER_SEC, EXHAUST_MAX, regenEnergy, TIRED_AT, TIRED_DMG, TIRED_SLOW } from './energy';
 import { getSettings } from '../utils/settings';
 
 interface MoveSpec {
@@ -279,6 +280,10 @@ interface FighterRuntime {
   dodgeFatigue: number;
   energy: number;
   energyIdle: number;
+  exhaust: number;
+  emptied: boolean;
+  /** Chet's STOCK CRASH: takes +25% damage while > 0 */
+  markTimer: number;
   /** same move repeated (the AI blocks mashers more) */
   lastMove: CombatAction | null;
   repeatCount: number;
@@ -489,6 +494,9 @@ export class AkharaCombatEngine {
       dodgeFatigue: 0,
       energy: 100,
       energyIdle: 1,
+      exhaust: 0,
+      emptied: false,
+      markTimer: 0,
       lastMove: null,
       repeatCount: 0,
       whiffTimer: 0,
@@ -605,6 +613,7 @@ export class AkharaCombatEngine {
       f.energyIdle = 0;
       if (f.energy < TIRED_AT && !gassed) this.pushCallout(f, 'TIRED!');
     }
+    if (action === 'combo_finisher' && SIGNATURE_NAMES[f.profile.id]) this.pushCallout(f, SIGNATURE_NAMES[f.profile.id]);
     f.action = action;
     f.actionTimer = 0;
     f.actionDuration =
@@ -987,7 +996,7 @@ export class AkharaCombatEngine {
 
     // Counter-hit bonus if defender was mid-startup
     const isCounter = Boolean(MOVE_DATA[defender.action]) && !isRageMulti;
-    const appliedDamage = isCounter ? Math.round(finalDamage * 1.2) : finalDamage;
+    const appliedDamage = Math.round((isCounter ? finalDamage * 1.2 : finalDamage) * (defender.markTimer > 0 ? 1.25 : 1));
 
     if (this.phase === 'FIGHTING') {
       defender.hp = Math.max(0, defender.hp - appliedDamage);
@@ -1070,6 +1079,24 @@ export class AkharaCombatEngine {
       spec.height === 'throw' ||
       attacker.action === 'combo_finisher' ||
       (isRageMulti && attacker.rageHitsLanded === 3);
+
+    // Each fighter's own combo finisher
+    const sig = attacker.action === 'combo_finisher' ? attacker.profile.id : '';
+    if (sig === 'qari_jaleel' || sig === 'rebel_shadow') {
+      // hot chai in the face / charmed: long stun instead of a knockdown
+      defender.vx *= 0.3;
+      defender.vy = 0;
+      this.startAction(defender, 'hitstun', 1.2);
+      this.pushCallout(attacker, sig === 'qari_jaleel' ? 'GARAM CHAI!' : 'CHARMED!');
+      return;
+    }
+    if (sig === 'rebel_aviator') defender.vx *= 1.8;
+    if (sig === 'rebel_enforcer') defender.vy = Math.max(defender.vy, 8.2);
+    if (sig === 'rebel_tactician') this.shakeIntensity = Math.max(this.shakeIntensity, 0.4);
+    if (sig === 'rebel_striker') {
+      defender.markTimer = 4;
+      this.pushCallout(attacker, '-25% STOCK CRASH');
+    }
 
     if (causesKnockdown) {
       this.startAction(defender, 'knockdown', 0.88);
@@ -1592,7 +1619,15 @@ export class AkharaCombatEngine {
     if (f.invulnTimer > 0) f.invulnTimer = Math.max(0, f.invulnTimer - dt);
     f.dodgeFatigue = Math.max(0, f.dodgeFatigue - dt);
     f.energyIdle += dt;
-    f.energy = regenEnergy(f.energy, f.energyIdle, f.action === 'idle' || f.action === 'block', dt);
+    f.exhaust = Math.max(0, f.exhaust - EXHAUST_DECAY_PER_SEC * dt);
+    f.markTimer = Math.max(0, f.markTimer - dt);
+    f.energy = regenEnergy(f.energy, f.energyIdle, f.action === 'idle' || f.action === 'block', dt, f.exhaust);
+    if (f.emptied && f.energy > 30) f.emptied = false;
+    if (!f.emptied && f.energy <= 0.5) {
+      f.emptied = true;
+      f.exhaust = Math.min(EXHAUST_MAX, Math.floor(f.exhaust) + 1);
+      this.pushCallout(f, f.exhaust >= 2 ? 'TOTALLY GASSED!' : 'EXHAUSTED!');
+    }
     f.whiffTimer = Math.max(0, f.whiffTimer - dt);
     f.counterReady = Math.max(0, f.counterReady - dt);
 
@@ -1956,6 +1991,7 @@ export class AkharaCombatEngine {
       recoverableHp: Math.ceil(f.recoverableHp),
       rage: Math.round(f.rage),
       energy: Math.round(f.energy),
+      exhaust: Math.ceil(f.exhaust - 0.01),
       combo: f.comboCount,
       roundsWon: f.roundsWon,
       action: f.action,

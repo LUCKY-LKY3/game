@@ -44,6 +44,7 @@ export function updateEnemies(this: StreetBrawlEngine, dt: number) {
       }
     }
     if (e.rollTimer > 0) e.rollTimer = Math.max(0, e.rollTimer - dt);
+    if (e.markTimer > 0) e.markTimer = Math.max(0, e.markTimer - dt);
     e.x += e.vx * dt;
     e.z += e.vz * dt;
     e.vx *= Math.exp((e.bowlingActive ? -2.2 : -6.5) * dt);
